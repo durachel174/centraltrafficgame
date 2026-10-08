@@ -15,6 +15,19 @@ export class DemandGenerator {
     this.nextId = 1;
   }
 
+  getState() {
+    return { carry: this.carry, nextId: this.nextId };
+  }
+
+  setState(state: { carry: number; nextId: number }) {
+    this.carry = state.carry;
+    this.nextId = state.nextId;
+  }
+
+  getRate(relativeMinute: number): number {
+    return this.rate(relativeMinute);
+  }
+
   generate(relativeMinute: number, dtMinutes: number): TripRequest[] {
     const rate = this.rate(relativeMinute);
     this.carry += rate * dtMinutes;

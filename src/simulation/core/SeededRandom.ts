@@ -9,6 +9,14 @@ export class SeededRandom {
     this.state = seed >>> 0 || 1;
   }
 
+  getState(): number {
+    return this.state;
+  }
+
+  setState(state: number) {
+    this.state = state >>> 0 || 1;
+  }
+
   next(): number {
     this.state = (1664525 * this.state + 1013904223) >>> 0;
     return this.state / 0x100000000;

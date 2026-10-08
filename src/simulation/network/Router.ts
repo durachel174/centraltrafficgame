@@ -4,6 +4,7 @@ import type { TrafficGraph } from "./TrafficGraph";
 export interface RoutingContext {
   avoidEdges?: string[];
   penalizedEdges?: Record<string, number>;
+  weight?: "currentTravelTime" | "baseTravelTime" | "distance";
 }
 
 export class Router {
@@ -35,7 +36,13 @@ export class Router {
       for (const edge of this.graph.outgoingEdges(current)) {
         if (edge.closed || avoid.has(edge.id)) continue;
         const penalty = context.penalizedEdges?.[edge.id] ?? 0;
-        const candidate = best + travelTime(edge, this.congestion) + penalty;
+        const weight =
+          context.weight === "baseTravelTime"
+            ? edge.baseTravelTime
+            : context.weight === "distance"
+              ? edge.lengthKm
+              : travelTime(edge, this.congestion);
+        const candidate = best + weight + penalty;
         if (candidate < (dist.get(edge.to) ?? Number.POSITIVE_INFINITY)) {
           dist.set(edge.to, candidate);
           prevNode.set(edge.to, current);

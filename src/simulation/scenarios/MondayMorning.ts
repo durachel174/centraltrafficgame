@@ -113,5 +113,12 @@ export const mondayMorningScenario: Scenario = {
     excessDistance: 0.9
   },
   congestion: { alpha: 0.15, beta: 4, utilizationThreshold: 0.82 },
-  satisfaction: { departureDelay: 0.8, lateDelay: 1.2, reroute: 1.6 }
+  satisfaction: { departureDelay: 0.8, lateDelay: 1.2, reroute: 1.6 },
+  forecast: {
+    horizonsMinutes: [5, 10, 15],
+    refreshIntervalMinutes: 5,
+    warningUtilization: 1,
+    criticalUtilization: 1.25,
+    previewHorizonMinutes: 15
+  }
 };

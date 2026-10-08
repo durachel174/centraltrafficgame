@@ -12,6 +12,7 @@ export interface Vehicle {
   expectedArrivalTime?: number;
   actualArrivalTime?: number;
   baselineTravelTime: number;
+  baselineDistanceKm: number;
   status: "waiting" | "traveling" | "arrived";
   passengerTolerance: number;
   satisfaction: number;
@@ -141,6 +142,13 @@ export interface Scenario {
   objectiveWeights: ObjectiveWeights;
   congestion: { alpha: number; beta: number; utilizationThreshold: number };
   satisfaction: { departureDelay: number; lateDelay: number; reroute: number };
+  forecast?: {
+    horizonsMinutes: [number, number, number];
+    refreshIntervalMinutes: number;
+    warningUtilization: number;
+    criticalUtilization: number;
+    previewHorizonMinutes: number;
+  };
 }
 
 export interface EdgeObservation {

@@ -1,6 +1,6 @@
 import { utilization } from "../traffic/CongestionModel";
 import type { TrafficGraph } from "../network/TrafficGraph";
-import type { ObjectiveWeights, SimulationMetrics, Vehicle } from "../types";
+import type { ObjectiveWeights, SimulationMetrics, TripRequest, Vehicle } from "../types";
 
 const percentile = (values: number[], p: number) => {
   if (!values.length) return 0;
@@ -10,21 +10,50 @@ const percentile = (values: number[], p: number) => {
 
 export function calculateMetrics(args: {
   vehicles: Vehicle[];
-  waitingTrips: number;
+  waitingTrips: TripRequest[];
   graph: TrafficGraph;
   congestionCost: number;
   departureDelay: number;
   weights: ObjectiveWeights;
   utilizationThreshold: number;
+  currentTime: number;
+  satisfaction: { departureDelay: number; lateDelay: number; reroute: number };
 }): SimulationMetrics {
   const completed = args.vehicles.filter((vehicle) => vehicle.status === "arrived");
-  const active = args.vehicles.filter((vehicle) => vehicle.status === "traveling").length;
+  const activeVehicles = args.vehicles.filter((vehicle) => vehicle.status === "traveling");
+  const active = activeVehicles.length;
   const durations = completed.map((vehicle) => (vehicle.actualArrivalTime ?? 0) - (vehicle.actualDepartureTime ?? 0));
+  const activeDurations = activeVehicles.map((vehicle) => args.currentTime - (vehicle.actualDepartureTime ?? args.currentTime));
+  const travelTime = [...durations, ...activeDurations].reduce((sum, value) => sum + Math.max(0, value), 0);
   const averageTravelTime = durations.reduce((sum, value) => sum + value, 0) / Math.max(1, durations.length);
-  const averageSatisfaction =
-    completed.reduce((sum, vehicle) => sum + vehicle.satisfaction, 0) / Math.max(1, completed.length || args.vehicles.length);
-  const excessDistance = completed.reduce(
-    (sum, vehicle) => sum + Math.max(0, vehicle.distanceKm - vehicle.baselineTravelTime),
+  const waitingSatisfaction = args.waitingTrips.map((trip) =>
+    Math.max(0, 100 - Math.max(0, args.currentTime - trip.requestedDepartureTime) * args.satisfaction.departureDelay)
+  );
+  const activeSatisfaction = activeVehicles.map((vehicle) => {
+    const elapsed = args.currentTime - (vehicle.actualDepartureTime ?? args.currentTime);
+    const late = Math.max(0, elapsed - vehicle.passengerTolerance);
+    return Math.max(0, vehicle.satisfaction - late * args.satisfaction.lateDelay);
+  });
+  const allSatisfaction = [
+    ...completed.map((vehicle) => vehicle.satisfaction),
+    ...activeSatisfaction,
+    ...waitingSatisfaction
+  ];
+  const averageSatisfaction = allSatisfaction.length
+    ? allSatisfaction.reduce((sum, value) => sum + value, 0) / allSatisfaction.length
+    : 100;
+  const routeDistance = (vehicle: Vehicle) => {
+    if (vehicle.status === "arrived") return vehicle.distanceKm;
+    return vehicle.route.reduce((sum, edgeId, index) => {
+      if (vehicle.status === "traveling" && index < vehicle.currentEdgeIndex) return sum;
+      if (vehicle.status === "traveling" && index === vehicle.currentEdgeIndex) {
+        return sum + args.graph.edge(edgeId).lengthKm * (1 - vehicle.edgeProgress);
+      }
+      return sum + args.graph.edge(edgeId).lengthKm;
+    }, vehicle.distanceKm);
+  };
+  const excessDistance = args.vehicles.reduce(
+    (sum, vehicle) => sum + Math.max(0, routeDistance(vehicle) - vehicle.baselineDistanceKm),
     0
   );
   let worstBottleneck = "";
@@ -36,8 +65,7 @@ export function calculateMetrics(args: {
       worstBottleneck = edge.name ?? edge.id;
     }
   }
-  const dissatisfaction = completed.reduce((sum, vehicle) => sum + (100 - vehicle.satisfaction), 0);
-  const travelTime = durations.reduce((sum, value) => sum + value, 0);
+  const dissatisfaction = allSatisfaction.reduce((sum, value) => sum + (100 - value), 0);
   const objective =
     args.weights.travelTime * travelTime +
     args.weights.congestion * args.congestionCost +
@@ -46,10 +74,10 @@ export function calculateMetrics(args: {
     args.weights.excessDistance * excessDistance;
 
   return {
-    tripsRequested: args.vehicles.length + args.waitingTrips,
+    tripsRequested: args.vehicles.length + args.waitingTrips.length,
     tripsCompleted: completed.length,
     activeTrips: active,
-    waitingTrips: args.waitingTrips,
+    waitingTrips: args.waitingTrips.length,
     averageTravelTime,
     medianTripTime: percentile(durations, 0.5),
     p90TripTime: percentile(durations, 0.9),
