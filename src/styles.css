@@ -1,0 +1,245 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e9f2f6;
+  background: #050b10;
+}
+
+button {
+  border: 1px solid rgba(154, 194, 210, 0.22);
+  background: #10202c;
+  color: #e9f2f6;
+  min-height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+button:hover,
+button.active {
+  background: #1d3a4b;
+  border-color: #68c7e8;
+}
+
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topBar {
+  height: 76px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(178, 221, 235, 0.16);
+  background: #08131b;
+}
+
+.topBar h1 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.topBar span,
+.metricsBar span,
+.muted,
+small {
+  color: #8ea5b2;
+}
+
+.topBar strong {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metricsBar {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  min-height: 76px;
+  border-bottom: 1px solid rgba(178, 221, 235, 0.16);
+  background: #0b1822;
+}
+
+.metricsBar div {
+  padding: 13px 24px;
+  border-right: 1px solid rgba(178, 221, 235, 0.12);
+}
+
+.metricsBar strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 24px;
+}
+
+.mainGrid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 365px;
+}
+
+.mapPanel {
+  position: relative;
+  min-height: 620px;
+}
+
+.mapToolbar {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 8px;
+  padding: 7px;
+  background: rgba(5, 14, 21, 0.8);
+  border: 1px solid rgba(178, 221, 235, 0.14);
+  border-radius: 8px;
+}
+
+.trafficCanvas {
+  width: 100%;
+  height: 100%;
+  min-height: 620px;
+  display: block;
+}
+
+.sidePanel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  background: #071017;
+  border-left: 1px solid rgba(178, 221, 235, 0.16);
+  overflow: auto;
+}
+
+.panel {
+  padding: 14px;
+  border: 1px solid rgba(178, 221, 235, 0.16);
+  border-radius: 8px;
+  background: #0d1a24;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.statGrid,
+.endGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.statGrid span,
+.endGrid span {
+  color: #8ea5b2;
+}
+
+.forecastRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 13px 0;
+}
+
+.forecastRow span,
+.preview {
+  padding: 8px;
+  background: #09131b;
+  border-radius: 6px;
+  color: #b8cad2;
+  font-size: 13px;
+}
+
+.preview {
+  margin: 10px 0 6px;
+}
+
+.panel button {
+  width: 100%;
+  margin-top: 7px;
+}
+
+.alert {
+  justify-content: flex-start;
+  text-align: left;
+  min-height: 54px;
+}
+
+.alert span {
+  display: grid;
+  gap: 2px;
+}
+
+.alert.critical {
+  border-color: rgba(255, 77, 95, 0.55);
+}
+
+.alert.warning {
+  border-color: rgba(255, 184, 74, 0.55);
+}
+
+.debugPanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.debugPanel h2 {
+  grid-column: 1 / -1;
+}
+
+.debugPanel button {
+  margin: 0;
+}
+
+.endOverlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(2, 8, 12, 0.76);
+  z-index: 10;
+}
+
+.endScreen {
+  width: min(560px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(178, 221, 235, 0.24);
+  background: #0d1a24;
+}
+
+.endScreen h2 {
+  margin-top: 0;
+  text-transform: uppercase;
+}
+
+@media (max-width: 920px) {
+  .metricsBar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidePanel {
+    border-left: 0;
+  }
+}

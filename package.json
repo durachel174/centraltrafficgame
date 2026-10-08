@@ -1,0 +1,30 @@
+{
+  "name": "central-traffic",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "simulate": "tsx scripts/simulate.ts",
+    "benchmark": "tsx scripts/benchmark.ts"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.0.3",
+    "lucide-react": "^0.544.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "vite": "^7.1.7",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "jsdom": "^27.0.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.11"
+  }
+}
