@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import React from "react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { RoadInspector } from "../components/RoadInspector";
+import { useGameStore } from "../game/GameStore";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
 import { SeededRandom } from "../simulation/core/SeededRandom";
 import { TrafficGraph } from "../simulation/network/TrafficGraph";
@@ -61,6 +66,12 @@ function run(seed = 428193, actions: Record<number, Parameters<SimulationEngine[
   for (let i = 0; i < 160; i++) engine.step(actions[i] ?? { type: "NO_OP" });
   return engine.getState().metrics;
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  useGameStore.getState().reset();
+});
 
 describe("determinism", () => {
   it("produces identical metrics for same seed and actions", () => {
@@ -170,6 +181,7 @@ describe("traffic math and actions", () => {
 
   it("rerouting reduces target-road pressure and increases alternate-road pressure in a controlled fixture", () => {
     const scenario = fixtureScenario({
+      congestion: { alpha: 0, beta: 4, utilizationThreshold: 0.8 },
       graph: {
         nodes: [
           { id: "o", x: 0, y: 0, type: "origin" },
@@ -212,6 +224,71 @@ describe("traffic math and actions", () => {
 });
 
 describe("scoring and reward regressions", () => {
+  it("short trips cannot arrive before departure", () => {
+    const scenario = fixtureScenario({
+      congestion: { alpha: 0, beta: 4, utilizationThreshold: 0.8 },
+      graph: {
+        nodes: [
+          { id: "o", x: 0, y: 0, type: "origin" },
+          { id: "d", x: 1, y: 0, type: "destination" }
+        ],
+        edges: [{ id: "quick", from: "o", to: "d", lengthKm: 0.1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 }]
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(1);
+    engine.step({ type: "DEBUG_SPAWN", count: 1 });
+    const vehicle = engine.getState().vehicles[0];
+    expect(vehicle.actualDepartureTime).toBe(0);
+    expect(vehicle.actualArrivalTime).toBeCloseTo(0.1, 6);
+    expect((vehicle.actualArrivalTime ?? 0) - (vehicle.actualDepartureTime ?? 0)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("free-flow travel duration is exact across multiple edges in one tick", () => {
+    const scenario = fixtureScenario({
+      congestion: { alpha: 0, beta: 4, utilizationThreshold: 0.8 },
+      graph: {
+        nodes: [
+          { id: "o", x: 0, y: 0, type: "origin" },
+          { id: "a", x: 1, y: 0, type: "intersection" },
+          { id: "d", x: 2, y: 0, type: "destination" }
+        ],
+        edges: [
+          { id: "e1", from: "o", to: "a", lengthKm: 0.05, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 },
+          { id: "e2", from: "a", to: "d", lengthKm: 0.05, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 }
+        ]
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(1);
+    engine.step({ type: "DEBUG_SPAWN", count: 1 });
+    const vehicle = engine.getState().vehicles[0];
+    expect(vehicle.actualArrivalTime).toBeCloseTo(0.1, 6);
+    expect(vehicle.distanceKm).toBeCloseTo(0.1, 6);
+  });
+
+  it("newly generated demand waits until the next tick before moving", () => {
+    const scenario = fixtureScenario({
+      demand: {
+        curve: [
+          { minute: 0, tripsPerMinute: 4 },
+          { minute: 30, tripsPerMinute: 4 }
+        ],
+        pairs: [{ origin: "o", destination: "d", weight: 1 }],
+        passengerTolerance: [5, 5]
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(1);
+    engine.step({ type: "NO_OP" });
+    expect(engine.getState().waiting.length).toBe(1);
+    expect(engine.getState().vehicles.length).toBe(0);
+    engine.step({ type: "NO_OP" });
+    const vehicle = engine.getState().vehicles[0];
+    expect(vehicle.actualDepartureTime).toBe(0.25);
+    expect(vehicle.actualArrivalTime ?? vehicle.actualDepartureTime).toBeGreaterThanOrEqual(vehicle.actualDepartureTime ?? 0);
+  });
+
   it("active vehicles accumulate travel-time objective cost", () => {
     const engine = new SimulationEngine(fixtureScenario());
     engine.reset(1);
@@ -339,6 +416,50 @@ describe("scoring and reward regressions", () => {
 });
 
 describe("forecast, replay, speed independence", () => {
+  it("reset matches a fresh engine for initial state and future outcomes", () => {
+    const used = new SimulationEngine(mondayMorningScenario);
+    used.reset(22);
+    used.step({ type: "DEBUG_SPAWN", count: 100 });
+    for (let i = 0; i < 10; i++) used.step({ type: "NO_OP" });
+    used.reset(22);
+
+    const fresh = new SimulationEngine(mondayMorningScenario);
+    fresh.reset(22);
+    expect(used.getObservation()).toEqual(fresh.getObservation());
+    expect(used.getInfo()).toEqual(fresh.getInfo());
+    for (let i = 0; i < 20; i++) {
+      used.step({ type: "NO_OP" });
+      fresh.step({ type: "NO_OP" });
+    }
+    expect(used.getState().metrics).toEqual(fresh.getState().metrics);
+  });
+
+  it("mutating input actions or exported logs cannot change internal history", () => {
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(23);
+    const action = { type: "DEBUG_SPAWN" as const, count: 10 };
+    engine.step(action);
+    action.count = 999;
+    const exported = engine.createRun();
+    exported.actions[0].action = { type: "DEBUG_SPAWN", count: 999 };
+    expect(engine.createRun().actions[0].action).toEqual({ type: "DEBUG_SPAWN", count: 10 });
+  });
+
+  it("mutating returned state cannot change future outcomes", () => {
+    const clean = new SimulationEngine(mondayMorningScenario);
+    const mutated = new SimulationEngine(mondayMorningScenario);
+    clean.reset(24);
+    mutated.reset(24);
+    const returned = mutated.getState();
+    returned.metrics.objective = 999999;
+    returned.vehicles.push({} as never);
+    for (let i = 0; i < 20; i++) {
+      clean.step({ type: "NO_OP" });
+      mutated.step({ type: "NO_OP" });
+    }
+    expect(mutated.getState().metrics).toEqual(clean.getState().metrics);
+  });
+
   it("forecast and preview do not change live state, logs, RNG, or future outcomes", () => {
     const untouched = new SimulationEngine(mondayMorningScenario);
     const inspected = new SimulationEngine(mondayMorningScenario);
@@ -407,6 +528,45 @@ describe("forecast, replay, speed independence", () => {
     );
   });
 
+  it("preview utilization changes match real rollouts at displayed horizons", () => {
+    const source = new SimulationEngine(mondayMorningScenario);
+    source.reset(31);
+    source.step({ type: "DEBUG_SPAWN", count: 400 });
+    for (let i = 0; i < 5; i++) source.step({ type: "NO_OP" });
+    const action = { type: "REROUTE" as const, targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.5 };
+    const preview = source.previewAction(action);
+    const change = preview.forecastChanges.find((item) => item.edgeId === "north_bridge" && item.horizonMinutes === 5);
+    expect(change).toBeDefined();
+
+    const noAction = new SimulationEngine(mondayMorningScenario);
+    const withAction = new SimulationEngine(mondayMorningScenario);
+    for (const engine of [noAction, withAction]) {
+      engine.reset(31);
+      engine.step({ type: "DEBUG_SPAWN", count: 400 });
+      for (let i = 0; i < 5; i++) engine.step({ type: "NO_OP" });
+    }
+    withAction.step(action);
+    noAction.step({ type: "NO_OP" });
+    for (let i = 0; i < 19; i++) {
+      withAction.step({ type: "NO_OP" });
+      noAction.step({ type: "NO_OP" });
+    }
+    const noEdge = noAction.getState().graph.edge("north_bridge");
+    const actionEdge = withAction.getState().graph.edge("north_bridge");
+    expect(change?.before).toBeCloseTo(noEdge.currentVehicleCount / (noEdge.comfortableCapacity * noEdge.capacityModifier), 6);
+    expect(change?.after).toBeCloseTo(actionEdge.currentVehicleCount / (actionEdge.comfortableCapacity * actionEdge.capacityModifier), 6);
+  });
+
+  it("passenger-delay preview reports total and per-passenger units", () => {
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(32);
+    engine.step({ type: "DEBUG_SPAWN", count: 100 });
+    const preview = engine.previewAction({ type: "DELAY_DEPARTURES", destination: "downtown", durationMinutes: 5, percentage: 0.5 });
+    expect(Number.isFinite(preview.passengerDelayDeltaMinutes)).toBe(true);
+    expect(Number.isFinite(preview.passengerDelayDeltaPerPassenger)).toBe(true);
+    expect(Math.abs(preview.passengerDelayDeltaMinutes)).toBeGreaterThanOrEqual(Math.abs(preview.passengerDelayDeltaPerPassenger));
+  });
+
   it("previews count only genuinely eligible reroute vehicles", () => {
     const engine = new SimulationEngine(mondayMorningScenario);
     engine.reset(12);
@@ -420,6 +580,50 @@ describe("forecast, replay, speed independence", () => {
       ).length;
     const preview = engine.previewAction({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 1 });
     expect(preview.affectedVehicles).toBe(eligible);
+  });
+
+  it("no-alternative-route vehicles are excluded from successful reroute counts", () => {
+    const scenario = fixtureScenario({
+      graph: {
+        nodes: [
+          { id: "o", x: 0, y: 0, type: "origin" },
+          { id: "a", x: 1, y: 0, type: "intersection" },
+          { id: "b", x: 2, y: 0, type: "intersection" },
+          { id: "d", x: 3, y: 0, type: "destination" }
+        ],
+        edges: [
+          { id: "approach", from: "o", to: "a", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 },
+          { id: "target", from: "a", to: "b", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20, major: true },
+          { id: "exit", from: "b", to: "d", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 }
+        ]
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(33);
+    engine.step({ type: "DEBUG_SPAWN", count: 1 });
+    const preview = engine.previewAction({ type: "REROUTE", targetEdge: "target", avoidEdge: "target", percentage: 1 });
+    expect(preview.affectedVehicles).toBe(0);
+  });
+
+  it("hold and release previews report actual changed trips", () => {
+    const scenario = fixtureScenario({
+      demand: {
+        curve: [
+          { minute: 0, tripsPerMinute: 4 },
+          { minute: 30, tripsPerMinute: 4 }
+        ],
+        pairs: [{ origin: "o", destination: "d", weight: 1 }],
+        passengerTolerance: [5, 5]
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(34);
+    engine.step({ type: "NO_OP" });
+    const hold = engine.previewAction({ type: "DELAY_DEPARTURES", destination: "d", durationMinutes: 5, percentage: 1 });
+    expect(hold.affectedVehicles).toBe(1);
+    engine.step({ type: "DELAY_DEPARTURES", destination: "d", durationMinutes: 5, percentage: 1 });
+    const release = engine.previewAction({ type: "RELEASE_DEPARTURES", destination: "d" });
+    expect(release.affectedVehicles).toBe(1);
   });
 
   it("known future demand produces overload forecast", () => {
@@ -436,6 +640,7 @@ describe("forecast, replay, speed independence", () => {
     while (!engine.isDone()) engine.step({ type: "NO_OP" });
     const replay = replayRun(mondayMorningScenario, engine.createRun());
     expect(replay.finalMetrics?.objective).toBe(engine.createRun().finalMetrics?.objective);
+    expect(replay.finalMetrics).toEqual(engine.createRun().finalMetrics);
   });
 
   it("UI speed grouping does not change simulation results", () => {
@@ -448,5 +653,46 @@ describe("forecast, replay, speed independence", () => {
       for (let i = 0; i < 4; i++) four.step({ type: "NO_OP" });
     }
     expect(four.getState().metrics).toEqual(one.getState().metrics);
+  });
+});
+
+describe("preview UI flow", () => {
+  it("rendering the inspector does not trigger expensive previews", () => {
+    useGameStore.getState().reset();
+    const spy = vi.spyOn(useGameStore.getState().engine, "previewAction");
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    act(() => {
+      root.render(<RoadInspector />);
+    });
+    expect(spy).not.toHaveBeenCalled();
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it("stale asynchronous preview results are discarded", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    useGameStore.getState().step({ type: "NO_OP" });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("stale");
+  });
+
+  it("cancel changes nothing and confirm applies the reviewed action once", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    const beforeCancel = useGameStore.getState().version;
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    await vi.runAllTimersAsync();
+    useGameStore.getState().cancelPreview();
+    expect(useGameStore.getState().version).toBe(beforeCancel);
+
+    useGameStore.getState().requestPreview({ type: "DEBUG_SPAWN", count: 5 });
+    await vi.runAllTimersAsync();
+    useGameStore.getState().confirmPreview();
+    expect(useGameStore.getState().version).toBe(beforeCancel + 1);
+    expect(useGameStore.getState().engine.createRun().actions.filter((entry) => entry.action.type === "DEBUG_SPAWN")).toHaveLength(1);
   });
 });

@@ -91,6 +91,7 @@ export type DisruptionAction =
 
 export interface ForecastDelta {
   edgeId: string;
+  horizonMinutes: number;
   before: number;
   after: number;
 }
@@ -99,8 +100,10 @@ export interface ActionPreview {
   affectedVehicles: number;
   networkCostDelta: number;
   forecastChanges: ForecastDelta[];
-  averagePassengerDelayDelta: number;
+  passengerDelayDeltaMinutes: number;
+  passengerDelayDeltaPerPassenger: number;
   satisfactionDelta: number;
+  horizonMinutes: number;
 }
 
 export interface DemandPair {

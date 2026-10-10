@@ -170,6 +170,27 @@ small {
   margin: 10px 0 6px;
 }
 
+.previewDialog {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(104, 199, 232, 0.32);
+  border-radius: 8px;
+  background: #09131b;
+}
+
+.previewDialog p {
+  margin: 0;
+  color: #b8cad2;
+}
+
+.previewActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .panel button {
   width: 100%;
   margin-top: 7px;

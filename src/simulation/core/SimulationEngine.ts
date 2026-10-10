@@ -8,6 +8,7 @@ import { createAlerts } from "../forecasting/TrafficPredictor";
 import type {
   ActionPreview,
   EdgeObservation,
+  ForecastDelta,
   LoggedAction,
   Scenario,
   SimulationAction,
@@ -34,6 +35,7 @@ export class SimulationEngine {
   private departureDelay = 0;
   private previousObjective = 0;
   private latestReward = 0;
+  private latestActionAffected = 0;
   private actionLog: LoggedAction[] = [];
   private activeEventIds = new Set<string>();
   private temporaryReductions = new Map<string, { until: number; modifier: number }>();
@@ -60,9 +62,14 @@ export class SimulationEngine {
     this.departureDelay = 0;
     this.previousObjective = 0;
     this.latestReward = 0;
+    this.latestActionAffected = 0;
     this.actionLog = [];
     this.activeEventIds.clear();
     this.temporaryReductions.clear();
+    this.forecasts = [];
+    this.alerts = [];
+    this.lastForecastTime = Number.NEGATIVE_INFINITY;
+    this.forecastingEnabled = true;
     this.graph = new TrafficGraph(this.scenario.graph);
     this.router = new Router(this.graph, this.scenario.congestion);
     this.rng = new SeededRandom(seed);
@@ -76,27 +83,30 @@ export class SimulationEngine {
     if (this.isDone()) {
       return { observation: this.getObservation(), reward: 0, done: true, info: this.getInfo() };
     }
+    const actionToApply = this.cloneAction(action);
     const before = this.metrics.objective;
-    this.time += this.dtMinutes;
+    const intervalStart = this.time;
+    const intervalEnd = this.time + this.dtMinutes;
     this.processEvents();
     this.restoreTemporaryReductions();
-    this.departureDelay += this.waiting.length * this.dtMinutes;
-    this.waiting.push(...this.demand.generate(this.time, this.dtMinutes));
-    this.applyAction(action);
-    if (action.type !== "NO_OP") this.lastForecastTime = Number.NEGATIVE_INFINITY;
+    this.latestActionAffected = this.applyAction(actionToApply);
+    if (actionToApply.type !== "NO_OP") this.lastForecastTime = Number.NEGATIVE_INFINITY;
     this.dispatchTrips();
+    this.departureDelay += this.waiting.length * this.dtMinutes;
     this.updateEdgeCounts();
     this.updateTravelTimes();
-    this.moveVehicles();
+    this.moveVehicles(intervalStart);
+    this.time = intervalEnd;
+    this.waiting.push(...this.demand.generate(this.time, this.dtMinutes));
     this.updateEdgeCounts();
     this.updateDerived();
     const reward = before - this.metrics.objective;
     this.latestReward = reward;
-    if (action.type !== "NO_OP") {
+    if (actionToApply.type !== "NO_OP") {
       this.actionLog.push({
         simulationTime: this.time,
         stateSnapshotId: `t_${this.time.toFixed(2)}`,
-        action,
+        action: this.cloneAction(actionToApply),
         immediateReward: reward
       });
     }
@@ -158,31 +168,42 @@ export class SimulationEngine {
   }
 
   previewAction(action: SimulationAction): ActionPreview {
-    const affectedVehicles = this.countAffected(action);
     const horizon = this.scenario.forecast?.previewHorizonMinutes ?? 15;
+    const horizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
     const noAction = this.cloneForRollout();
     const withAction = this.cloneForRollout();
-    noAction.runFor(horizon);
-    withAction.step(action);
-    withAction.runFor(Math.max(0, horizon - withAction.dtMinutes));
-    const before = noAction.getState().metrics;
-    const after = withAction.getState().metrics;
-    const noActionForecast = noAction.computeForecastsFromCurrent();
-    const actionForecast = withAction.computeForecastsFromCurrent();
-    const forecastChanges = actionForecast.map((forecast) => {
-      const baseline = noActionForecast.find((item) => item.edgeId === forecast.edgeId);
-      return {
-        edgeId: forecast.edgeId,
-        before: baseline?.utilization10m ?? 0,
-        after: forecast.utilization10m
-      };
-    });
+    const noActionSamples = noAction.rolloutSamples(horizons);
+    const actionSamples = withAction.rolloutSamples(horizons, action);
+    const before = noActionSamples[noActionSamples.length - 1].metrics;
+    const after = actionSamples[actionSamples.length - 1].metrics;
+    const beforeDelay = noActionSamples[noActionSamples.length - 1].passengerDelayMinutes;
+    const afterDelay = actionSamples[actionSamples.length - 1].passengerDelayMinutes;
+    const passengers = Math.max(1, actionSamples[actionSamples.length - 1].passengerCount);
+    const edgeIds = new Set<string>();
+    for (const sample of noActionSamples) for (const edgeId of sample.utilizationByEdge.keys()) edgeIds.add(edgeId);
+    const forecastChanges: ForecastDelta[] = [];
+    for (const edgeId of edgeIds) {
+      for (let index = 0; index < horizons.length; index++) {
+        const beforeUtilization = noActionSamples[index].utilizationByEdge.get(edgeId) ?? 0;
+        const afterUtilization = actionSamples[index].utilizationByEdge.get(edgeId) ?? 0;
+        if (Math.abs(beforeUtilization - afterUtilization) > 0.000001 || edgeId === (action as { targetEdge?: string }).targetEdge) {
+          forecastChanges.push({
+            edgeId,
+            horizonMinutes: horizons[index],
+            before: beforeUtilization,
+            after: afterUtilization
+          });
+        }
+      }
+    }
     return {
-      affectedVehicles,
+      affectedVehicles: actionSamples[0]?.affectedTrips ?? 0,
       networkCostDelta: after.objective - before.objective,
       forecastChanges,
-      averagePassengerDelayDelta: after.departureDelay - before.departureDelay,
-      satisfactionDelta: after.averageSatisfaction - before.averageSatisfaction
+      passengerDelayDeltaMinutes: afterDelay - beforeDelay,
+      passengerDelayDeltaPerPassenger: (afterDelay - beforeDelay) / passengers,
+      satisfactionDelta: after.averageSatisfaction - before.averageSatisfaction,
+      horizonMinutes: horizon
     };
   }
 
@@ -192,7 +213,10 @@ export class SimulationEngine {
       seed: this.seed,
       engineVersion: "0.1.0",
       startedAt: new Date(0).toISOString(),
-      actions: [...this.actionLog],
+      actions: this.actionLog.map((entry) => ({
+        ...entry,
+        action: this.cloneAction(entry.action)
+      })),
       finalMetrics: { ...this.metrics }
     };
   }
@@ -220,26 +244,44 @@ export class SimulationEngine {
     }
   }
 
-  private applyAction(action: SimulationAction) {
-    if (action.type === "NO_OP") return;
-    if (action.type === "REROUTE") this.reroute(action.targetEdge, action.percentage, action.avoidEdge ?? action.targetEdge);
+  private applyAction(action: SimulationAction): number {
+    if (action.type === "NO_OP") return 0;
+    if (action.type === "REROUTE") return this.reroute(action.targetEdge, action.percentage, action.avoidEdge ?? action.targetEdge);
     if (action.type === "DELAY_DEPARTURES") {
       const trips = this.matchingTrips(action);
       const count = Math.floor(trips.length * action.percentage);
-      for (const trip of trips.slice(0, count)) trip.heldUntil = Math.max(trip.heldUntil ?? 0, this.time + action.durationMinutes);
+      let changed = 0;
+      for (const trip of trips.slice(0, count)) {
+        const nextHeldUntil = Math.max(trip.heldUntil ?? 0, this.time + action.durationMinutes);
+        if (trip.heldUntil !== nextHeldUntil) changed += 1;
+        trip.heldUntil = nextHeldUntil;
+      }
+      return changed;
     }
     if (action.type === "RELEASE_DEPARTURES") {
-      for (const trip of this.matchingTrips(action)) trip.heldUntil = undefined;
+      let changed = 0;
+      for (const trip of this.matchingTrips(action)) {
+        if (trip.heldUntil !== undefined) changed += 1;
+        trip.heldUntil = undefined;
+      }
+      return changed;
     }
-    if (action.type === "DEBUG_SPAWN") this.spawnDebug(action.count);
+    if (action.type === "DEBUG_SPAWN") {
+      this.spawnDebug(action.count);
+      return action.count;
+    }
     if (action.type === "DEBUG_INCIDENT") {
       this.graph.edge(action.edgeId).capacityModifier = action.capacityModifier;
       this.temporaryReductions.set(action.edgeId, { until: this.time + action.durationMinutes, modifier: action.capacityModifier });
+      return 1;
     }
     if (action.type === "DEBUG_CLEAR_INCIDENT") {
+      const changed = this.graph.edge(action.edgeId).capacityModifier !== 1 || this.temporaryReductions.has(action.edgeId);
       this.graph.edge(action.edgeId).capacityModifier = 1;
       this.temporaryReductions.delete(action.edgeId);
+      return changed ? 1 : 0;
     }
+    return 0;
   }
 
   private matchingTrips(filter: { origin?: string; destination?: string }) {
@@ -248,11 +290,12 @@ export class SimulationEngine {
     );
   }
 
-  private reroute(targetEdge: string, percentage: number, avoidEdge: string) {
+  private reroute(targetEdge: string, percentage: number, avoidEdge: string): number {
     const candidates = this.vehicles.filter(
       (vehicle) => vehicle.status === "traveling" && vehicle.route.slice(vehicle.currentEdgeIndex + 1).includes(targetEdge)
     );
     const count = Math.floor(candidates.length * percentage);
+    let changed = 0;
     for (const vehicle of candidates.slice(0, count)) {
       const currentEdge = this.graph.edge(vehicle.route[vehicle.currentEdgeIndex]);
       const from = currentEdge.to;
@@ -261,8 +304,10 @@ export class SimulationEngine {
         vehicle.route = [...vehicle.route.slice(0, vehicle.currentEdgeIndex + 1), ...route];
         vehicle.rerouteCount += 1;
         vehicle.satisfaction = Math.max(0, vehicle.satisfaction - this.scenario.satisfaction.reroute);
+        changed += 1;
       }
     }
+    return changed;
   }
 
   private dispatchTrips() {
@@ -323,8 +368,7 @@ export class SimulationEngine {
     for (const edge of this.graph.edges.values()) edge.currentTravelTime = travelTime(edge, this.scenario.congestion);
   }
 
-  private moveVehicles() {
-    const intervalStart = this.time - this.dtMinutes;
+  private moveVehicles(intervalStart: number) {
     for (const vehicle of this.vehicles) {
       if (vehicle.status !== "traveling") continue;
       let remaining = this.dtMinutes;
@@ -431,6 +475,7 @@ export class SimulationEngine {
       departureDelay: this.departureDelay,
       previousObjective: this.previousObjective,
       latestReward: this.latestReward,
+      latestActionAffected: this.latestActionAffected,
       actionLog: this.actionLog.map((entry) => ({ ...entry, action: { ...entry.action } })),
       activeEventIds: [...this.activeEventIds],
       temporaryReductions: [...this.temporaryReductions.entries()].map(([edgeId, value]) => [edgeId, { ...value }] as const),
@@ -457,6 +502,7 @@ export class SimulationEngine {
     this.departureDelay = snapshot.departureDelay;
     this.previousObjective = snapshot.previousObjective;
     this.latestReward = snapshot.latestReward;
+    this.latestActionAffected = snapshot.latestActionAffected;
     this.actionLog = snapshot.actionLog.map((entry) => ({ ...entry, action: { ...entry.action } }));
     this.activeEventIds = new Set(snapshot.activeEventIds);
     this.temporaryReductions = new Map(snapshot.temporaryReductions.map(([edgeId, value]) => [edgeId, { ...value }]));
@@ -465,6 +511,57 @@ export class SimulationEngine {
     this.alerts = snapshot.alerts.map((alert) => ({ ...alert }));
     this.lastForecastTime = snapshot.lastForecastTime;
     this.forecastingEnabled = snapshot.forecastingEnabled;
+  }
+
+  private rolloutSamples(horizons: readonly number[], action?: SimulationAction) {
+    const samples: Array<{
+      horizonMinutes: number;
+      metrics: SimulationMetrics;
+      utilizationByEdge: Map<string, number>;
+      passengerDelayMinutes: number;
+      passengerCount: number;
+      affectedTrips: number;
+    }> = [];
+    const edgeIds = Array.from(this.graph.edges.values())
+      .filter((edge) => edge.major)
+      .map((edge) => edge.id);
+    let elapsed = 0;
+    let affectedTrips = 0;
+    for (const horizon of horizons) {
+      while (elapsed < horizon && !this.isDone()) {
+        if (action && elapsed === 0) {
+          this.step(action);
+          affectedTrips = this.latestActionAffected;
+        } else {
+          this.step({ type: "NO_OP" });
+        }
+        elapsed += this.dtMinutes;
+      }
+      const utilizationByEdge = new Map<string, number>();
+      for (const edgeId of edgeIds) utilizationByEdge.set(edgeId, utilization(this.graph.edge(edgeId)));
+      samples.push({
+        horizonMinutes: horizon,
+        metrics: { ...this.metrics },
+        utilizationByEdge,
+        passengerDelayMinutes: this.passengerDelayMinutes(),
+        passengerCount: this.vehicles.length + this.waiting.length,
+        affectedTrips
+      });
+    }
+    return samples;
+  }
+
+  private passengerDelayMinutes() {
+    const vehicleDelay = this.vehicles.reduce((sum, vehicle) => {
+      const end = vehicle.actualArrivalTime ?? this.time;
+      const elapsed = Math.max(0, end - (vehicle.actualDepartureTime ?? end));
+      return sum + Math.max(0, elapsed - vehicle.baselineTravelTime);
+    }, 0);
+    return this.departureDelay + vehicleDelay;
+  }
+
+  private cloneAction<T extends SimulationAction>(action: T): T {
+    return { ...action } as T;
   }
 
   private computeForecastsFromCurrent(): TrafficForecast[] {
