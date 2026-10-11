@@ -37,7 +37,9 @@ Forecasts are deterministic no-further-intervention projections at +5, +10, and 
 
 Action previews compare two cloned rollouts from identical state and identical future randomness: no intervention versus the proposed action. Deltas use `action branch - no-action branch`, so positive network cost and delay deltas are worse, while positive satisfaction delta is better. The preview horizon is configurable and is 15 minutes for Monday Morning.
 
-Preview utilization changes are sampled at the sorted union of forecast horizons and the configured preview horizon in one rollout per branch. Objective, passenger-delay, and satisfaction deltas are computed at the actual preview horizon, not whichever forecast horizon happens to be last. If the scenario ends before that horizon, the preview reports the elapsed horizon and marks the result truncated.
+Forecast and preview samples record both requested horizon and actual elapsed horizon. Preview utilization changes are sampled at the sorted union of forecast horizons and the configured preview horizon in one rollout per branch. Objective, passenger-delay, and satisfaction deltas are computed at the actual preview horizon, not whichever forecast horizon happens to be last. If the scenario ends before a requested horizon, the sample reports the elapsed horizon, marks the result truncated, and duplicate end-state road samples are collapsed instead of shown as separate future predictions.
+
+Configured forecast and preview horizons must align to the fixed 0.25-minute simulation tick. Non-aligned horizons are rejected with a configuration error rather than rounded silently.
 
 Passenger delay is reported as both total passenger-minutes and minutes per passenger over the same action/no-action cohort; it combines departure delay plus travel delay beyond free-flow baseline travel time, including unfinished trips at the preview horizon. The selected road is included in preview utilization results even if it is not marked as a major road.
 

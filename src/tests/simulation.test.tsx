@@ -149,6 +149,19 @@ function routeHoldScenario(): Scenario {
   });
 }
 
+function slowOnlyScenario(overrides: Partial<Scenario> = {}): Scenario {
+  return fixtureScenario({
+    graph: {
+      nodes: [
+        { id: "o", x: 0, y: 0, type: "origin" },
+        { id: "d", x: 2, y: 0, type: "destination" }
+      ],
+      edges: [{ id: "slow", from: "o", to: "d", lengthKm: 30, speedLimitKph: 30, comfortableCapacity: 10, maximumCapacity: 20, major: true }]
+    },
+    ...overrides
+  });
+}
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -832,13 +845,14 @@ describe("forecast, replay, speed independence", () => {
   });
 
   it("road forecast labels never claim predictions beyond scenario end", () => {
-    const scenario = fixtureScenario({
+    const scenario = slowOnlyScenario({
       endTime: 1,
       forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 0, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
     });
     const engine = new SimulationEngine(scenario);
     engine.reset(40);
-    for (let i = 0; i < 3; i++) engine.step({ type: "NO_OP" });
+    engine.step({ type: "DEBUG_SPAWN", count: 1 });
+    for (let i = 0; i < 2; i++) engine.step({ type: "NO_OP" });
     const forecast = engine.getState().forecasts.find((item) => item.edgeId === "slow");
     expect(forecast?.samples).toEqual([
       { requestedHorizonMinutes: 5, actualHorizonMinutes: 0.25, truncated: true, utilization: expect.any(Number) }
@@ -849,7 +863,7 @@ describe("forecast, replay, speed independence", () => {
   });
 
   it("duplicate truncated preview samples are not presented as separate road changes", () => {
-    const scenario = fixtureScenario({
+    const scenario = slowOnlyScenario({
       endTime: 1,
       forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 1, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
     });
@@ -876,7 +890,7 @@ describe("forecast, replay, speed independence", () => {
   });
 
   it("preview horizon road sample matching uses requested horizon even when forecast horizons differ", () => {
-    const scenario = fixtureScenario({
+    const scenario = slowOnlyScenario({
       forecast: {
         horizonsMinutes: [5, 10, 15],
         refreshIntervalMinutes: 1,
