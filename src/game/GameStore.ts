@@ -46,6 +46,10 @@ let requestCounter = 0;
 let activePreviewWorker: Worker | null = null;
 
 const cloneAction = <T extends SimulationAction>(action: T): T => ({ ...action }) as T;
+const clonePreview = (preview: ActionPreview): ActionPreview => ({
+  ...preview,
+  forecastChanges: preview.forecastChanges.map((change) => ({ ...change }))
+});
 const previewKey = (sessionId: number, version: number, action: SimulationAction) => `${sessionId}:${version}:${JSON.stringify(action)}`;
 const targetEdgeForAction = (action: SimulationAction) => ("targetEdge" in action ? (action.targetEdge ?? null) : null);
 const idlePreview = (requestId = requestCounter, sessionId = sessionCounter): GameStore["preview"] => ({
@@ -62,7 +66,7 @@ const idlePreview = (requestId = requestCounter, sessionId = sessionCounter): Ga
 
 const rememberPreview = (key: string, result: ActionPreview) => {
   if (previewCache.has(key)) previewCache.delete(key);
-  previewCache.set(key, result);
+  previewCache.set(key, clonePreview(result));
   while (previewCache.size > maxPreviewCacheEntries) {
     const oldest = previewCache.keys().next().value;
     if (oldest === undefined) break;
@@ -132,7 +136,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       preview: {
         status: cached ? "ready" : "loading",
         action: copiedAction,
-        result: cached ?? null,
+        result: cached ? clonePreview(cached) : null,
         baseVersion: version,
         baseSessionId: sessionId,
         requestId,
@@ -176,12 +180,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
         return;
       }
-      rememberPreview(key, message.result);
+      const result = clonePreview(message.result);
+      rememberPreview(key, result);
       set({
         preview: {
           ...current,
           status: "ready",
-          result: message.result,
+          result,
           timings: { roundTripMs: performance.now() - roundTripStart, calculationMs: message.timings.calculationMs }
         }
       });

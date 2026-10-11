@@ -162,6 +162,44 @@ function slowOnlyScenario(overrides: Partial<Scenario> = {}): Scenario {
   });
 }
 
+function renderInspector() {
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  act(() => {
+    root.render(<RoadInspector />);
+  });
+  return { host, root };
+}
+
+function makeNearEndPreviewStoreState() {
+  const scenario = slowOnlyScenario({
+    endTime: 1,
+    forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 1, criticalUtilization: 1.2, previewHorizonMinutes: 15 }
+  });
+  const engine = new SimulationEngine(scenario);
+  engine.reset(50);
+  for (let i = 0; i < 3; i++) engine.step({ type: "NO_OP" });
+  const action = { type: "DEBUG_SPAWN" as const, count: 1 };
+  const result = engine.previewAction(action);
+  useGameStore.setState({
+    engine,
+    version: 3,
+    selectedEdgeId: "slow",
+    preview: {
+      status: "ready",
+      action,
+      result,
+      baseVersion: 3,
+      baseSessionId: 999,
+      requestId: 999,
+      targetEdgeId: "slow",
+      error: null,
+      timings: { roundTripMs: 10, calculationMs: 5 }
+    }
+  });
+  return result;
+}
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -562,6 +600,75 @@ describe("forecast, replay, speed independence", () => {
     expect(mutated.getState().metrics).toEqual(clean.getState().metrics);
   });
 
+  it("mutating returned forecast samples cannot change internal forecasts or alerts", () => {
+    const scenario = slowOnlyScenario({
+      forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 0, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(45);
+    engine.step({ type: "DEBUG_SPAWN", count: 1 });
+    const originalForecast = engine.getState().forecasts[0].samples[0].utilization;
+    const originalAlerts = JSON.stringify(engine.getState().alerts);
+
+    const state = engine.getState();
+    state.forecasts[0].samples[0].utilization = 999;
+    const info = engine.getInfo();
+    info.forecasts[0].samples[0].utilization = 777;
+
+    expect(engine.getState().forecasts[0].samples[0].utilization).toBe(originalForecast);
+    expect(JSON.stringify(engine.getState().alerts)).toBe(originalAlerts);
+  });
+
+  it("mutating an exported snapshot cannot change internal forecasts, alerts, or future outcomes", () => {
+    const scenario = slowOnlyScenario({
+      forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 0, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
+    });
+    const clean = new SimulationEngine(scenario);
+    const inspected = new SimulationEngine(scenario);
+    clean.reset(46);
+    inspected.reset(46);
+    for (const engine of [clean, inspected]) engine.step({ type: "DEBUG_SPAWN", count: 1 });
+
+    const snapshot = inspected.exportSnapshot();
+    snapshot.forecasts[0].samples[0].utilization = 999;
+    snapshot.alerts[0].predicted = 999;
+
+    expect(inspected.getState().forecasts[0].samples[0].utilization).not.toBe(999);
+    expect(inspected.getState().alerts[0].predicted).not.toBe(999);
+    for (let i = 0; i < 8; i++) {
+      clean.step({ type: "NO_OP" });
+      inspected.step({ type: "NO_OP" });
+    }
+    expect(inspected.getState().metrics).toEqual(clean.getState().metrics);
+  });
+
+  it("mutating input snapshots after restoration cannot change restored forecasts, alerts, or future outcomes", () => {
+    const scenario = slowOnlyScenario({
+      forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 0, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
+    });
+    const source = new SimulationEngine(scenario);
+    source.reset(47);
+    source.step({ type: "DEBUG_SPAWN", count: 1 });
+    const snapshot = source.exportSnapshot();
+    const cleanSnapshot = source.exportSnapshot();
+    const restored = new SimulationEngine(scenario);
+    const expected = new SimulationEngine(scenario);
+    restored.restoreFromSnapshot(snapshot);
+    expected.restoreFromSnapshot(cleanSnapshot);
+
+    snapshot.forecasts[0].samples[0].utilization = 999;
+    snapshot.alerts[0].predicted = 999;
+    snapshot.vehicles.push({} as never);
+
+    expect(restored.getState().forecasts[0].samples[0].utilization).not.toBe(999);
+    expect(restored.getState().alerts[0].predicted).not.toBe(999);
+    for (let i = 0; i < 8; i++) {
+      restored.step({ type: "NO_OP" });
+      expected.step({ type: "NO_OP" });
+    }
+    expect(restored.getState().metrics).toEqual(expected.getState().metrics);
+  });
+
   it("forecast and preview do not change live state, logs, RNG, or future outcomes", () => {
     const untouched = new SimulationEngine(mondayMorningScenario);
     const inspected = new SimulationEngine(mondayMorningScenario);
@@ -957,12 +1064,57 @@ describe("preview UI flow", () => {
   it("rendering the inspector does not trigger expensive previews", () => {
     useGameStore.getState().reset();
     const spy = vi.spyOn(useGameStore.getState().engine, "previewAction");
-    const host = document.createElement("div");
-    const root = createRoot(host);
-    act(() => {
-      root.render(<RoadInspector />);
-    });
+    const { root } = renderInspector();
     expect(spy).not.toHaveBeenCalled();
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it("near-end selected road preview shows measured utilization at scenario end", () => {
+    const result = makeNearEndPreviewStoreState();
+    const selectedChange = result.forecastChanges.find((change) => change.edgeId === "slow");
+    expect(selectedChange?.requestedHorizonMinutes).toBe(5);
+    expect(selectedChange?.actualHorizonMinutes).toBe(0.25);
+    expect(selectedChange?.before).not.toBe(selectedChange?.after);
+
+    const { host, root } = renderInspector();
+    expect(host.textContent).toContain("0% -> 10%");
+    expect(host.textContent).toContain("0.25 min (scenario end)");
+    expect(host.textContent).not.toContain("No change");
+    expect(host.textContent).not.toContain("Unavailable");
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it("normal untruncated selected road previews still show measured utilization", () => {
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(51);
+    engine.step({ type: "DEBUG_SPAWN", count: 500 });
+    const action = { type: "REROUTE" as const, targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 };
+    const result = engine.previewAction(action);
+    useGameStore.setState({
+      engine,
+      version: 1,
+      selectedEdgeId: "north_bridge",
+      preview: {
+        status: "ready",
+        action,
+        result,
+        baseVersion: 1,
+        baseSessionId: 1000,
+        requestId: 1000,
+        targetEdgeId: "north_bridge",
+        error: null,
+        timings: null
+      }
+    });
+
+    const { host, root } = renderInspector();
+    expect(host.textContent).toMatch(/Selected road\d+% -> \d+%/);
+    expect(host.textContent).toContain("Horizon15 min");
+    expect(host.textContent).not.toContain("Unavailable");
     act(() => {
       root.unmount();
     });

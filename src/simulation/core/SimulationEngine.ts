@@ -124,7 +124,7 @@ export class SimulationEngine {
       waiting: this.waiting.map((trip) => ({ ...trip })),
       vehicles: this.vehicles.map((vehicle) => ({ ...vehicle, route: [...vehicle.route] })),
       metrics: { ...this.metrics },
-      forecasts: this.forecasts.map((forecast) => ({ ...forecast })),
+      forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast)),
       alerts: this.alerts.map((alert) => ({ ...alert }))
     };
   }
@@ -162,7 +162,7 @@ export class SimulationEngine {
   getInfo() {
     return {
       alerts: this.alerts.map((alert) => ({ ...alert })),
-      forecasts: this.forecasts.map((forecast) => ({ ...forecast }))
+      forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast))
     };
   }
 
@@ -517,7 +517,7 @@ export class SimulationEngine {
       activeEventIds: [...this.activeEventIds],
       temporaryReductions: [...this.temporaryReductions.entries()].map(([edgeId, value]) => [edgeId, { ...value }] as const),
       metrics: { ...this.metrics },
-      forecasts: this.forecasts.map((forecast) => ({ ...forecast })),
+      forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast)),
       alerts: this.alerts.map((alert) => ({ ...alert })),
       lastForecastTime: this.lastForecastTime,
       forecastingEnabled: this.forecastingEnabled
@@ -546,7 +546,7 @@ export class SimulationEngine {
     this.activeEventIds = new Set(snapshot.activeEventIds);
     this.temporaryReductions = new Map(snapshot.temporaryReductions.map(([edgeId, value]) => [edgeId, { ...value }]));
     this.metrics = { ...snapshot.metrics };
-    this.forecasts = snapshot.forecasts.map((forecast) => ({ ...forecast }));
+    this.forecasts = snapshot.forecasts.map((forecast) => this.cloneForecast(forecast));
     this.alerts = snapshot.alerts.map((alert) => ({ ...alert }));
     this.lastForecastTime = snapshot.lastForecastTime;
     this.forecastingEnabled = snapshot.forecastingEnabled;
@@ -600,6 +600,13 @@ export class SimulationEngine {
 
   private cloneAction<T extends SimulationAction>(action: T): T {
     return { ...action } as T;
+  }
+
+  private cloneForecast(forecast: TrafficForecast): TrafficForecast {
+    return {
+      ...forecast,
+      samples: forecast.samples.map((sample) => ({ ...sample }))
+    };
   }
 
   private sortedHorizons(horizons: readonly number[]) {

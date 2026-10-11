@@ -13,9 +13,10 @@ export function RoadInspector() {
   const selectedPreview = preview.result;
   const reviewedEdgeId = preview.targetEdgeId ?? edge.id;
   const reviewedEdge = state.graph.edges.get(reviewedEdgeId);
-  const selectedRoadChange = selectedPreview?.forecastChanges.find(
-    (change) => change.edgeId === reviewedEdgeId && change.requestedHorizonMinutes === selectedPreview.requestedHorizonMinutes
-  );
+  const selectedRoadChanges = selectedPreview?.forecastChanges.filter((change) => change.edgeId === reviewedEdgeId) ?? [];
+  const selectedRoadChange =
+    selectedRoadChanges.find((change) => Math.abs(change.actualHorizonMinutes - (selectedPreview?.horizonMinutes ?? 0)) < 0.000001) ??
+    selectedRoadChanges.find((change) => change.requestedHorizonMinutes === selectedPreview?.requestedHorizonMinutes);
   const otherChanges = selectedPreview?.forecastChanges
     .filter((change) => change.edgeId !== reviewedEdgeId && Math.abs(change.after - change.before) > 0.01)
     .slice(0, 3);
@@ -85,7 +86,7 @@ export function RoadInspector() {
                 <strong>
                   {selectedRoadChange
                     ? `${(selectedRoadChange.before * 100).toFixed(0)}% -> ${(selectedRoadChange.after * 100).toFixed(0)}%`
-                    : "No change"}
+                    : "Unavailable"}
                 </strong>
                 <span>Objective delta</span>
                 <strong>{selectedPreview.networkCostDelta.toFixed(0)}</strong>
