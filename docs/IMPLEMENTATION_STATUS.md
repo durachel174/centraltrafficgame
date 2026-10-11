@@ -11,7 +11,7 @@ Assessment against the original phased acceptance conditions.
 | 4 Visualization | COMPLETE | Canvas renders map, roads, traffic intensity, vehicles, clock, and speed controls. |
 | 5 Demand | COMPLETE | Monday Morning demand is generated mathematically from a time curve and OD weights. |
 | 6 Metrics | COMPLETE | Objective includes completed and active travel time, waiting delay, dissatisfaction, congestion, and kilometer-based excess distance. Baseline objective is computed in UI. |
-| 7 Forecasting | COMPLETE | Forecasts use cloned no-action forward rollouts at +5/+10/+15 minutes with configurable alert thresholds. |
+| 7 Forecasting | COMPLETE | Forecasts use cloned no-action forward rollouts at +5/+10/+15 minutes with configurable alert thresholds and actual elapsed horizon labels near scenario end. |
 | 8 Player Actions | IN PROGRESS | Reroute, route-based waiting holds, release, preview, Confirm, and Cancel are implemented with session-safe caching and worker execution. The full forecast -> preview -> confirm -> network-consequence interaction still needs browser FPS/responsiveness verification. |
 | 9 Scenario | IN PROGRESS | Monday Morning runs 7:00-9:00 with the 8:12 incident and end screen. Best/worst decision labels remain heuristic placeholders. |
 | 10 Headless Environment | COMPLETE | `TrafficEnvironment`, baseline/reactive controllers, `npm run simulate`, replay support, and benchmark script are implemented. |
@@ -21,13 +21,13 @@ Assessment against the original phased acceptance conditions.
 ## Remaining Limitations
 
 - Forecasts are truthful deterministic rollouts, but they are still aggregate macroscopic network forecasts rather than microscopic driver behavior.
-- The browser FPS target is not verified by the headless benchmark.
-- Browser previews now run in a Web Worker, but real-browser responsiveness still needs measurement beyond bundle/build and UI smoke checks.
+- Browser FPS and responsiveness measurements are tracked separately from headless benchmarks.
+- Browser previews now run in a Web Worker; playable checkpoint completion depends on real-browser preview and FPS verification.
 - The reactive controller is intentionally simple and is not tuned to guarantee better results than baseline.
 - Disrupt mode and ML training are type-level architecture only, not gameplay.
 
 ## Accuracy And Preview Fixes
 
-- Tick timing, nonnegative durations, reset clearing, immutable logs/actions, route-based holds, preview cache sessions, worker parity, configurable preview horizons, near-end truncation, and selected-road preview labeling are covered by regression tests.
+- Tick timing, nonnegative durations, reset clearing, immutable logs/actions, route-based holds, preview cache sessions, worker parity, configurable preview horizons, actual-vs-requested horizon labels, near-end truncation de-duplication, and selected-road preview labeling are covered by regression tests.
 - The hold action affects currently eligible waiting trips whose current fastest route traverses the selected road. It does not apply to future demand.
 - Preview cache keys include a session/generation id, simulation revision, and serialized action. Reset clears the cache and invalidates pending worker responses.
