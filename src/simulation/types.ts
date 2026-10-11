@@ -63,6 +63,7 @@ export interface TrafficForecast {
   utilization5m: number;
   utilization10m: number;
   utilization15m: number;
+  samples: ForecastSample[];
   congestionRisk: number;
 }
 
@@ -72,6 +73,8 @@ export interface TrafficAlert {
   title: string;
   severity: "INFO" | "WARNING" | "CRITICAL";
   minutesUntil: number;
+  requestedMinutesUntil: number;
+  truncated: boolean;
   current: number;
   predicted: number;
 }
@@ -93,8 +96,18 @@ export type DisruptionAction =
 export interface ForecastDelta {
   edgeId: string;
   horizonMinutes: number;
+  requestedHorizonMinutes: number;
+  actualHorizonMinutes: number;
+  truncated: boolean;
   before: number;
   after: number;
+}
+
+export interface ForecastSample {
+  requestedHorizonMinutes: number;
+  actualHorizonMinutes: number;
+  truncated: boolean;
+  utilization: number;
 }
 
 export interface ActionPreview {

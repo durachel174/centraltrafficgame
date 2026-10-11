@@ -9,6 +9,7 @@ import type {
   ActionPreview,
   EdgeObservation,
   ForecastDelta,
+  ForecastSample,
   GraphSnapshot,
   LoggedAction,
   Scenario,
@@ -191,13 +192,21 @@ export class SimulationEngine {
     for (const sample of noActionSamples) for (const edgeId of sample.utilizationByEdge.keys()) edgeIds.add(edgeId);
     const forecastChanges: ForecastDelta[] = [];
     for (const edgeId of edgeIds) {
-      for (let index = 0; index < horizons.length; index++) {
-        const beforeUtilization = noActionSamples[index].utilizationByEdge.get(edgeId) ?? 0;
-        const afterUtilization = actionSamples[index].utilizationByEdge.get(edgeId) ?? 0;
+      const seenActualHorizons = new Set<number>();
+      for (let index = 0; index < noActionSamples.length; index++) {
+        const beforeSample = noActionSamples[index];
+        const actionSample = actionSamples[index];
+        if (seenActualHorizons.has(beforeSample.actualHorizonMinutes)) continue;
+        seenActualHorizons.add(beforeSample.actualHorizonMinutes);
+        const beforeUtilization = beforeSample.utilizationByEdge.get(edgeId) ?? 0;
+        const afterUtilization = actionSample.utilizationByEdge.get(edgeId) ?? 0;
         if (Math.abs(beforeUtilization - afterUtilization) > 0.000001 || edgeId === (action as { targetEdge?: string }).targetEdge) {
           forecastChanges.push({
             edgeId,
-            horizonMinutes: horizons[index],
+            horizonMinutes: beforeSample.actualHorizonMinutes,
+            requestedHorizonMinutes: beforeSample.horizonMinutes,
+            actualHorizonMinutes: beforeSample.actualHorizonMinutes,
+            truncated: beforeSample.actualHorizonMinutes + 0.000001 < beforeSample.horizonMinutes,
             before: beforeUtilization,
             after: afterUtilization
           });
@@ -625,6 +634,10 @@ export class SimulationEngine {
     const horizons = [...forecast.horizonsMinutes, forecast.previewHorizonMinutes];
     for (const horizon of horizons) {
       if (!Number.isFinite(horizon) || horizon <= 0) throw new Error(`Invalid forecast horizon: ${horizon}`);
+      const ticks = horizon / this.dtMinutes;
+      if (Math.abs(ticks - Math.round(ticks)) > 0.000001) {
+        throw new Error(`Invalid forecast horizon ${horizon}: horizons must align to ${this.dtMinutes}-minute ticks`);
+      }
     }
   }
 
@@ -680,32 +693,48 @@ export class SimulationEngine {
   }
 
   private computeForecastsFromCurrent(): TrafficForecast[] {
+    this.validateForecastConfig();
     const horizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
     const clone = this.cloneForRollout();
     const edgeIds = Array.from(this.graph.edges.values())
       .filter((edge) => edge.major)
       .map((edge) => edge.id);
-    const values = new Map<string, number[]>();
-    for (const edgeId of edgeIds) values.set(edgeId, []);
+    const samplesByEdge = new Map<string, ForecastSample[]>();
+    for (const edgeId of edgeIds) samplesByEdge.set(edgeId, []);
     let elapsed = 0;
     for (const horizon of horizons) {
       clone.runFor(horizon - elapsed);
-      elapsed = horizon;
+      elapsed = clone.time - this.time;
       const state = clone.getInternalState();
       for (const edgeId of edgeIds) {
-        values.get(edgeId)?.push(utilization(state.graph.edge(edgeId)));
+        const actualHorizonMinutes = elapsed;
+        const edgeSamples = samplesByEdge.get(edgeId) ?? [];
+        if (!edgeSamples.some((sample) => Math.abs(sample.actualHorizonMinutes - actualHorizonMinutes) < 0.000001)) {
+          edgeSamples.push({
+            requestedHorizonMinutes: horizon,
+            actualHorizonMinutes,
+            truncated: actualHorizonMinutes + 0.000001 < horizon,
+            utilization: utilization(state.graph.edge(edgeId))
+          });
+        }
+        samplesByEdge.set(edgeId, edgeSamples);
       }
     }
     return edgeIds.map((edgeId) => {
-      const edgeValues = values.get(edgeId) ?? [0, 0, 0];
+      const edgeSamples = samplesByEdge.get(edgeId) ?? [];
+      const valueAtRequested = (requested: number) =>
+        edgeSamples.find((sample) => Math.abs(sample.requestedHorizonMinutes - requested) < 0.000001)?.utilization ??
+        edgeSamples.at(-1)?.utilization ??
+        current;
       const current = utilization(this.graph.edge(edgeId));
-      const max = Math.max(...edgeValues, current);
+      const max = Math.max(...edgeSamples.map((sample) => sample.utilization), current);
       return {
         edgeId,
         currentUtilization: current,
-        utilization5m: edgeValues[0] ?? current,
-        utilization10m: edgeValues[1] ?? current,
-        utilization15m: edgeValues[2] ?? current,
+        utilization5m: valueAtRequested(horizons[0]),
+        utilization10m: valueAtRequested(horizons[1]),
+        utilization15m: valueAtRequested(horizons[2]),
+        samples: edgeSamples,
         congestionRisk: Math.min(1, max / (this.scenario.forecast?.criticalUtilization ?? 1.25))
       };
     });

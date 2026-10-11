@@ -14,7 +14,7 @@ export function RoadInspector() {
   const reviewedEdgeId = preview.targetEdgeId ?? edge.id;
   const reviewedEdge = state.graph.edges.get(reviewedEdgeId);
   const selectedRoadChange = selectedPreview?.forecastChanges.find(
-    (change) => change.edgeId === reviewedEdgeId && change.horizonMinutes === selectedPreview.requestedHorizonMinutes
+    (change) => change.edgeId === reviewedEdgeId && change.requestedHorizonMinutes === selectedPreview.requestedHorizonMinutes
   );
   const otherChanges = selectedPreview?.forecastChanges
     .filter((change) => change.edgeId !== reviewedEdgeId && Math.abs(change.after - change.before) > 0.01)
@@ -26,6 +26,16 @@ export function RoadInspector() {
         ? "Hold eligible waiting trips 5m"
         : preview.action?.type.replaceAll("_", " ") ?? "Preview";
   const retryAction = preview.action ? { ...preview.action } : null;
+  const forecastSamples = forecast?.samples.length
+    ? forecast.samples
+    : forecast
+      ? [
+          { requestedHorizonMinutes: 5, actualHorizonMinutes: 5, truncated: false, utilization: forecast.utilization5m },
+          { requestedHorizonMinutes: 10, actualHorizonMinutes: 10, truncated: false, utilization: forecast.utilization10m },
+          { requestedHorizonMinutes: 15, actualHorizonMinutes: 15, truncated: false, utilization: forecast.utilization15m }
+        ]
+      : [];
+  const horizonLabel = (actual: number, truncated: boolean) => `+${actual}m${truncated ? " scenario end" : ""}`;
 
   return (
     <section className="panel">
@@ -44,9 +54,11 @@ export function RoadInspector() {
       </div>
       {forecast && (
         <div className="forecastRow">
-          <span>+5m {(forecast.utilization5m * 100).toFixed(0)}%</span>
-          <span>+10m {(forecast.utilization10m * 100).toFixed(0)}%</span>
-          <span>+15m {(forecast.utilization15m * 100).toFixed(0)}%</span>
+          {forecastSamples.map((sample) => (
+            <span key={`${sample.requestedHorizonMinutes}-${sample.actualHorizonMinutes}`}>
+              {horizonLabel(sample.actualHorizonMinutes, sample.truncated)} {(sample.utilization * 100).toFixed(0)}%
+            </span>
+          ))}
         </div>
       )}
       <button onClick={() => requestPreview(rerouteAction)}>
@@ -98,7 +110,7 @@ export function RoadInspector() {
                 <div className="preview">
                   {otherChanges.map((change) => (
                     <div key={`${change.edgeId}-${change.horizonMinutes}`}>
-                      {change.edgeId.replaceAll("_", " ")} +{change.horizonMinutes}m: {(change.before * 100).toFixed(0)}% to{" "}
+                      {change.edgeId.replaceAll("_", " ")} {horizonLabel(change.actualHorizonMinutes, change.truncated)}: {(change.before * 100).toFixed(0)}% to{" "}
                       {(change.after * 100).toFixed(0)}%
                     </div>
                   ))}

@@ -14,7 +14,8 @@ export function AlertPanel() {
           <span>
             {alert.edgeId.replaceAll("_", " ")}
             <small>
-              {alert.title} in {alert.minutesUntil} min, {(alert.predicted * 100).toFixed(0)}%
+              {alert.title} in {alert.minutesUntil} min{alert.truncated ? " (scenario end)" : ""},{" "}
+              {(alert.predicted * 100).toFixed(0)}%
             </small>
           </span>
         </button>
