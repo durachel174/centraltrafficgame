@@ -821,6 +821,7 @@ describe("forecast, replay, speed independence", () => {
     const preview = engine.previewAction({ type: "DEBUG_SPAWN", count: 1 });
     expect(preview.truncated).toBe(true);
     expect(preview.horizonMinutes).toBeCloseTo(0.25, 6);
+    expect(preview.forecastChanges.every((change) => change.actualHorizonMinutes <= 0.25)).toBe(true);
   });
 
   it("non-major selected roads receive preview utilization results", () => {
@@ -828,6 +829,84 @@ describe("forecast, replay, speed independence", () => {
     engine.reset(39);
     const preview = engine.previewAction({ type: "DELAY_DEPARTURES", targetEdge: "downtown_core", durationMinutes: 5, percentage: 1 });
     expect(preview.forecastChanges.some((change) => change.edgeId === "downtown_core")).toBe(true);
+  });
+
+  it("road forecast labels never claim predictions beyond scenario end", () => {
+    const scenario = fixtureScenario({
+      endTime: 1,
+      forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 0, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(40);
+    for (let i = 0; i < 3; i++) engine.step({ type: "NO_OP" });
+    const forecast = engine.getState().forecasts.find((item) => item.edgeId === "slow");
+    expect(forecast?.samples).toEqual([
+      { requestedHorizonMinutes: 5, actualHorizonMinutes: 0.25, truncated: true, utilization: expect.any(Number) }
+    ]);
+    const alert = engine.getState().alerts.find((item) => item.edgeId === "slow");
+    expect(alert?.minutesUntil).toBeCloseTo(0.25, 6);
+    expect(alert?.truncated).toBe(true);
+  });
+
+  it("duplicate truncated preview samples are not presented as separate road changes", () => {
+    const scenario = fixtureScenario({
+      endTime: 1,
+      forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 0.25, warningUtilization: 1, criticalUtilization: 1.2, previewHorizonMinutes: 5 }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(41);
+    for (let i = 0; i < 3; i++) engine.step({ type: "NO_OP" });
+    const preview = engine.previewAction({ type: "DEBUG_SPAWN", count: 1 });
+    const slowChanges = preview.forecastChanges.filter((change) => change.edgeId === "slow");
+    expect(slowChanges).toHaveLength(1);
+    expect(slowChanges[0]).toMatchObject({
+      requestedHorizonMinutes: 5,
+      actualHorizonMinutes: 0.25,
+      horizonMinutes: 0.25,
+      truncated: true
+    });
+  });
+
+  it("normal 5/10/15 forecast labels remain unchanged when enough time remains", () => {
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(42);
+    const forecast = engine.getState().forecasts.find((item) => item.edgeId === "north_bridge");
+    expect(forecast?.samples.map((sample) => sample.actualHorizonMinutes)).toEqual([5, 10, 15]);
+    expect(forecast?.samples.map((sample) => sample.truncated)).toEqual([false, false, false]);
+  });
+
+  it("preview horizon road sample matching uses requested horizon even when forecast horizons differ", () => {
+    const scenario = fixtureScenario({
+      forecast: {
+        horizonsMinutes: [5, 10, 15],
+        refreshIntervalMinutes: 1,
+        warningUtilization: 0.9,
+        criticalUtilization: 1.2,
+        previewHorizonMinutes: 7
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(43);
+    const preview = engine.previewAction({ type: "DEBUG_SPAWN", count: 1 });
+    const previewSample = preview.forecastChanges.find(
+      (change) => change.edgeId === "slow" && change.requestedHorizonMinutes === preview.requestedHorizonMinutes
+    );
+    expect(previewSample?.actualHorizonMinutes).toBe(7);
+    expect(previewSample?.horizonMinutes).toBe(7);
+  });
+
+  it("rejects non-timestep-aligned preview horizons with a clear configuration error", () => {
+    const scenario = fixtureScenario({
+      forecast: {
+        horizonsMinutes: [5, 10, 15],
+        refreshIntervalMinutes: 1,
+        warningUtilization: 0.9,
+        criticalUtilization: 1.2,
+        previewHorizonMinutes: 7.1
+      }
+    });
+    const engine = new SimulationEngine(scenario);
+    expect(() => engine.reset(44)).toThrow(/align to 0\.25-minute ticks/);
   });
 
   it("known future demand produces overload forecast", () => {
