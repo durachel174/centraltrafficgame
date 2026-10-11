@@ -9,12 +9,14 @@ import type {
   ActionPreview,
   EdgeObservation,
   ForecastDelta,
+  GraphSnapshot,
   LoggedAction,
   Scenario,
   SimulationAction,
   SimulationMetrics,
   SimulationObservation,
   SimulationRun,
+  SimulationSnapshot,
   TrafficAlert,
   TrafficForecast,
   TripRequest,
@@ -168,17 +170,23 @@ export class SimulationEngine {
   }
 
   previewAction(action: SimulationAction): ActionPreview {
-    const horizon = this.scenario.forecast?.previewHorizonMinutes ?? 15;
-    const horizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
+    this.validateForecastConfig();
+    const requestedHorizon = this.scenario.forecast?.previewHorizonMinutes ?? 15;
+    const forecastHorizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
+    const horizons = this.sortedHorizons([...forecastHorizons, requestedHorizon]);
     const noAction = this.cloneForRollout();
     const withAction = this.cloneForRollout();
-    const noActionSamples = noAction.rolloutSamples(horizons);
-    const actionSamples = withAction.rolloutSamples(horizons, action);
-    const before = noActionSamples[noActionSamples.length - 1].metrics;
-    const after = actionSamples[actionSamples.length - 1].metrics;
-    const beforeDelay = noActionSamples[noActionSamples.length - 1].passengerDelayMinutes;
-    const afterDelay = actionSamples[actionSamples.length - 1].passengerDelayMinutes;
-    const passengers = Math.max(1, actionSamples[actionSamples.length - 1].passengerCount);
+    const trackedEdges = this.previewEdgeIds(action);
+    const noActionSamples = noAction.rolloutSamples(horizons, trackedEdges);
+    const actionSamples = withAction.rolloutSamples(horizons, trackedEdges, action);
+    const previewSampleIndex = this.sampleIndexAt(noActionSamples, requestedHorizon);
+    const beforeSample = noActionSamples[previewSampleIndex];
+    const afterSample = actionSamples[previewSampleIndex];
+    const before = beforeSample.metrics;
+    const after = afterSample.metrics;
+    const beforeDelay = beforeSample.passengerDelayMinutes;
+    const afterDelay = afterSample.passengerDelayMinutes;
+    const passengers = Math.max(1, afterSample.passengerCount);
     const edgeIds = new Set<string>();
     for (const sample of noActionSamples) for (const edgeId of sample.utilizationByEdge.keys()) edgeIds.add(edgeId);
     const forecastChanges: ForecastDelta[] = [];
@@ -203,8 +211,18 @@ export class SimulationEngine {
       passengerDelayDeltaMinutes: afterDelay - beforeDelay,
       passengerDelayDeltaPerPassenger: (afterDelay - beforeDelay) / passengers,
       satisfactionDelta: after.averageSatisfaction - before.averageSatisfaction,
-      horizonMinutes: horizon
+      horizonMinutes: afterSample.actualHorizonMinutes,
+      requestedHorizonMinutes: requestedHorizon,
+      truncated: afterSample.actualHorizonMinutes + 0.000001 < requestedHorizon
     };
+  }
+
+  exportSnapshot(): SimulationSnapshot {
+    return this.createSnapshot();
+  }
+
+  restoreFromSnapshot(snapshot: SimulationSnapshot) {
+    this.restoreSnapshot(snapshot);
   }
 
   createRun(): SimulationRun {
@@ -284,10 +302,18 @@ export class SimulationEngine {
     return 0;
   }
 
-  private matchingTrips(filter: { origin?: string; destination?: string }) {
+  private matchingTrips(filter: { origin?: string; destination?: string; targetEdge?: string }) {
     return this.waiting.filter(
-      (trip) => (!filter.origin || trip.origin === filter.origin) && (!filter.destination || trip.destination === filter.destination)
+      (trip) =>
+        (!filter.origin || trip.origin === filter.origin) &&
+        (!filter.destination || trip.destination === filter.destination) &&
+        (!filter.targetEdge || this.routeForTripIncludesEdge(trip, filter.targetEdge))
     );
+  }
+
+  private routeForTripIncludesEdge(trip: TripRequest, edgeId: string) {
+    const route = this.router.findRoute(trip.origin, trip.destination);
+    return route.includes(edgeId);
   }
 
   private reroute(targetEdge: string, percentage: number, avoidEdge: string): number {
@@ -462,11 +488,13 @@ export class SimulationEngine {
     return clone;
   }
 
-  private createSnapshot() {
+  private createSnapshot(): SimulationSnapshot {
     return {
+      version: 1,
+      scenario: this.cloneScenario(this.scenario),
       seed: this.seed,
       time: this.time,
-      graph: this.graph.clone(),
+      graph: this.graphSnapshot(),
       rngState: this.rng.getState(),
       demandState: this.demand.getState(),
       waiting: this.waiting.map((trip) => ({ ...trip })),
@@ -476,7 +504,7 @@ export class SimulationEngine {
       previousObjective: this.previousObjective,
       latestReward: this.latestReward,
       latestActionAffected: this.latestActionAffected,
-      actionLog: this.actionLog.map((entry) => ({ ...entry, action: { ...entry.action } })),
+      actionLog: this.actionLog.map((entry) => ({ ...entry, action: this.cloneAction(entry.action) })),
       activeEventIds: [...this.activeEventIds],
       temporaryReductions: [...this.temporaryReductions.entries()].map(([edgeId, value]) => [edgeId, { ...value }] as const),
       metrics: { ...this.metrics },
@@ -487,10 +515,12 @@ export class SimulationEngine {
     };
   }
 
-  private restoreSnapshot(snapshot: ReturnType<SimulationEngine["createSnapshot"]>) {
+  private restoreSnapshot(snapshot: SimulationSnapshot) {
+    if (snapshot.version !== 1) throw new Error(`Unsupported simulation snapshot version: ${snapshot.version}`);
+    this.scenario = this.cloneScenario(snapshot.scenario);
     this.seed = snapshot.seed;
     this.time = snapshot.time;
-    this.graph = snapshot.graph.clone();
+    this.graph = this.graphFromSnapshot(snapshot.graph);
     this.router = new Router(this.graph, this.scenario.congestion);
     this.rng = new SeededRandom(snapshot.seed);
     this.rng.setState(snapshot.rngState);
@@ -503,7 +533,7 @@ export class SimulationEngine {
     this.previousObjective = snapshot.previousObjective;
     this.latestReward = snapshot.latestReward;
     this.latestActionAffected = snapshot.latestActionAffected;
-    this.actionLog = snapshot.actionLog.map((entry) => ({ ...entry, action: { ...entry.action } }));
+    this.actionLog = snapshot.actionLog.map((entry) => ({ ...entry, action: this.cloneAction(entry.action) }));
     this.activeEventIds = new Set(snapshot.activeEventIds);
     this.temporaryReductions = new Map(snapshot.temporaryReductions.map(([edgeId, value]) => [edgeId, { ...value }]));
     this.metrics = { ...snapshot.metrics };
@@ -513,18 +543,16 @@ export class SimulationEngine {
     this.forecastingEnabled = snapshot.forecastingEnabled;
   }
 
-  private rolloutSamples(horizons: readonly number[], action?: SimulationAction) {
+  private rolloutSamples(horizons: readonly number[], edgeIds: readonly string[], action?: SimulationAction) {
     const samples: Array<{
       horizonMinutes: number;
+      actualHorizonMinutes: number;
       metrics: SimulationMetrics;
       utilizationByEdge: Map<string, number>;
       passengerDelayMinutes: number;
       passengerCount: number;
       affectedTrips: number;
     }> = [];
-    const edgeIds = Array.from(this.graph.edges.values())
-      .filter((edge) => edge.major)
-      .map((edge) => edge.id);
     let elapsed = 0;
     let affectedTrips = 0;
     for (const horizon of horizons) {
@@ -541,6 +569,7 @@ export class SimulationEngine {
       for (const edgeId of edgeIds) utilizationByEdge.set(edgeId, utilization(this.graph.edge(edgeId)));
       samples.push({
         horizonMinutes: horizon,
+        actualHorizonMinutes: elapsed,
         metrics: { ...this.metrics },
         utilizationByEdge,
         passengerDelayMinutes: this.passengerDelayMinutes(),
@@ -562,6 +591,92 @@ export class SimulationEngine {
 
   private cloneAction<T extends SimulationAction>(action: T): T {
     return { ...action } as T;
+  }
+
+  private sortedHorizons(horizons: readonly number[]) {
+    const unique = Array.from(new Set(horizons.map((horizon) => Number(horizon.toFixed(6)))));
+    unique.sort((a, b) => a - b);
+    return unique;
+  }
+
+  private sampleIndexAt(
+    samples: Array<{ horizonMinutes: number }>,
+    horizon: number
+  ) {
+    const index = samples.findIndex((sample) => Math.abs(sample.horizonMinutes - horizon) < 0.000001);
+    if (index === -1) throw new Error(`Preview horizon ${horizon} was not sampled`);
+    return index;
+  }
+
+  private previewEdgeIds(action: SimulationAction) {
+    const ids = new Set(
+      Array.from(this.graph.edges.values())
+        .filter((edge) => edge.major)
+        .map((edge) => edge.id)
+    );
+    const targetEdge = "targetEdge" in action ? action.targetEdge : undefined;
+    if (targetEdge) ids.add(targetEdge);
+    return [...ids];
+  }
+
+  private validateForecastConfig() {
+    const forecast = this.scenario.forecast;
+    if (!forecast) return;
+    const horizons = [...forecast.horizonsMinutes, forecast.previewHorizonMinutes];
+    for (const horizon of horizons) {
+      if (!Number.isFinite(horizon) || horizon <= 0) throw new Error(`Invalid forecast horizon: ${horizon}`);
+    }
+  }
+
+  private graphSnapshot(): GraphSnapshot {
+    return {
+      nodes: Array.from(this.graph.nodes.values()).map((node) => ({ ...node })),
+      edges: Array.from(this.graph.edges.values()).map((edge) => ({ ...edge }))
+    };
+  }
+
+  private graphFromSnapshot(snapshot: GraphSnapshot) {
+    const graph = new TrafficGraph({
+      nodes: snapshot.nodes.map((node) => ({ ...node })),
+      edges: snapshot.edges.map((edge) => ({
+        id: edge.id,
+        from: edge.from,
+        to: edge.to,
+        lengthKm: edge.lengthKm,
+        speedLimitKph: edge.speedLimitKph,
+        comfortableCapacity: edge.comfortableCapacity,
+        maximumCapacity: edge.maximumCapacity,
+        name: edge.name,
+        major: edge.major
+      }))
+    });
+    for (const edge of snapshot.edges) Object.assign(graph.edge(edge.id), { ...edge });
+    return graph;
+  }
+
+  private cloneScenario(scenario: Scenario): Scenario {
+    return {
+      ...scenario,
+      graph: {
+        nodes: scenario.graph.nodes.map((node) => ({ ...node })),
+        edges: scenario.graph.edges.map((edge) => ({ ...edge }))
+      },
+      demand: {
+        curve: scenario.demand.curve.map((point) => ({ ...point })),
+        pairs: scenario.demand.pairs.map((pair) => ({ ...pair })),
+        passengerTolerance: [...scenario.demand.passengerTolerance]
+      },
+      events: scenario.events.map((event) => ({ ...event })),
+      objectiveWeights: { ...scenario.objectiveWeights },
+      congestion: { ...scenario.congestion },
+      satisfaction: { ...scenario.satisfaction },
+      forecast: scenario.forecast
+        ? {
+            ...scenario.forecast,
+            horizonsMinutes: [...scenario.forecast.horizonsMinutes] as [number, number, number]
+          }
+        : undefined
+    };
   }
 
   private computeForecastsFromCurrent(): TrafficForecast[] {

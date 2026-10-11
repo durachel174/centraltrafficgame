@@ -1,7 +1,7 @@
 import React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RoadInspector } from "../components/RoadInspector";
 import { useGameStore } from "../game/GameStore";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
@@ -13,10 +13,50 @@ import { calculateMetrics } from "../simulation/scoring/Metrics";
 import { replayRun } from "../simulation/logging/Replay";
 import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
 import type { GraphConfig, RoadEdge } from "../simulation/network/types";
-import type { Scenario } from "../simulation/types";
+import type { ActionPreview, Scenario, SimulationAction, SimulationSnapshot } from "../simulation/types";
 
 const congestion = { alpha: 0.15, beta: 4, utilizationThreshold: 0.82 };
 const baseWeights = { travelTime: 1, congestion: 10, departureDelay: 2, dissatisfaction: 1, excessDistance: 1 };
+const fakeWorkers: FakePreviewWorker[] = [];
+
+class FakePreviewWorker {
+  static failNext = false;
+
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  terminated = false;
+
+  constructor() {
+    fakeWorkers.push(this);
+  }
+
+  postMessage(message: { requestId: number; sessionId: number; snapshot: SimulationSnapshot; action: SimulationAction }) {
+    window.setTimeout(() => {
+      if (this.terminated) return;
+      if (FakePreviewWorker.failNext) {
+        FakePreviewWorker.failNext = false;
+        this.onerror?.(new ErrorEvent("error", { message: "forced worker failure" }));
+        return;
+      }
+      const started = performance.now();
+      const engine = new SimulationEngine(message.snapshot.scenario);
+      engine.restoreFromSnapshot(message.snapshot);
+      const result = engine.previewAction(message.action);
+      this.onmessage?.({
+        data: {
+          requestId: message.requestId,
+          sessionId: message.sessionId,
+          result,
+          timings: { roundTripStartedAt: started, calculationMs: performance.now() - started }
+        }
+      } as MessageEvent);
+    }, 0);
+  }
+
+  terminate() {
+    this.terminated = true;
+  }
+}
 
 function fixtureScenario(overrides: Partial<Scenario> = {}): Scenario {
   return {
@@ -67,10 +107,59 @@ function run(seed = 428193, actions: Record<number, Parameters<SimulationEngine[
   return engine.getState().metrics;
 }
 
+function restoreWithWaiting(scenario: Scenario, waiting: SimulationSnapshot["waiting"]) {
+  const engine = new SimulationEngine(scenario);
+  engine.reset(scenario.seed ?? 1);
+  const snapshot = engine.exportSnapshot();
+  engine.restoreFromSnapshot({
+    ...snapshot,
+    waiting: waiting.map((trip) => ({ ...trip })),
+    metrics: { ...snapshot.metrics, waitingTrips: waiting.length }
+  });
+  return engine;
+}
+
+function routeHoldScenario(): Scenario {
+  return fixtureScenario({
+    graph: {
+      nodes: [
+        { id: "o1", x: 0, y: 0, type: "origin" },
+        { id: "o2", x: 0, y: 1, type: "origin" },
+        { id: "a", x: 1, y: 0, type: "intersection" },
+        { id: "d1", x: 2, y: 0, type: "destination" },
+        { id: "d2", x: 2, y: 1, type: "destination" }
+      ],
+      edges: [
+        { id: "north_bridge", from: "o1", to: "a", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 },
+        { id: "target_exit", from: "a", to: "d1", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 },
+        { id: "unrelated", from: "o2", to: "d2", lengthKm: 1, speedLimitKph: 60, comfortableCapacity: 10, maximumCapacity: 20 }
+      ]
+    },
+    demand: {
+      curve: [
+        { minute: 0, tripsPerMinute: 0 },
+        { minute: 30, tripsPerMinute: 0 }
+      ],
+      pairs: [
+        { origin: "o1", destination: "d1", weight: 1 },
+        { origin: "o2", destination: "d2", weight: 1 }
+      ],
+      passengerTolerance: [5, 5]
+    }
+  });
+}
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  fakeWorkers.length = 0;
+  FakePreviewWorker.failNext = false;
   useGameStore.getState().reset();
+});
+
+beforeEach(() => {
+  vi.stubGlobal("Worker", FakePreviewWorker);
 });
 
 describe("determinism", () => {
@@ -626,6 +715,121 @@ describe("forecast, replay, speed independence", () => {
     expect(release.affectedVehicles).toBe(1);
   });
 
+  it("North Bridge holds affect eligible waiting trips by planned route", () => {
+    const scenario = routeHoldScenario();
+    const engine = restoreWithWaiting(scenario, [
+      { id: "target_1", origin: "o1", destination: "d1", requestedDepartureTime: 0, passengerTolerance: 5 },
+      { id: "target_2", origin: "o1", destination: "d1", requestedDepartureTime: 0, passengerTolerance: 5 },
+      { id: "other_1", origin: "o2", destination: "d2", requestedDepartureTime: 0, passengerTolerance: 5 }
+    ]);
+    engine.step({ type: "DELAY_DEPARTURES", targetEdge: "north_bridge", durationMinutes: 5, percentage: 1 });
+    const held = engine.getState().waiting.filter((trip) => trip.heldUntil !== undefined).map((trip) => trip.id);
+    expect(held).toEqual(["target_1", "target_2"]);
+  });
+
+  it("trips whose routes avoid the selected road remain unaffected by holds", () => {
+    const scenario = routeHoldScenario();
+    const engine = restoreWithWaiting(scenario, [
+      { id: "other_1", origin: "o2", destination: "d2", requestedDepartureTime: 0, passengerTolerance: 5 },
+      { id: "other_2", origin: "o2", destination: "d2", requestedDepartureTime: 0, passengerTolerance: 5 }
+    ]);
+    engine.step({ type: "DELAY_DEPARTURES", targetEdge: "north_bridge", durationMinutes: 5, percentage: 1 });
+    expect(engine.getState().waiting.every((trip) => trip.heldUntil === undefined)).toBe(true);
+  });
+
+  it("preview affected counts match real hold execution", () => {
+    const scenario = routeHoldScenario();
+    const waiting = [
+      { id: "target_1", origin: "o1", destination: "d1", requestedDepartureTime: 0, passengerTolerance: 5 },
+      { id: "target_2", origin: "o1", destination: "d1", requestedDepartureTime: 0, passengerTolerance: 5 },
+      { id: "other_1", origin: "o2", destination: "d2", requestedDepartureTime: 0, passengerTolerance: 5 }
+    ];
+    const previewEngine = restoreWithWaiting(scenario, waiting);
+    const realEngine = restoreWithWaiting(scenario, waiting);
+    const action = { type: "DELAY_DEPARTURES" as const, targetEdge: "north_bridge", durationMinutes: 5, percentage: 1 };
+    const preview = previewEngine.previewAction(action);
+    realEngine.step(action);
+    expect(preview.affectedVehicles).toBe(realEngine.getState().waiting.filter((trip) => trip.heldUntil !== undefined).length);
+  });
+
+  it("worker preview protocol exactly matches synchronous preview from the same snapshot", async () => {
+    vi.useFakeTimers();
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(35);
+    engine.step({ type: "DEBUG_SPAWN", count: 200 });
+    const snapshot = engine.exportSnapshot();
+    const action = { type: "REROUTE" as const, targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 };
+    const sync = engine.previewAction(action);
+    const worker = new FakePreviewWorker();
+    const response = new Promise<ActionPreview>((resolve) => {
+      worker.onmessage = (event) => resolve(event.data.result);
+    });
+    worker.postMessage({ requestId: 1, sessionId: 1, snapshot, action });
+    await vi.runAllTimersAsync();
+    await expect(response).resolves.toEqual(sync);
+    worker.terminate();
+  });
+
+  it("snapshot round trips preserve deterministic future outcomes", () => {
+    const original = new SimulationEngine(mondayMorningScenario);
+    original.reset(36);
+    original.step({ type: "DEBUG_SPAWN", count: 150 });
+    for (let i = 0; i < 12; i++) original.step({ type: "NO_OP" });
+    const restored = new SimulationEngine(mondayMorningScenario);
+    restored.restoreFromSnapshot(original.exportSnapshot());
+    for (let i = 0; i < 30; i++) {
+      original.step({ type: "NO_OP" });
+      restored.step({ type: "NO_OP" });
+    }
+    expect(restored.getState().metrics).toEqual(original.getState().metrics);
+    expect(restored.getState().vehicles).toEqual(original.getState().vehicles);
+  });
+
+  it("a preview horizon different from forecast horizons uses the preview horizon for score deltas", () => {
+    const scenario = fixtureScenario({
+      forecast: {
+        horizonsMinutes: [5, 10, 15],
+        refreshIntervalMinutes: 1,
+        warningUtilization: 0.9,
+        criticalUtilization: 1.2,
+        previewHorizonMinutes: 7
+      }
+    });
+    const source = new SimulationEngine(scenario);
+    source.reset(37);
+    const action = { type: "DEBUG_SPAWN" as const, count: 1 };
+    const preview = source.previewAction(action);
+    const noAction = new SimulationEngine(scenario);
+    const withAction = new SimulationEngine(scenario);
+    noAction.reset(37);
+    withAction.reset(37);
+    withAction.step(action);
+    noAction.step({ type: "NO_OP" });
+    for (let i = 0; i < 27; i++) {
+      noAction.step({ type: "NO_OP" });
+      withAction.step({ type: "NO_OP" });
+    }
+    expect(preview.horizonMinutes).toBe(7);
+    expect(preview.networkCostDelta).toBeCloseTo(withAction.getState().metrics.objective - noAction.getState().metrics.objective, 6);
+  });
+
+  it("near-end previews report truncation honestly", () => {
+    const scenario = fixtureScenario({ endTime: 1, forecast: { horizonsMinutes: [5, 10, 15], refreshIntervalMinutes: 1, warningUtilization: 1, criticalUtilization: 1.2, previewHorizonMinutes: 5 } });
+    const engine = new SimulationEngine(scenario);
+    engine.reset(38);
+    for (let i = 0; i < 3; i++) engine.step({ type: "NO_OP" });
+    const preview = engine.previewAction({ type: "DEBUG_SPAWN", count: 1 });
+    expect(preview.truncated).toBe(true);
+    expect(preview.horizonMinutes).toBeCloseTo(0.25, 6);
+  });
+
+  it("non-major selected roads receive preview utilization results", () => {
+    const engine = new SimulationEngine(mondayMorningScenario);
+    engine.reset(39);
+    const preview = engine.previewAction({ type: "DELAY_DEPARTURES", targetEdge: "downtown_core", durationMinutes: 5, percentage: 1 });
+    expect(preview.forecastChanges.some((change) => change.edgeId === "downtown_core")).toBe(true);
+  });
+
   it("known future demand produces overload forecast", () => {
     const engine = new SimulationEngine(mondayMorningScenario);
     engine.reset(5);
@@ -680,6 +884,56 @@ describe("preview UI flow", () => {
     expect(useGameStore.getState().preview.status).toBe("stale");
   });
 
+  it("same revision and action in different sessions cannot reuse cached results", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("ready");
+    useGameStore.getState().reset();
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    expect(useGameStore.getState().preview.status).toBe("loading");
+    expect(fakeWorkers).toHaveLength(2);
+  });
+
+  it("reset clears cached previews and ignores old worker responses", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    useGameStore.getState().reset();
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("idle");
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    expect(useGameStore.getState().preview.status).toBe("loading");
+  });
+
+  it("canceled and superseded worker responses are discarded", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    useGameStore.getState().requestPreview({ type: "DEBUG_SPAWN", count: 1 });
+    useGameStore.getState().cancelPreview();
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("idle");
+
+    useGameStore.getState().requestPreview({ type: "DEBUG_SPAWN", count: 1 });
+    useGameStore.getState().requestPreview({ type: "DEBUG_SPAWN", count: 2 });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.action).toEqual({ type: "DEBUG_SPAWN", count: 2 });
+    expect(useGameStore.getState().preview.status).toBe("ready");
+  });
+
+  it("mutating input action objects cannot alter pending requests", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    const action = { type: "DEBUG_SPAWN" as const, count: 5 };
+    useGameStore.getState().requestPreview(action);
+    action.count = 50;
+    await vi.runAllTimersAsync();
+    useGameStore.getState().confirmPreview();
+    const log = useGameStore.getState().engine.createRun().actions;
+    expect(log.at(-1)?.action).toEqual({ type: "DEBUG_SPAWN", count: 5 });
+  });
+
   it("cancel changes nothing and confirm applies the reviewed action once", async () => {
     vi.useFakeTimers();
     useGameStore.getState().reset();
@@ -694,5 +948,29 @@ describe("preview UI flow", () => {
     useGameStore.getState().confirmPreview();
     expect(useGameStore.getState().version).toBe(beforeCancel + 1);
     expect(useGameStore.getState().engine.createRun().actions.filter((entry) => entry.action.type === "DEBUG_SPAWN")).toHaveLength(1);
+  });
+
+  it("worker errors are visible and workers are cleaned up", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    FakePreviewWorker.failNext = true;
+    useGameStore.getState().requestPreview({ type: "DEBUG_SPAWN", count: 1 });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("error");
+    expect(useGameStore.getState().preview.error).toContain("forced worker failure");
+    expect(fakeWorkers.at(-1)?.terminated).toBe(true);
+  });
+
+  it("changing selected roads cancels an unrelated review", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().reset();
+    useGameStore.getState().selectEdge("north_bridge");
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().preview.status).toBe("ready");
+    useGameStore.getState().selectEdge("south_bridge");
+    expect(useGameStore.getState().preview.status).toBe("idle");
+    useGameStore.getState().confirmPreview();
+    expect(useGameStore.getState().engine.createRun().actions).toHaveLength(0);
   });
 });

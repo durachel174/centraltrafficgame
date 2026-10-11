@@ -9,14 +9,23 @@ export function RoadInspector() {
   const forecast = state.forecasts.find((item) => item.edgeId === edge.id);
   const speedKph = edge.lengthKm / Math.max(0.01, edge.currentTravelTime / 60);
   const rerouteAction: SimulationAction = { type: "REROUTE", targetEdge: edge.id, percentage: 0.25, avoidEdge: edge.id };
-  const holdAction: SimulationAction = { type: "DELAY_DEPARTURES", destination: edge.to, durationMinutes: 5, percentage: 0.25 };
+  const holdAction: SimulationAction = { type: "DELAY_DEPARTURES", targetEdge: edge.id, durationMinutes: 5, percentage: 0.25 };
   const selectedPreview = preview.result;
+  const reviewedEdgeId = preview.targetEdgeId ?? edge.id;
+  const reviewedEdge = state.graph.edges.get(reviewedEdgeId);
   const selectedRoadChange = selectedPreview?.forecastChanges.find(
-    (change) => change.edgeId === edge.id && change.horizonMinutes === selectedPreview.horizonMinutes
+    (change) => change.edgeId === reviewedEdgeId && change.horizonMinutes === selectedPreview.requestedHorizonMinutes
   );
   const otherChanges = selectedPreview?.forecastChanges
-    .filter((change) => change.edgeId !== edge.id && Math.abs(change.after - change.before) > 0.01)
+    .filter((change) => change.edgeId !== reviewedEdgeId && Math.abs(change.after - change.before) > 0.01)
     .slice(0, 3);
+  const previewActionLabel =
+    preview.action?.type === "REROUTE"
+      ? "Reroute 25%"
+      : preview.action?.type === "DELAY_DEPARTURES"
+        ? "Hold eligible waiting trips 5m"
+        : preview.action?.type.replaceAll("_", " ") ?? "Preview";
+  const retryAction = preview.action ? { ...preview.action } : null;
 
   return (
     <section className="panel">
@@ -44,13 +53,17 @@ export function RoadInspector() {
         <Route size={16} /> Preview Reroute 25%
       </button>
       <button onClick={() => requestPreview(holdAction)}>
-        <TimerReset size={16} /> Preview Hold Downstream 5m
+        <TimerReset size={16} /> Preview Hold Eligible Waiting Trips 5m
       </button>
       {preview.status !== "idle" && (
         <div className="previewDialog">
-          <strong>Projection assumes no further intervention.</strong>
+          <strong>
+            {previewActionLabel} on {reviewedEdge?.name ?? reviewedEdgeId}
+          </strong>
+          <p>Projection assumes no further intervention. Positive cost and delay are worse; positive satisfaction is better.</p>
           {preview.status === "loading" && <p>Calculating preview...</p>}
           {preview.status === "stale" && <p>Simulation changed. Recompute before confirming.</p>}
+          {preview.status === "error" && <p>{preview.error ?? "Preview failed."}</p>}
           {preview.status === "ready" && selectedPreview && (
             <>
               <div className="statGrid">
@@ -65,11 +78,21 @@ export function RoadInspector() {
                 <span>Objective delta</span>
                 <strong>{selectedPreview.networkCostDelta.toFixed(0)}</strong>
                 <span>Passenger delay</span>
-                <strong>{selectedPreview.passengerDelayDeltaPerPassenger.toFixed(2)} min/rider</strong>
+                <strong>
+                  {selectedPreview.passengerDelayDeltaMinutes.toFixed(1)} passenger-min ({selectedPreview.passengerDelayDeltaPerPassenger.toFixed(2)} min/rider)
+                </strong>
                 <span>Satisfaction</span>
                 <strong>{selectedPreview.satisfactionDelta.toFixed(1)}</strong>
                 <span>Horizon</span>
-                <strong>{selectedPreview.horizonMinutes} min</strong>
+                <strong>
+                  {selectedPreview.horizonMinutes} min{selectedPreview.truncated ? " (scenario end)" : ""}
+                </strong>
+                {preview.timings && (
+                  <>
+                    <span>Preview time</span>
+                    <strong>{preview.timings.roundTripMs.toFixed(0)} ms ({preview.timings.calculationMs.toFixed(0)} ms calc)</strong>
+                  </>
+                )}
               </div>
               {!!otherChanges?.length && (
                 <div className="preview">
@@ -89,6 +112,7 @@ export function RoadInspector() {
           )}
           {preview.status !== "ready" && (
             <div className="previewActions">
+              {preview.status === "error" && retryAction && <button onClick={() => requestPreview(retryAction)}>Retry</button>}
               <button onClick={cancelPreview}>Cancel</button>
             </div>
           )}

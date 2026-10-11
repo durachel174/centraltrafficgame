@@ -1,4 +1,5 @@
 import type { GraphConfig } from "./network/types";
+import type { RoadEdge, TrafficNode } from "./network/types";
 
 export interface Vehicle {
   id: string;
@@ -78,8 +79,8 @@ export interface TrafficAlert {
 export type SimulationAction =
   | { type: "NO_OP" }
   | { type: "REROUTE"; targetEdge: string; percentage: number; avoidEdge?: string }
-  | { type: "DELAY_DEPARTURES"; destination?: string; origin?: string; durationMinutes: number; percentage: number }
-  | { type: "RELEASE_DEPARTURES"; destination?: string; origin?: string }
+  | { type: "DELAY_DEPARTURES"; destination?: string; origin?: string; targetEdge?: string; durationMinutes: number; percentage: number }
+  | { type: "RELEASE_DEPARTURES"; destination?: string; origin?: string; targetEdge?: string }
   | { type: "DEBUG_SPAWN"; count: number }
   | { type: "DEBUG_INCIDENT"; edgeId: string; capacityModifier: number; durationMinutes: number }
   | { type: "DEBUG_CLEAR_INCIDENT"; edgeId: string };
@@ -104,6 +105,38 @@ export interface ActionPreview {
   passengerDelayDeltaPerPassenger: number;
   satisfactionDelta: number;
   horizonMinutes: number;
+  requestedHorizonMinutes: number;
+  truncated: boolean;
+}
+
+export interface GraphSnapshot {
+  nodes: TrafficNode[];
+  edges: RoadEdge[];
+}
+
+export interface SimulationSnapshot {
+  version: 1;
+  scenario: Scenario;
+  seed: number;
+  time: number;
+  graph: GraphSnapshot;
+  rngState: number;
+  demandState: { carry: number; nextId: number };
+  waiting: TripRequest[];
+  vehicles: Vehicle[];
+  congestionCost: number;
+  departureDelay: number;
+  previousObjective: number;
+  latestReward: number;
+  latestActionAffected: number;
+  actionLog: LoggedAction[];
+  activeEventIds: string[];
+  temporaryReductions: Array<[string, { until: number; modifier: number }]>;
+  metrics: SimulationMetrics;
+  forecasts: TrafficForecast[];
+  alerts: TrafficAlert[];
+  lastForecastTime: number;
+  forecastingEnabled: boolean;
 }
 
 export interface DemandPair {
