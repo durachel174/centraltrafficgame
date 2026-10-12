@@ -3,7 +3,7 @@ import { useGameStore } from "../game/GameStore";
 import type { SimulationAction } from "../simulation/types";
 
 export function RoadInspector() {
-  const { engine, selectedEdgeId, preview, requestPreview, cancelPreview, confirmPreview } = useGameStore();
+  const { engine, selectedEdgeId, preview, requestPreview, cancelPreview, confirmPreview, lastActionNotice, clearActionNotice } = useGameStore();
   const state = engine.getState();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
   const forecast = state.forecasts.find((item) => item.edgeId === edge.id);
@@ -41,6 +41,7 @@ export function RoadInspector() {
   return (
     <section className="panel">
       <h2>{edge.name ?? edge.id}</h2>
+      <p className="plainLead">{edge.currentVehicleCount > 0 ? `${edge.name ?? edge.id} is carrying ${edge.currentVehicleCount} vehicles.` : "Select a road to inspect traffic and preview an intervention."}</p>
       <div className="statGrid">
         <span>Vehicles</span>
         <strong>{edge.currentVehicleCount}</strong>
@@ -68,6 +69,13 @@ export function RoadInspector() {
       <button onClick={() => requestPreview(holdAction)}>
         <TimerReset size={16} /> Preview Hold Eligible Waiting Trips 5m
       </button>
+      {lastActionNotice && (
+        <div className="actionNotice" role="status">
+          <strong>{lastActionNotice.text}</strong>
+          <span>{lastActionNotice.affected} trips or vehicles affected. Watch the map for observed changes.</span>
+          <button onClick={clearActionNotice}>Dismiss</button>
+        </div>
+      )}
       {preview.status !== "idle" && (
         <div className="previewDialog">
           <strong>
@@ -79,6 +87,9 @@ export function RoadInspector() {
           {preview.status === "error" && <p>{preview.error ?? "Preview failed."}</p>}
           {preview.status === "ready" && selectedPreview && (
             <>
+              <p>
+                Rerouting sends eligible approaching vehicles onto alternatives. Holding departures keeps eligible waiting trips off the network temporarily.
+              </p>
               <div className="statGrid">
                 <span>Affected trips</span>
                 <strong>{selectedPreview.affectedVehicles}</strong>
@@ -109,6 +120,7 @@ export function RoadInspector() {
               </div>
               {!!otherChanges?.length && (
                 <div className="preview">
+                  <strong>Other affected roads</strong>
                   {otherChanges.map((change) => (
                     <div key={`${change.edgeId}-${change.horizonMinutes}`}>
                       {change.edgeId.replaceAll("_", " ")} {horizonLabel(change.actualHorizonMinutes, change.truncated)}: {(change.before * 100).toFixed(0)}% to{" "}

@@ -2,6 +2,7 @@ import React from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { App } from "../components/App";
 import { RoadInspector } from "../components/RoadInspector";
 import { useGameStore } from "../game/GameStore";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
@@ -12,6 +13,7 @@ import { travelTime } from "../simulation/traffic/CongestionModel";
 import { calculateMetrics } from "../simulation/scoring/Metrics";
 import { replayRun } from "../simulation/logging/Replay";
 import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
+import { practiceCheckpointTicks, practiceScenario } from "../simulation/scenarios/PracticeScenario";
 import type { GraphConfig, RoadEdge } from "../simulation/network/types";
 import type { ActionPreview, Scenario, SimulationAction, SimulationSnapshot } from "../simulation/types";
 
@@ -167,6 +169,15 @@ function renderInspector() {
   const root = createRoot(host);
   act(() => {
     root.render(<RoadInspector />);
+  });
+  return { host, root };
+}
+
+function renderApp() {
+  const host = document.createElement("div");
+  const root = createRoot(host);
+  act(() => {
+    root.render(<App />);
   });
   return { host, root };
 }
@@ -1217,5 +1228,84 @@ describe("preview UI flow", () => {
     expect(useGameStore.getState().preview.status).toBe("idle");
     useGameStore.getState().confirmPreview();
     expect(useGameStore.getState().engine.createRun().actions).toHaveLength(0);
+  });
+});
+
+describe("player interface and tutorial", () => {
+  it("tutorial progresses, skips, persists completion, and replays from help state", () => {
+    const setItem = vi.fn();
+    Object.defineProperty(window, "localStorage", {
+      value: { getItem: vi.fn(() => null), setItem },
+      configurable: true
+    });
+    useGameStore.getState().replayTutorial();
+    expect(useGameStore.getState().tutorial).toMatchObject({ active: true, step: "goal" });
+    useGameStore.getState().advanceTutorial();
+    expect(useGameStore.getState().tutorial.step).toBe("inspect");
+    useGameStore.getState().skipTutorial();
+    expect(useGameStore.getState().tutorial).toMatchObject({ active: false, completed: true, step: "done" });
+    expect(setItem).toHaveBeenCalledWith("centralTrafficTutorialComplete", "1");
+    useGameStore.getState().replayTutorial();
+    expect(useGameStore.getState().scenarioMode).toBe("practice");
+    expect(useGameStore.getState().speed).toBe(0);
+  });
+
+  it("tutorial state does not affect deterministic simulation or replay logs", () => {
+    const withTutorial = new SimulationEngine(mondayMorningScenario);
+    const withoutTutorial = new SimulationEngine(mondayMorningScenario);
+    withTutorial.reset(61);
+    withoutTutorial.reset(61);
+    useGameStore.getState().replayTutorial();
+    useGameStore.getState().advanceTutorial();
+    useGameStore.getState().skipTutorial();
+    for (let i = 0; i < 24; i++) {
+      withTutorial.step({ type: "NO_OP" });
+      withoutTutorial.step({ type: "NO_OP" });
+    }
+    expect(withTutorial.getState().metrics).toEqual(withoutTutorial.getState().metrics);
+    expect(withTutorial.createRun().actions).toEqual(withoutTutorial.createRun().actions);
+  });
+
+  it("development controls are hidden until the explicit dev toggle is opened", () => {
+    useGameStore.getState().setScenarioMode("monday");
+    const { host, root } = renderApp();
+    expect(host.textContent).not.toContain("Spawn 500");
+    act(() => {
+      useGameStore.getState().toggleDevTools();
+    });
+    act(() => {
+      root.render(<App />);
+    });
+    expect(host.textContent).toContain("Spawn 500");
+    act(() => {
+      root.unmount();
+    });
+  });
+
+  it("practice scenario produces a real reroute decision and spillover", () => {
+    const setup = (engine: SimulationEngine) => {
+      engine.reset(practiceScenario.seed);
+      for (let i = 0; i < practiceCheckpointTicks; i++) engine.step({ type: "NO_OP" });
+    };
+    const noAction = new SimulationEngine(practiceScenario);
+    const rerouted = new SimulationEngine(practiceScenario);
+    setup(noAction);
+    setup(rerouted);
+    const action = { type: "REROUTE" as const, targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 };
+    const preview = rerouted.previewAction(action);
+    expect(preview.affectedVehicles).toBeGreaterThan(0);
+    expect(preview.forecastChanges.some((change) => change.edgeId === "north_bridge" && change.before > change.after)).toBe(true);
+    rerouted.step(action);
+    noAction.step({ type: "NO_OP" });
+    for (let i = 0; i < 40; i++) {
+      rerouted.step({ type: "NO_OP" });
+      noAction.step({ type: "NO_OP" });
+    }
+    const northNo = noAction.getState().graph.edge("north_bridge").currentVehicleCount;
+    const northYes = rerouted.getState().graph.edge("north_bridge").currentVehicleCount;
+    const southNo = noAction.getState().graph.edge("south_bridge").currentVehicleCount;
+    const southYes = rerouted.getState().graph.edge("south_bridge").currentVehicleCount;
+    expect(northYes).toBeLessThan(northNo);
+    expect(southYes).toBeGreaterThan(southNo);
   });
 });

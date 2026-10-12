@@ -4,16 +4,15 @@
 
 body {
   margin: 0;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #e9f2f6;
-  background: #050b10;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #e9f2ee;
+  background: #06100f;
 }
 
 button {
-  border: 1px solid rgba(154, 194, 210, 0.22);
-  background: #10202c;
-  color: #e9f2f6;
+  border: 1px solid rgba(154, 194, 180, 0.24);
+  background: #10231f;
+  color: #e9f2ee;
   min-height: 34px;
   border-radius: 6px;
   display: inline-flex;
@@ -24,9 +23,12 @@ button {
 }
 
 button:hover,
-button.active {
+button.active,
+button:focus-visible {
   background: #1d3a4b;
-  border-color: #68c7e8;
+  border-color: #f8f2a5;
+  outline: 2px solid rgba(248, 242, 165, 0.42);
+  outline-offset: 2px;
 }
 
 .appShell {
@@ -35,14 +37,22 @@ button.active {
   flex-direction: column;
 }
 
-.topBar {
-  height: 76px;
-  padding: 16px 24px;
+.topBar,
+.commandStrip,
+.transportControls,
+.utilityControls,
+.scenarioSwitch {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.topBar {
+  min-height: 72px;
+  padding: 14px 24px;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(178, 221, 235, 0.16);
-  background: #08131b;
+  border-bottom: 1px solid rgba(178, 221, 205, 0.16);
+  background: #091816;
 }
 
 .topBar h1 {
@@ -56,7 +66,7 @@ button.active {
 .metricsBar span,
 .muted,
 small {
-  color: #8ea5b2;
+  color: #9db0aa;
 }
 
 .topBar strong {
@@ -64,17 +74,28 @@ small {
   font-variant-numeric: tabular-nums;
 }
 
+.scenarioSwitch button {
+  min-height: 30px;
+}
+
+.commandStrip {
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(178, 221, 205, 0.14);
+  background: #0b1715;
+}
+
 .metricsBar {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  min-height: 76px;
-  border-bottom: 1px solid rgba(178, 221, 235, 0.16);
-  background: #0b1822;
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 70px;
+  border-bottom: 1px solid rgba(178, 221, 205, 0.16);
+  background: #101c19;
 }
 
 .metricsBar div {
-  padding: 13px 24px;
-  border-right: 1px solid rgba(178, 221, 235, 0.12);
+  padding: 12px 24px;
+  border-right: 1px solid rgba(178, 221, 205, 0.12);
 }
 
 .metricsBar strong {
@@ -83,35 +104,71 @@ small {
   font-size: 24px;
 }
 
+.detailMetrics {
+  grid-template-columns: 1fr;
+  min-height: auto;
+  border: 0;
+  background: transparent;
+}
+
+.detailMetrics div {
+  padding: 8px 0;
+  border-right: 0;
+  border-bottom: 1px solid rgba(178, 221, 205, 0.1);
+}
+
+.detailMetrics strong {
+  font-size: 16px;
+}
+
 .mainGrid {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 365px;
+  grid-template-columns: minmax(0, 1fr) 390px;
 }
 
 .mapPanel {
   position: relative;
-  min-height: 620px;
+  min-height: 660px;
 }
 
-.mapToolbar {
+.mapLegend {
   position: absolute;
   z-index: 2;
   top: 14px;
   left: 14px;
   display: flex;
-  gap: 8px;
-  padding: 7px;
-  background: rgba(5, 14, 21, 0.8);
-  border: 1px solid rgba(178, 221, 235, 0.14);
+  gap: 9px;
+  padding: 9px 10px;
+  background: rgba(5, 14, 12, 0.82);
+  border: 1px solid rgba(178, 221, 205, 0.18);
   border-radius: 8px;
+  color: #dce8e2;
+  font-size: 13px;
 }
+
+.mapLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.severityIcon {
+  width: 18px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.severityIcon.calm { background: #53d69b; }
+.severityIcon.busy { background: repeating-linear-gradient(90deg, #ffb84a, #ffb84a 5px, #422c13 5px, #422c13 9px); }
+.severityIcon.jammed { background: repeating-linear-gradient(90deg, #ff4d5f, #ff4d5f 3px, #3d1017 3px, #3d1017 7px); }
 
 .trafficCanvas {
   width: 100%;
   height: 100%;
-  min-height: 620px;
+  min-height: 660px;
   display: block;
 }
 
@@ -120,21 +177,27 @@ small {
   align-content: start;
   gap: 12px;
   padding: 12px;
-  background: #071017;
-  border-left: 1px solid rgba(178, 221, 235, 0.16);
+  background: #07120f;
+  border-left: 1px solid rgba(178, 221, 205, 0.16);
   overflow: auto;
 }
 
 .panel {
   padding: 14px;
-  border: 1px solid rgba(178, 221, 235, 0.16);
+  border: 1px solid rgba(178, 221, 205, 0.16);
   border-radius: 8px;
-  background: #0d1a24;
+  background: #101b18;
 }
 
 .panel h2 {
   margin: 0 0 12px;
   font-size: 16px;
+}
+
+.plainLead {
+  margin: -4px 0 12px;
+  color: #b8c9c1;
+  line-height: 1.35;
 }
 
 .statGrid,
@@ -147,7 +210,7 @@ small {
 
 .statGrid span,
 .endGrid span {
-  color: #8ea5b2;
+  color: #9db0aa;
 }
 
 .forecastRow {
@@ -160,13 +223,15 @@ small {
 .forecastRow span,
 .preview {
   padding: 8px;
-  background: #09131b;
+  background: #0a1512;
   border-radius: 6px;
-  color: #b8cad2;
+  color: #c7d7d0;
   font-size: 13px;
 }
 
 .preview {
+  display: grid;
+  gap: 6px;
   margin: 10px 0 6px;
 }
 
@@ -175,17 +240,18 @@ small {
   gap: 10px;
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid rgba(104, 199, 232, 0.32);
+  border: 1px solid rgba(248, 242, 165, 0.34);
   border-radius: 8px;
-  background: #09131b;
+  background: #0a1512;
 }
 
 .previewDialog p {
   margin: 0;
-  color: #b8cad2;
+  color: #c7d7d0;
 }
 
-.previewActions {
+.previewActions,
+.tutorialActions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -194,6 +260,20 @@ small {
 .panel button {
   width: 100%;
   margin-top: 7px;
+}
+
+.actionNotice {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid rgba(83, 214, 155, 0.36);
+  border-radius: 8px;
+  background: rgba(83, 214, 155, 0.09);
+}
+
+.actionNotice span {
+  color: #c9d9d2;
 }
 
 .alert {
@@ -215,6 +295,14 @@ small {
   border-color: rgba(255, 184, 74, 0.55);
 }
 
+.detailPanel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  color: #dce8e2;
+}
+
 .debugPanel {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -227,6 +315,30 @@ small {
 
 .debugPanel button {
   margin: 0;
+}
+
+.tutorialCoach {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  z-index: 9;
+  width: min(390px, calc(100vw - 44px));
+  padding: 14px;
+  border: 1px solid rgba(248, 242, 165, 0.45);
+  border-radius: 8px;
+  background: rgba(12, 24, 20, 0.96);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
+}
+
+.tutorialCoach strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.tutorialCoach p {
+  margin: 0 0 12px;
+  color: #c6d6cf;
+  line-height: 1.4;
 }
 
 .endOverlay {
@@ -242,8 +354,8 @@ small {
   width: min(560px, calc(100vw - 32px));
   padding: 24px;
   border-radius: 8px;
-  border: 1px solid rgba(178, 221, 235, 0.24);
-  background: #0d1a24;
+  border: 1px solid rgba(178, 221, 205, 0.24);
+  background: #101b18;
 }
 
 .endScreen h2 {
@@ -252,15 +364,27 @@ small {
 }
 
 @media (max-width: 920px) {
-  .metricsBar {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
+  .metricsBar,
   .mainGrid {
     grid-template-columns: 1fr;
   }
 
+  .topBar,
+  .commandStrip,
+  .mapLegend {
+    flex-wrap: wrap;
+  }
+
   .sidePanel {
     border-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -7,13 +7,17 @@ const formatClock = (minutes: number) => {
 };
 
 export function TopBar() {
-  const { engine } = useGameStore();
+  const { engine, scenario, scenarioMode, setScenarioMode } = useGameStore();
   const time = engine.getObservation().time;
   return (
     <header className="topBar">
       <div>
         <h1>Central Traffic</h1>
-        <span>Monday Morning</span>
+        <span>{scenario.name}</span>
+      </div>
+      <div className="scenarioSwitch" aria-label="Scenario">
+        <button className={scenarioMode === "practice" ? "active" : ""} onClick={() => setScenarioMode("practice")}>Practice</button>
+        <button className={scenarioMode === "monday" ? "active" : ""} onClick={() => setScenarioMode("monday")}>Monday Morning</button>
       </div>
       <strong>{formatClock(time)}</strong>
     </header>

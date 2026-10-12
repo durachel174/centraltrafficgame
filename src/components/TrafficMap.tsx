@@ -4,11 +4,11 @@ import { renderTrafficMap } from "../rendering/TrafficRenderer";
 
 export function TrafficMap() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { engine, version, selectedEdgeId, selectEdge } = useGameStore();
+  const { engine, version, selectedEdgeId, selectEdge, preview } = useGameStore();
 
   useEffect(() => {
-    if (canvasRef.current) renderTrafficMap(canvasRef.current, engine, selectedEdgeId);
-  }, [engine, selectedEdgeId, version]);
+    if (canvasRef.current) renderTrafficMap(canvasRef.current, engine, selectedEdgeId, preview.result);
+  }, [engine, selectedEdgeId, version, preview.result]);
 
   return (
     <canvas

@@ -13,6 +13,12 @@ npm run simulate -- --runs=10 --controller=reactive
 npm run benchmark
 ```
 
+## Player Flow
+
+The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics live behind the Dev toggle. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage`, can be replayed from Help, and uses the same preview, confirm, cancel, and worker systems as the scored Monday Morning scenario.
+
+The practice scenario is a verified checkpoint warmed forward from its seed so a North Bridge reroute produces a measured selected-road change and real South Bridge spillover. It is not a separate ruleset; it uses the same deterministic engine, forecast labels, preview worker path, route changes, and replay/action logging as normal play.
+
 ## Architecture
 
 - `src/simulation`: deterministic, render-independent traffic engine.
