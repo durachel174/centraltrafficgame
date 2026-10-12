@@ -29,7 +29,7 @@ export function App() {
     if (!speed || done) return;
     const interval = window.setInterval(() => {
       for (let i = 0; i < speed; i++) step();
-    }, 90);
+    }, 250);
     return () => window.clearInterval(interval);
   }, [speed, step, done, version]);
 
