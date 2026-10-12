@@ -12,11 +12,11 @@ Assessment against the original phased acceptance conditions.
 | 5 Demand | COMPLETE | Monday Morning demand is generated mathematically from a time curve and OD weights. |
 | 6 Metrics | COMPLETE | Objective includes completed and active travel time, waiting delay, dissatisfaction, congestion, and kilometer-based excess distance. Baseline objective is computed in UI. |
 | 7 Forecasting | COMPLETE | Forecasts use cloned no-action forward rollouts at +5/+10/+15 minutes with configurable alert thresholds and actual elapsed horizon labels near scenario end. |
-| 8 Player Actions | IN PROGRESS | Reroute, route-based waiting holds, release, preview, Confirm, and Cancel are implemented with session-safe caching and worker execution. The practice checkpoint demonstrates a real North Bridge reroute and South Bridge spillover in automated tests. The full forecast -> preview -> confirm -> network-consequence interaction still needs fresh real-browser FPS/responsiveness verification after the UI redesign. |
+| 8 Player Actions | IN PROGRESS | Reroute, route-based waiting holds, release, preview, Confirm, and Cancel are implemented with session-safe caching and worker execution. The action-driven tutorial and practice checkpoint demonstrate a real North Bridge reroute and South Bridge spillover in automated tests and browser checks. Full browser FPS measurement still needs tooling that exposes animation timing. |
 | 9 Scenario | IN PROGRESS | Monday Morning runs 7:00-9:00 with the 8:12 incident and end screen. Best/worst decision labels remain heuristic placeholders. |
 | 10 Headless Environment | COMPLETE | `TrafficEnvironment`, baseline/reactive controllers, `npm run simulate`, replay support, and benchmark script are implemented. |
 | 11 Logging/Replay | COMPLETE | Action logs deep-copy actions, forecast samples, and snapshots; replay reproduces final metrics, and snapshot round trips preserve deterministic future outcomes. |
-| 12 Polish | IN PROGRESS | The player interface is now map-first with three primary indicators, plain-language inspector copy, skippable/replayable tutorial stored in `localStorage`, a dedicated practice checkpoint, and development controls behind an explicit toggle. Browser FPS still needs real-browser verification. |
+| 12 Polish | IN PROGRESS | The player interface is now map-first with three primary indicators, plain-language inspector copy, an action-driven skippable/replayable tutorial stored in `localStorage`, a dedicated practice checkpoint, gradual control reveal, production-hidden debug controls, and baseline improvement hidden until scenario finish. Browser FPS still needs real-browser verification. |
 
 ## Remaining Limitations
 
@@ -24,6 +24,7 @@ Assessment against the original phased acceptance conditions.
 - Browser FPS and responsiveness measurements are tracked separately from headless benchmarks.
 - Browser previews now run in a Web Worker; playable checkpoint completion depends on real-browser preview and FPS verification.
 - The practice tutorial checkpoint is warmed forward from the deterministic seed before play begins so the first preview has visible measured consequences.
+- The in-app browser automation verifies worker previews and interaction state, but does not expose `requestAnimationFrame`/`performance` for a true FPS measurement.
 - The reactive controller is intentionally simple and is not tuned to guarantee better results than baseline.
 - Disrupt mode and ML training are type-level architecture only, not gameplay.
 

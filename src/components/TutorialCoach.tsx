@@ -1,55 +1,66 @@
 import { useGameStore } from "../game/GameStore";
 
 const copy = {
-  goal: {
-    title: "Keep the morning commute moving",
-    body: "This practice run starts paused. Watch the bridges, keep passengers satisfied, and use previews before committing."
+  intro: {
+    title: "Keep The Morning Commute Moving",
+    body: "Start with one short practice decision. The city is paused so you can read the map before acting."
   },
-  inspect: {
-    title: "Inspect North Bridge",
-    body: "The map is the city. Moving dots are vehicles. North Bridge is selected so you can compare current traffic with forecast pressure."
+  select: {
+    title: "Select North Bridge",
+    body: "Choose North Bridge and compare what is happening now with what the forecast expects soon."
   },
   forecast: {
-    title: "Read the forecast",
-    body: "Forecast chips show measured pressure at future horizons. Alerts use the same forecast data, not scripted warnings."
+    title: "Read The Forecast",
+    body: "Traffic is moving now, but the forecast shows pressure building. Continue when you have looked at the +5, +10, and +15 minute chips."
   },
   preview: {
-    title: "Preview a reroute",
-    body: "Preview Reroute asks the worker to compare no action against moving eligible approaching vehicles to alternatives."
+    title: "Preview A Reroute",
+    body: "Preview a North Bridge reroute to see where traffic would go before you commit."
   },
   review: {
-    title: "Compare before and after",
-    body: "Use selected-road pressure, other affected roads, passenger delay, and satisfaction to decide. Positive cost and delay are worse."
+    title: "Review The Tradeoff",
+    body: "Check the selected road and the other affected roads. If South Bridge gets busier, that is the cost of the reroute."
   },
   observe: {
-    title: "Confirm, then resume",
-    body: "Confirm applies the reviewed action once through the normal action API. Resume time and watch observed traffic, not just projections."
+    title: "Watch What Changed",
+    body: "Resume time and watch the bridges for a few simulated minutes. The lesson advances after the city has actually moved."
   },
   hold: {
-    title: "Try holding departures later",
-    body: "Departure holds temporarily keep eligible waiting trips off the network. They can reduce pressure but add passenger delay."
+    title: "Departure Holds",
+    body: "A hold keeps eligible waiting trips off the network briefly. It can ease a road, but riders wait longer."
   },
-  done: {
-    title: "Independent play",
-    body: "You can replay this tutorial from Help. Switch to Monday Morning when you want the scored scenario."
+  complete: {
+    title: "Ready To Play",
+    body: "Start Monday Morning for the scored scenario, or keep experimenting in this practice checkpoint."
   }
 } as const;
 
 export function TutorialCoach() {
-  const { tutorial, advanceTutorial, skipTutorial, replayTutorial } = useGameStore();
+  const { tutorial, advanceTutorial, skipTutorial, finishTutorial, selectEdge, setSpeed } = useGameStore();
   if (!tutorial.active && tutorial.completed) return null;
   const step = copy[tutorial.step];
+  const actionButton =
+    tutorial.step === "intro" || tutorial.step === "forecast" || tutorial.step === "hold" ? (
+      <button onClick={advanceTutorial}>{tutorial.step === "hold" ? "Continue" : "Continue"}</button>
+    ) : tutorial.step === "select" ? (
+      <button onClick={() => selectEdge("north_bridge")}>Select North Bridge</button>
+    ) : tutorial.step === "observe" ? (
+      <button onClick={() => setSpeed(1)}>Resume 1x</button>
+    ) : tutorial.step === "complete" ? (
+      <>
+        <button onClick={() => finishTutorial("monday")}>Start Monday Morning</button>
+        <button onClick={() => finishTutorial("practice")}>Continue Practice</button>
+      </>
+    ) : null;
   return (
     <section className={`tutorialCoach tutorial-${tutorial.step}`} aria-live="polite">
       <strong>{step.title}</strong>
       <p>{step.body}</p>
+      {tutorial.observationSummary && <p>{tutorial.observationSummary}</p>}
+      {tutorial.message && <p className="tutorialMessage">{tutorial.message}</p>}
       <div className="tutorialActions">
-        {tutorial.step === "done" ? (
-          <button onClick={replayTutorial}>Replay Tutorial</button>
-        ) : (
-          <button onClick={advanceTutorial}>{tutorial.step === "hold" ? "Finish" : "Next"}</button>
-        )}
-        <button onClick={skipTutorial}>Skip Tutorial</button>
+        {actionButton}
+        {tutorial.step !== "complete" && <button onClick={skipTutorial}>Skip To Practice</button>}
       </div>
     </section>
   );

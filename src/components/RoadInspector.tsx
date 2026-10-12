@@ -3,7 +3,7 @@ import { useGameStore } from "../game/GameStore";
 import type { SimulationAction } from "../simulation/types";
 
 export function RoadInspector() {
-  const { engine, selectedEdgeId, preview, requestPreview, cancelPreview, confirmPreview, lastActionNotice, clearActionNotice } = useGameStore();
+  const { engine, selectedEdgeId, preview, requestPreview, cancelPreview, confirmPreview, lastActionNotice, clearActionNotice, tutorial } = useGameStore();
   const state = engine.getState();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
   const forecast = state.forecasts.find((item) => item.edgeId === edge.id);
@@ -37,6 +37,7 @@ export function RoadInspector() {
         ]
       : [];
   const horizonLabel = (actual: number, truncated: boolean) => `+${actual}m${truncated ? " scenario end" : ""}`;
+  const showHold = !tutorial.active || tutorial.step === "hold" || tutorial.step === "complete";
 
   return (
     <section className="panel">
@@ -66,9 +67,11 @@ export function RoadInspector() {
       <button onClick={() => requestPreview(rerouteAction)}>
         <Route size={16} /> Preview Reroute 25%
       </button>
-      <button onClick={() => requestPreview(holdAction)}>
-        <TimerReset size={16} /> Preview Hold Eligible Waiting Trips 5m
-      </button>
+      {showHold && (
+        <button onClick={() => requestPreview(holdAction)}>
+          <TimerReset size={16} /> Preview Hold Eligible Waiting Trips 5m
+        </button>
+      )}
       {lastActionNotice && (
         <div className="actionNotice" role="status">
           <strong>{lastActionNotice.text}</strong>
@@ -81,14 +84,14 @@ export function RoadInspector() {
           <strong>
             {previewActionLabel} on {reviewedEdge?.name ?? reviewedEdgeId}
           </strong>
-          <p>Projection assumes no further intervention. Positive cost and delay are worse; positive satisfaction is better.</p>
+          <p>This compares doing nothing with the action you are reviewing. More delay is worse; more satisfaction is better.</p>
           {preview.status === "loading" && <p>Calculating preview...</p>}
           {preview.status === "stale" && <p>Simulation changed. Recompute before confirming.</p>}
           {preview.status === "error" && <p>{preview.error ?? "Preview failed."}</p>}
           {preview.status === "ready" && selectedPreview && (
             <>
               <p>
-                Rerouting sends eligible approaching vehicles onto alternatives. Holding departures keeps eligible waiting trips off the network temporarily.
+                Rerouting sends eligible approaching vehicles onto alternatives. Holding departures keeps eligible waiting trips off the network for a short time.
               </p>
               <div className="statGrid">
                 <span>Affected trips</span>
@@ -99,7 +102,7 @@ export function RoadInspector() {
                     ? `${(selectedRoadChange.before * 100).toFixed(0)}% -> ${(selectedRoadChange.after * 100).toFixed(0)}%`
                     : "Unavailable"}
                 </strong>
-                <span>Objective delta</span>
+                <span>System cost</span>
                 <strong>{selectedPreview.networkCostDelta.toFixed(0)}</strong>
                 <span>Passenger delay</span>
                 <strong>

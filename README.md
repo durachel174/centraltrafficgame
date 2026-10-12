@@ -15,9 +15,11 @@ npm run benchmark
 
 ## Player Flow
 
-The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics live behind the Dev toggle. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage`, can be replayed from Help, and uses the same preview, confirm, cancel, and worker systems as the scored Monday Morning scenario.
+The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage`, can be replayed from Help, and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, confirm, resume time, and watch the observed result.
 
 The practice scenario is a verified checkpoint warmed forward from its seed so a North Bridge reroute produces a measured selected-road change and real South Bridge spillover. It is not a separate ruleset; it uses the same deterministic engine, forecast labels, preview worker path, route changes, and replay/action logging as normal play.
+
+Development-only spawn and incident controls are available only in Vite development builds. Production builds do not render the Dev toggle or `DebugPanel`.
 
 ## Architecture
 
@@ -33,7 +35,7 @@ The objective includes completed travel time plus elapsed travel time for active
 
 Excess distance is measured in kilometers. The baseline is the free-flow fastest route, using each edge's base travel time, and the score compares the current or completed route distance against that baseline distance. At scenario end, unfinished trips still contribute elapsed travel time, accumulated departure delay, dissatisfaction, and planned excess distance.
 
-Forecasts and action previews are deterministic no-further-intervention rollouts from the current state. A preview compares two identical-future simulations: no action versus the proposed action. Positive `networkCostDelta` and passenger delay deltas are worse; positive `satisfactionDelta` is better.
+Forecasts and action previews are deterministic no-further-intervention rollouts from the current state. A preview compares two identical-future simulations: no action versus the proposed action. Positive `networkCostDelta` and passenger delay deltas are worse; positive `satisfactionDelta` is better. The UI shows baseline improvement only after a scenario finishes so it does not compare an unfinished player run against a completed baseline.
 
 ## Tick Convention
 

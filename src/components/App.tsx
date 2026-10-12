@@ -10,9 +10,15 @@ import { DebugPanel } from "./DebugPanel";
 import { EndScreen } from "./EndScreen";
 import { TutorialCoach } from "./TutorialCoach";
 
+export const canUseDevTools = (env: { DEV?: boolean } = import.meta.env) => env.DEV === true;
+
 export function App() {
-  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, replayTutorial } = useGameStore();
+  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, replayTutorial, tutorial } = useGameStore();
   const done = engine.isDone();
+  const tutorialActive = tutorial.active;
+  const revealPlayback = !tutorialActive || tutorial.step === "observe" || tutorial.step === "hold" || tutorial.step === "complete";
+  const revealAdvanced = !tutorialActive || tutorial.step === "hold" || tutorial.step === "complete";
+  const devAvailable = canUseDevTools();
 
   useEffect(() => {
     computeBaseline();
@@ -34,11 +40,12 @@ export function App() {
           <button className={speed === 0 ? "active" : ""} onClick={() => setSpeed(0)} title="Pause">
             <Pause size={17} /> Pause
           </button>
-          {[1, 2, 4].map((value) => (
-            <button key={value} className={speed === value ? "active" : ""} onClick={() => setSpeed(value as 1 | 2 | 4)}>
-              <Play size={15} /> {value}x
-            </button>
-          ))}
+          {revealPlayback &&
+            [1, 2, 4].map((value) => (
+              <button key={value} className={speed === value ? "active" : ""} onClick={() => setSpeed(value as 1 | 2 | 4)}>
+                <Play size={15} /> {value}x
+              </button>
+            ))}
           <button onClick={reset} title="Reset">
             <RotateCcw size={16} /> Reset
           </button>
@@ -47,9 +54,11 @@ export function App() {
           <button onClick={replayTutorial}>
             <HelpCircle size={16} /> Help
           </button>
-          <button onClick={toggleDevTools} className={devToolsOpen ? "active" : ""}>
-            <Wrench size={16} /> Dev
-          </button>
+          {devAvailable && !tutorialActive && (
+            <button onClick={toggleDevTools} className={devToolsOpen ? "active" : ""}>
+              <Wrench size={16} /> Dev
+            </button>
+          )}
         </div>
       </div>
       <MetricsBar />
@@ -65,13 +74,15 @@ export function App() {
         <aside className="sidePanel">
           <RoadInspector />
           <AlertPanel />
-          <details className="panel detailPanel">
-            <summary>
-              <Gauge size={16} /> Detailed stats <ChevronDown size={15} />
-            </summary>
-            <MetricsBar detailed />
-          </details>
-          {devToolsOpen && <DebugPanel />}
+          {revealAdvanced && (
+            <details className="panel detailPanel">
+              <summary>
+                <Gauge size={16} /> Detailed stats <ChevronDown size={15} />
+              </summary>
+              <MetricsBar detailed />
+            </details>
+          )}
+          {devAvailable && !tutorialActive && devToolsOpen && <DebugPanel />}
         </aside>
       </main>
       <TutorialCoach />
