@@ -9,11 +9,12 @@ import { RoadInspector } from "./RoadInspector";
 import { DebugPanel } from "./DebugPanel";
 import { EndScreen } from "./EndScreen";
 import { TutorialCoach } from "./TutorialCoach";
+import { HelpPanel } from "./HelpPanel";
 
 export const canUseDevTools = (env: { DEV?: boolean } = import.meta.env) => env.DEV === true;
 
 export function App() {
-  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, replayTutorial, tutorial } = useGameStore();
+  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, openHelp, tutorial } = useGameStore();
   const done = engine.isDone();
   const tutorialActive = tutorial.active;
   const revealPlayback = !tutorialActive || tutorial.step === "observe" || tutorial.step === "hold" || tutorial.step === "complete";
@@ -33,7 +34,7 @@ export function App() {
   }, [speed, step, done, version]);
 
   return (
-    <div className="appShell">
+    <div className={`appShell tutorialStep-${tutorial.active ? tutorial.step : "off"}`}>
       <TopBar />
       <div className="commandStrip">
         <div className="transportControls" aria-label="Simulation controls">
@@ -51,7 +52,7 @@ export function App() {
           </button>
         </div>
         <div className="utilityControls">
-          <button onClick={replayTutorial}>
+          <button onClick={openHelp}>
             <HelpCircle size={16} /> Help
           </button>
           {devAvailable && !tutorialActive && (
@@ -86,6 +87,7 @@ export function App() {
         </aside>
       </main>
       <TutorialCoach />
+      <HelpPanel />
       {done && <EndScreen />}
     </div>
   );

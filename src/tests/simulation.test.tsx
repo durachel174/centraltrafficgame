@@ -182,6 +182,14 @@ function renderApp() {
   return { host, root };
 }
 
+function clickButton(host: HTMLElement, label: string) {
+  const button = [...host.querySelectorAll("button")].find((item) => item.textContent?.includes(label));
+  expect(button).toBeTruthy();
+  act(() => {
+    button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+}
+
 function makeNearEndPreviewStoreState() {
   const scenario = slowOnlyScenario({
     endTime: 1,
@@ -1272,20 +1280,59 @@ describe("player interface and tutorial", () => {
     expect(setItem).toHaveBeenCalledWith("centralTrafficTutorialComplete", "1");
   });
 
-  it("skip persists completion and help replay restarts practice before replacing the current run", () => {
+  it("skip persists completion and replay starts practice only after help confirmation", () => {
     const setItem = vi.fn();
     Object.defineProperty(window, "localStorage", {
       value: { getItem: vi.fn(() => null), setItem },
       configurable: true
     });
     useGameStore.getState().setScenarioMode("monday");
-    useGameStore.getState().replayTutorial();
+    const beforeEngine = useGameStore.getState().engine;
+    const { host, root } = renderApp();
+    clickButton(host, "Help");
+    expect(useGameStore.getState().engine).toBe(beforeEngine);
+    expect(host.textContent).toContain("Replay Tutorial starts a fresh practice session");
+    clickButton(host, "Replay Tutorial");
+    expect(useGameStore.getState().engine).toBe(beforeEngine);
+    clickButton(host, "Keep Current Run");
+    expect(useGameStore.getState().scenarioMode).toBe("monday");
+    clickButton(host, "Replay Tutorial");
+    clickButton(host, "Start Practice");
     expect(useGameStore.getState().scenarioMode).toBe("practice");
     expect(useGameStore.getState().speed).toBe(0);
     expect(useGameStore.getState().tutorial.step).toBe("intro");
+    act(() => root.unmount());
     useGameStore.getState().skipTutorial();
     expect(useGameStore.getState().tutorial).toMatchObject({ active: false, completed: true, step: "complete" });
     expect(setItem).toHaveBeenCalledWith("centralTrafficTutorialComplete", "1");
+  });
+
+  it("help opens and closes without replacing the run and restores playback", () => {
+    useGameStore.getState().setScenarioMode("monday");
+    useGameStore.getState().setSpeed(2);
+    const beforeEngine = useGameStore.getState().engine;
+    const beforeActions = beforeEngine.createRun().actions.length;
+    const { host, root } = renderApp();
+    clickButton(host, "Help");
+    expect(useGameStore.getState().engine).toBe(beforeEngine);
+    expect(useGameStore.getState().speed).toBe(0);
+    expect(beforeEngine.createRun().actions).toHaveLength(beforeActions);
+    clickButton(host, "Return To Game");
+    expect(useGameStore.getState().engine).toBe(beforeEngine);
+    expect(useGameStore.getState().speed).toBe(2);
+    act(() => root.unmount());
+  });
+
+  it("help cancels pending previews without making old responses confirmable", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().setScenarioMode("monday");
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    expect(useGameStore.getState().preview.status).toBe("loading");
+    useGameStore.getState().openHelp();
+    expect(useGameStore.getState().preview.status).toBe("idle");
+    await vi.runAllTimersAsync();
+    useGameStore.getState().confirmPreview();
+    expect(useGameStore.getState().engine.createRun().actions).toHaveLength(0);
   });
 
   it("tutorial state does not affect deterministic simulation or replay logs", () => {
@@ -1356,6 +1403,34 @@ describe("player interface and tutorial", () => {
     expect(useGameStore.getState().tutorial).toMatchObject({ active: false, completed: true, step: "complete" });
   });
 
+  it("changing roads during review returns to a recoverable tutorial step", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().replayTutorial();
+    useGameStore.setState((state) => ({ tutorial: { ...state.tutorial, step: "preview" }, selectedEdgeId: "north_bridge" }));
+    const action = { type: "REROUTE" as const, targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 };
+    useGameStore.getState().requestPreview(action);
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().tutorial.step).toBe("review");
+    useGameStore.getState().selectEdge("south_bridge");
+    expect(useGameStore.getState().preview.status).toBe("idle");
+    expect(useGameStore.getState().tutorial).toMatchObject({ step: "select", message: expect.stringContaining("North Bridge") });
+    useGameStore.getState().selectEdge("north_bridge");
+    expect(useGameStore.getState().tutorial.step).toBe("forecast");
+    useGameStore.getState().advanceTutorial();
+    useGameStore.getState().requestPreview(action);
+    expect(useGameStore.getState().tutorial.step).toBe("review");
+    useGameStore.getState().confirmPreview();
+    expect(useGameStore.getState().tutorial.step).toBe("observe");
+  });
+
+  it("missing or invalid previews cannot advance observation", () => {
+    useGameStore.getState().replayTutorial();
+    useGameStore.setState((state) => ({ tutorial: { ...state.tutorial, step: "review" }, preview: { ...state.preview, status: "idle", action: null, result: null } }));
+    useGameStore.getState().confirmPreview();
+    expect(useGameStore.getState().tutorial.step).toBe("review");
+    expect(useGameStore.getState().engine.createRun().actions).toHaveLength(0);
+  });
+
   it("preview errors keep the tutorial recoverable", async () => {
     vi.useFakeTimers();
     useGameStore.getState().replayTutorial();
@@ -1365,6 +1440,34 @@ describe("player interface and tutorial", () => {
     await vi.runAllTimersAsync();
     expect(useGameStore.getState().tutorial).toMatchObject({ step: "preview", message: expect.stringContaining("failed") });
     expect(useGameStore.getState().preview.status).toBe("error");
+  });
+
+  it("zero-affected previews keep the tutorial recoverable", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().replayTutorial();
+    useGameStore.setState((state) => ({ tutorial: { ...state.tutorial, step: "preview" }, selectedEdgeId: "north_bridge" }));
+    useGameStore.getState().requestPreview({ type: "DELAY_DEPARTURES", targetEdge: "north_bridge", durationMinutes: 5, percentage: 0.25 });
+    await vi.runAllTimersAsync();
+    expect(useGameStore.getState().tutorial).toMatchObject({ step: "preview", message: expect.stringContaining("Try again") });
+  });
+
+  it("observation summary reports measured start, end, and elapsed time without over-attribution", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().replayTutorial();
+    useGameStore.setState((state) => ({ tutorial: { ...state.tutorial, step: "preview" }, selectedEdgeId: "north_bridge" }));
+    useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
+    await vi.runAllTimersAsync();
+    useGameStore.getState().confirmPreview();
+    const start = useGameStore.getState().tutorial.observationStart;
+    for (let i = 0; i < 10; i++) useGameStore.getState().step();
+    const summary = useGameStore.getState().tutorial.observationSummary ?? "";
+    expect(summary).toContain(`North Bridge ${start?.northBridgeVehicles}`);
+    expect(summary).toContain("->");
+    expect(summary).toContain("South Bridge");
+    expect(summary).toContain("2.50 simulated minutes");
+    expect(summary).toContain("New demand and normal traffic movement");
+    expect(summary).not.toContain("caused");
+    expect(summary).not.toContain("prevented");
   });
 
   it("baseline improvement is not shown before the scenario finishes", () => {

@@ -38,6 +38,7 @@ interface GameStore {
   devToolsOpen: boolean;
   lastActionNotice: { text: string; affected: number; actionType: SimulationAction["type"] } | null;
   tutorial: TutorialState;
+  help: { open: boolean; confirmingReplay: boolean; previousSpeed: Speed | null };
   preview: {
     status: "idle" | "loading" | "ready" | "stale" | "error";
     action: SimulationAction | null;
@@ -50,6 +51,11 @@ interface GameStore {
     timings: { roundTripMs: number; calculationMs: number } | null;
   };
   setSpeed: (speed: Speed) => void;
+  openHelp: () => void;
+  closeHelp: () => void;
+  showReplayConfirmation: () => void;
+  cancelReplayConfirmation: () => void;
+  startPracticeFromHelp: () => void;
   toggleDevTools: () => void;
   setScenarioMode: (mode: ScenarioMode) => void;
   selectEdge: (edgeId: string | null) => void;
@@ -133,6 +139,9 @@ const clonePreview = (preview: ActionPreview): ActionPreview => ({
 });
 const previewKey = (sessionId: number, version: number, action: SimulationAction) => `${sessionId}:${version}:${JSON.stringify(action)}`;
 const targetEdgeForAction = (action: SimulationAction) => ("targetEdge" in action ? (action.targetEdge ?? null) : null);
+const isNorthBridgeReroute = (action: SimulationAction | null) =>
+  action?.type === "REROUTE" && action.targetEdge === "north_bridge" && action.avoidEdge === "north_bridge";
+const isValidTutorialPreview = (action: SimulationAction | null, result: ActionPreview | null) => isNorthBridgeReroute(action) && !!result && result.affectedVehicles > 0;
 const idlePreview = (requestId = requestCounter, sessionId = sessionCounter): GameStore["preview"] => ({
   status: "idle",
   action: null,
@@ -176,8 +185,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
   devToolsOpen: false,
   lastActionNotice: null,
   tutorial: initialTutorial(!hasCompletedTutorial(), hasCompletedTutorial()),
+  help: { open: false, confirmingReplay: false, previousSpeed: null },
   preview: idlePreview(),
-  setSpeed: (speed) => set({ speed }),
+  setSpeed: (speed) =>
+    set((state) => {
+      if (state.tutorial.active && state.tutorial.step === "review" && speed > 0) {
+        return { speed: 0, tutorial: { ...state.tutorial, message: "Confirm or cancel the preview before resuming time." } };
+      }
+      return { speed };
+    }),
+  openHelp: () => {
+    stopActiveWorker();
+    requestCounter += 1;
+    set((state) => ({
+      speed: 0,
+      help: { open: true, confirmingReplay: false, previousSpeed: state.help.open ? state.help.previousSpeed : state.speed },
+      preview: state.preview.status === "loading" ? idlePreview(Math.max(requestCounter, state.preview.requestId + 1), sessionCounter) : state.preview
+    }));
+  },
+  closeHelp: () =>
+    set((state) => {
+      const restoreSpeed = state.help.previousSpeed ?? state.speed;
+      const mustStayPaused = state.preview.status === "ready" || state.preview.status === "loading" || (state.tutorial.active && state.tutorial.step === "review");
+      return {
+        help: { open: false, confirmingReplay: false, previousSpeed: null },
+        speed: mustStayPaused ? 0 : restoreSpeed
+      };
+    }),
+  showReplayConfirmation: () => set((state) => ({ help: { ...state.help, confirmingReplay: true } })),
+  cancelReplayConfirmation: () => set((state) => ({ help: { ...state.help, confirmingReplay: false } })),
+  startPracticeFromHelp: () => {
+    get().setScenarioMode("practice");
+    set({ help: { open: false, confirmingReplay: false, previousSpeed: null }, tutorial: initialTutorial(true, false), speed: 0, selectedEdgeId: null });
+  },
   toggleDevTools: () => set((state) => ({ devToolsOpen: !state.devToolsOpen })),
   setScenarioMode: (scenarioMode) => {
     stopActiveWorker();
@@ -196,6 +236,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       baselineObjective: null,
       preview: idlePreview(requestCounter, sessionCounter),
       lastActionNotice: null,
+      help: { open: false, confirmingReplay: false, previousSpeed: null },
       tutorial: scenarioMode === "monday" ? completeTutorial() : initialTutorial(!completed, completed)
     });
     get().computeBaseline();
@@ -205,6 +246,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const tutorial =
         state.tutorial.active && state.tutorial.step === "select" && selectedEdgeId === "north_bridge"
           ? { ...state.tutorial, step: "forecast" as const, message: null }
+          : state.tutorial.active && state.tutorial.step === "review" && selectedEdgeId !== state.preview.targetEdgeId
+            ? { ...state.tutorial, step: selectedEdgeId === "north_bridge" ? ("preview" as const) : ("select" as const), message: "That preview was for North Bridge. Select North Bridge and preview the reroute again to continue." }
           : state.tutorial.active && state.tutorial.step !== "intro" && selectedEdgeId !== "north_bridge"
             ? { ...state.tutorial, message: "Choose North Bridge to continue the practice lesson, or Skip to play freely." }
             : state.tutorial;
@@ -216,13 +259,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   step: (action = { type: "NO_OP" }) => {
     get().engine.step(action);
     set((state) => {
+      const elapsed = state.tutorial.observedFromTime === null ? 0 : get().engine.getObservation().time - state.tutorial.observedFromTime;
       const observationComplete =
         state.tutorial.active &&
         state.tutorial.step === "observe" &&
         state.tutorial.observedFromTime !== null &&
-        get().engine.getObservation().time - state.tutorial.observedFromTime >= observationMinutes;
+        elapsed >= observationMinutes;
       const northVehicles = get().engine.getState().graph.edge("north_bridge").currentVehicleCount;
       const southVehicles = get().engine.getState().graph.edge("south_bridge").currentVehicleCount;
+      const startNorth = state.tutorial.observationStart?.northBridgeVehicles ?? 0;
+      const startSouth = state.tutorial.observationStart?.southBridgeVehicles ?? 0;
       return {
         version: state.version + 1,
         speed: observationComplete ? 0 : state.speed,
@@ -231,7 +277,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ? {
               ...state.tutorial,
               step: "hold",
-              observationSummary: `The city advanced ${observationMinutes.toFixed(1)} simulated minutes. North Bridge now has ${northVehicles} vehicles, and South Bridge has ${southVehicles}.`
+              observationSummary: `Observed over ${elapsed.toFixed(2)} simulated minutes: North Bridge ${startNorth} -> ${northVehicles}; South Bridge ${startSouth} -> ${southVehicles}. New demand and normal traffic movement also affect these counts.`
             }
           : state.tutorial
       };
@@ -250,6 +296,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedEdgeId: null,
       preview: idlePreview(requestCounter, sessionCounter),
       lastActionNotice: null,
+      help: { open: false, confirmingReplay: false, previousSpeed: null },
       tutorial: tutorial.active ? initialTutorial(true, tutorial.completed) : tutorial
     });
   },
@@ -270,9 +317,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       speed: 0,
       tutorial:
-        activeTutorial.active && activeTutorial.step === "preview" && copiedAction.type === "REROUTE" && targetEdgeForAction(copiedAction) === "north_bridge"
+        activeTutorial.active && activeTutorial.step === "preview" && isNorthBridgeReroute(copiedAction)
           ? cached
-            ? cached.affectedVehicles > 0
+            ? isValidTutorialPreview(copiedAction, cached)
               ? { ...activeTutorial, step: "review", message: null }
               : { ...activeTutorial, message: "No eligible vehicles changed in that preview. Try again, reset, or Skip." }
             : { ...activeTutorial, message: null }
@@ -334,7 +381,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       rememberPreview(key, result);
       set({
         tutorial:
-          get().tutorial.active && get().tutorial.step === "preview" && result.affectedVehicles > 0
+          get().tutorial.active && get().tutorial.step === "preview" && isValidTutorialPreview(copiedAction, result)
             ? { ...get().tutorial, step: "review", message: null }
             : get().tutorial.active && get().tutorial.step === "preview"
               ? { ...get().tutorial, message: "No eligible vehicles changed in that preview. Try again, reset, or Skip." }
@@ -385,6 +432,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { preview, version, step, engine, tutorial } = get();
     if (preview.status !== "ready" || !preview.action || preview.baseVersion !== version || preview.baseSessionId !== sessionCounter) {
       set({ preview: { ...preview, status: "stale" } });
+      return;
+    }
+    if (tutorial.active && tutorial.step === "review" && !isValidTutorialPreview(preview.action, preview.result)) {
+      set({ tutorial: { ...tutorial, step: "preview", message: "That preview is no longer available. Preview the North Bridge reroute again to continue." } });
       return;
     }
     const action = cloneAction(preview.action);

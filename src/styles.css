@@ -250,6 +250,14 @@ small {
   color: #c7d7d0;
 }
 
+.tutorialTarget,
+.tutorialStep-select .mapPanel,
+.tutorialStep-observe .transportControls {
+  outline: 2px solid rgba(248, 242, 165, 0.76);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(248, 242, 165, 0.08);
+}
+
 .previewActions,
 .tutorialActions {
   display: grid;
@@ -274,6 +282,53 @@ small {
 
 .actionNotice span {
   color: #c9d9d2;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 8, 7, 0.66);
+}
+
+.helpPanel {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(248, 242, 165, 0.34);
+  border-radius: 8px;
+  background: #101b18;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.helpPanel h2,
+.helpPanel p,
+.helpPanel ul {
+  margin: 0;
+}
+
+.helpPanel ul {
+  padding-left: 20px;
+  color: #c7d7d0;
+}
+
+.helpTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirmBox {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 184, 74, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 184, 74, 0.08);
 }
 
 .alert {
@@ -339,6 +394,10 @@ small {
   margin: 0 0 12px;
   color: #c6d6cf;
   line-height: 1.4;
+}
+
+.tutorialMessage {
+  color: #f8f2a5;
 }
 
 .endOverlay {

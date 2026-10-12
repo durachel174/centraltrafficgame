@@ -38,6 +38,9 @@ export function RoadInspector() {
       : [];
   const horizonLabel = (actual: number, truncated: boolean) => `+${actual}m${truncated ? " scenario end" : ""}`;
   const showHold = !tutorial.active || tutorial.step === "hold" || tutorial.step === "complete";
+  const highlightForecast = tutorial.active && tutorial.step === "forecast";
+  const highlightPreview = tutorial.active && tutorial.step === "preview";
+  const highlightReview = tutorial.active && tutorial.step === "review";
 
   return (
     <section className="panel">
@@ -56,7 +59,7 @@ export function RoadInspector() {
         <strong>{speedKph.toFixed(0)} kph</strong>
       </div>
       {forecast && (
-        <div className="forecastRow">
+        <div className={`forecastRow ${highlightForecast ? "tutorialTarget" : ""}`}>
           {forecastSamples.map((sample) => (
             <span key={`${sample.requestedHorizonMinutes}-${sample.actualHorizonMinutes}`}>
               {horizonLabel(sample.actualHorizonMinutes, sample.truncated)} {(sample.utilization * 100).toFixed(0)}%
@@ -64,7 +67,7 @@ export function RoadInspector() {
           ))}
         </div>
       )}
-      <button onClick={() => requestPreview(rerouteAction)}>
+      <button className={highlightPreview ? "tutorialTarget" : ""} onClick={() => requestPreview(rerouteAction)}>
         <Route size={16} /> Preview Reroute 25%
       </button>
       {showHold && (
@@ -80,7 +83,7 @@ export function RoadInspector() {
         </div>
       )}
       {preview.status !== "idle" && (
-        <div className="previewDialog">
+        <div className={`previewDialog ${highlightReview ? "tutorialTarget" : ""}`}>
           <strong>
             {previewActionLabel} on {reviewedEdge?.name ?? reviewedEdgeId}
           </strong>

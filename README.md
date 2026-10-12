@@ -15,9 +15,11 @@ npm run benchmark
 
 ## Player Flow
 
-The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage`, can be replayed from Help, and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, confirm, resume time, and watch the observed result.
+The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage` and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, confirm, resume time, and watch the observed result.
 
-The practice scenario is a verified checkpoint warmed forward from its seed so a North Bridge reroute produces a measured selected-road change and real South Bridge spillover. It is not a separate ruleset; it uses the same deterministic engine, forecast labels, preview worker path, route changes, and replay/action logging as normal play.
+Help opens as a safe in-game panel. It explains the controls without replacing the current run, and replaying the tutorial requires a separate Start Practice confirmation because it starts a fresh practice session. The tutorial recovers if the player cancels, changes roads, resets, or receives an unusable preview.
+
+The practice scenario is a verified checkpoint warmed forward from its seed so a North Bridge reroute produces a measured selected-road change and real South Bridge spillover. It is not a separate ruleset; it uses the same deterministic engine, forecast labels, preview worker path, route changes, and replay/action logging as normal play. Post-action tutorial feedback reports observed start-to-end bridge counts and elapsed simulated time, and keeps those observations separate from projected preview effects.
 
 Development-only spawn and incident controls are available only in Vite development builds. Production builds do not render the Dev toggle or `DebugPanel`.
 

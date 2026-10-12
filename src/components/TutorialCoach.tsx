@@ -23,7 +23,7 @@ const copy = {
   },
   observe: {
     title: "Watch What Changed",
-    body: "Resume time and watch the bridges for a few simulated minutes. The lesson advances after the city has actually moved."
+    body: "Resume time and watch the bridges for a few simulated minutes. Projected preview effects and observed traffic counts are separate."
   },
   hold: {
     title: "Departure Holds",
