@@ -56,6 +56,7 @@ interface GameStore {
   showReplayConfirmation: () => void;
   cancelReplayConfirmation: () => void;
   startPracticeFromHelp: () => void;
+  startFreePractice: () => void;
   toggleDevTools: () => void;
   setScenarioMode: (mode: ScenarioMode) => void;
   selectEdge: (edgeId: string | null) => void;
@@ -217,6 +218,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   startPracticeFromHelp: () => {
     get().setScenarioMode("practice");
     set({ help: { open: false, confirmingReplay: false, previousSpeed: null }, tutorial: initialTutorial(true, false), speed: 0, selectedEdgeId: null });
+  },
+  startFreePractice: () => {
+    get().setScenarioMode("practice");
+    set({ tutorial: completeTutorial(), speed: 1, selectedEdgeId: "north_bridge" });
   },
   toggleDevTools: () => set((state) => ({ devToolsOpen: !state.devToolsOpen })),
   setScenarioMode: (scenarioMode) => {
@@ -479,7 +484,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   skipTutorial: () => {
     saveTutorialComplete();
-    set({ tutorial: completeTutorial(), speed: 0 });
+    set({ tutorial: completeTutorial(), speed: 1, selectedEdgeId: "north_bridge" });
   },
   replayTutorial: () => {
     get().setScenarioMode("practice");
@@ -487,7 +492,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   finishTutorial: (destination) => {
     saveTutorialComplete();
-    set({ tutorial: completeTutorial(), speed: 0 });
+    set({ tutorial: completeTutorial(), speed: destination === "practice" ? 1 : 0, selectedEdgeId: destination === "practice" ? "north_bridge" : get().selectedEdgeId });
     if (destination === "monday") get().setScenarioMode("monday");
   },
   clearActionNotice: () => set({ lastActionNotice: null })

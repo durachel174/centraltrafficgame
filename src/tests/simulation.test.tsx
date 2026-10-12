@@ -1304,7 +1304,27 @@ describe("player interface and tutorial", () => {
     act(() => root.unmount());
     useGameStore.getState().skipTutorial();
     expect(useGameStore.getState().tutorial).toMatchObject({ active: false, completed: true, step: "complete" });
+    expect(useGameStore.getState().speed).toBe(1);
+    expect(useGameStore.getState().selectedEdgeId).toBe("north_bridge");
     expect(setItem).toHaveBeenCalledWith("centralTrafficTutorialComplete", "1");
+  });
+
+  it("Practice scenario switch opens playable free practice instead of trapping the tutorial", () => {
+    useGameStore.getState().setScenarioMode("monday");
+    useGameStore.getState().replayTutorial();
+    const { host, root } = renderApp();
+    clickButton(host, "Practice");
+    expect(useGameStore.getState().scenarioMode).toBe("practice");
+    expect(useGameStore.getState().tutorial.active).toBe(false);
+    expect(useGameStore.getState().speed).toBe(1);
+    expect(useGameStore.getState().selectedEdgeId).toBe("north_bridge");
+    act(() => {
+      root.render(<App />);
+    });
+    expect(host.textContent).toContain("1x");
+    expect(host.textContent).toContain("Preview Hold Eligible Waiting Trips");
+    expect(host.textContent).not.toContain("Keep The Morning Commute Moving");
+    act(() => root.unmount());
   });
 
   it("help opens and closes without replacing the run and restores playback", () => {
