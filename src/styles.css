@@ -270,9 +270,64 @@ small {
   gap: 8px;
 }
 
-.panel button {
+.previewActions button,
+.tutorialActions button {
+  width: 100%;
+}
+
+.panel > button,
+.actionGrid button,
+.actionNotice button {
   width: 100%;
   margin-top: 7px;
+}
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actionChoice {
+  position: relative;
+}
+
+.actionGrid button {
+  min-height: 38px;
+  margin: 0;
+}
+
+.actionHint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  width: min(260px, 82vw);
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid rgba(248, 242, 165, 0.34);
+  border-radius: 8px;
+  background: rgba(8, 18, 15, 0.98);
+  color: #c7d7d0;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 5px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.actionHint strong {
+  color: #f8f2a5;
+}
+
+.actionChoice:hover .actionHint,
+.actionChoice:focus-within .actionHint {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .actionNotice {

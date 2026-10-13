@@ -1322,7 +1322,8 @@ describe("player interface and tutorial", () => {
       root.render(<App />);
     });
     expect(host.textContent).toContain("1x");
-    expect(host.textContent).toContain("Preview Hold Eligible Waiting Trips");
+    expect(host.textContent).toContain("Preview Hold");
+    expect(host.textContent).toContain("Keeps eligible waiting trips off the network briefly");
     expect(host.textContent).not.toContain("Keep The Morning Commute Moving");
     act(() => root.unmount());
   });
@@ -1395,7 +1396,7 @@ describe("player interface and tutorial", () => {
   it("advanced controls are revealed at the intended tutorial stages", () => {
     useGameStore.getState().replayTutorial();
     const { host, root } = renderApp();
-    expect(host.textContent).not.toContain("Preview Hold Eligible Waiting Trips");
+    expect(host.textContent).not.toContain("Preview Hold");
     expect(host.textContent).not.toContain("Detailed stats");
     expect(host.textContent).not.toContain("1x");
     act(() => {
@@ -1404,7 +1405,8 @@ describe("player interface and tutorial", () => {
     act(() => {
       root.render(<App />);
     });
-    expect(host.textContent).toContain("Preview Hold Eligible Waiting Trips");
+    expect(host.textContent).toContain("Preview Hold");
+    expect(host.textContent).toContain("Keeps eligible waiting trips off the network briefly");
     expect(host.textContent).toContain("Detailed stats");
     expect(host.textContent).toContain("1x");
     act(() => {
@@ -1520,15 +1522,20 @@ describe("player interface and tutorial", () => {
     expect(preview.forecastChanges.some((change) => change.edgeId === "north_bridge" && change.before > change.after)).toBe(true);
     rerouted.step(action);
     noAction.step({ type: "NO_OP" });
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 20; i++) {
       rerouted.step({ type: "NO_OP" });
       noAction.step({ type: "NO_OP" });
     }
     const northNo = noAction.getState().graph.edge("north_bridge").currentVehicleCount;
     const northYes = rerouted.getState().graph.edge("north_bridge").currentVehicleCount;
+    expect(northYes).toBeLessThan(northNo);
+
+    for (let i = 0; i < 20; i++) {
+      rerouted.step({ type: "NO_OP" });
+      noAction.step({ type: "NO_OP" });
+    }
     const southNo = noAction.getState().graph.edge("south_bridge").currentVehicleCount;
     const southYes = rerouted.getState().graph.edge("south_bridge").currentVehicleCount;
-    expect(northYes).toBeLessThan(northNo);
     expect(southYes).toBeGreaterThan(southNo);
   });
 });

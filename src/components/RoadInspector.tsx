@@ -67,14 +67,28 @@ export function RoadInspector() {
           ))}
         </div>
       )}
-      <button className={highlightPreview ? "tutorialTarget" : ""} onClick={() => requestPreview(rerouteAction)}>
-        <Route size={16} /> Preview Reroute 25%
-      </button>
-      {showHold && (
-        <button onClick={() => requestPreview(holdAction)}>
-          <TimerReset size={16} /> Preview Hold Eligible Waiting Trips 5m
-        </button>
-      )}
+      <div className="actionGrid" aria-label="Action choices">
+        <div className="actionChoice">
+          <button className={highlightPreview ? "tutorialTarget" : ""} onClick={() => requestPreview(rerouteAction)} aria-describedby="reroute-help">
+            <Route size={16} /> Preview Reroute
+          </button>
+          <div className="actionHint" id="reroute-help" role="tooltip">
+            <strong>Reroute 25%</strong>
+            <span>Moves eligible approaching vehicles around this road. Best for a bridge or approach forecast to overload soon.</span>
+          </div>
+        </div>
+        {showHold && (
+          <div className="actionChoice">
+            <button onClick={() => requestPreview(holdAction)} aria-describedby="hold-help">
+              <TimerReset size={16} /> Preview Hold
+            </button>
+            <div className="actionHint" id="hold-help" role="tooltip">
+              <strong>Hold trips 5m</strong>
+              <span>Keeps eligible waiting trips off the network briefly. Useful when adding more cars would make a jam worse.</span>
+            </div>
+          </div>
+        )}
+      </div>
       {lastActionNotice && (
         <div className="actionNotice" role="status">
           <strong>{lastActionNotice.text}</strong>
@@ -93,9 +107,6 @@ export function RoadInspector() {
           {preview.status === "error" && <p>{preview.error ?? "Preview failed."}</p>}
           {preview.status === "ready" && selectedPreview && (
             <>
-              <p>
-                Rerouting sends eligible approaching vehicles onto alternatives. Holding departures keeps eligible waiting trips off the network for a short time.
-              </p>
               <div className="statGrid">
                 <span>Affected trips</span>
                 <strong>{selectedPreview.affectedVehicles}</strong>
