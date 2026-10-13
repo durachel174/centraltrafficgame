@@ -41,6 +41,77 @@ export function RoadInspector() {
   const highlightForecast = tutorial.active && tutorial.step === "forecast";
   const highlightPreview = tutorial.active && tutorial.step === "preview";
   const highlightReview = tutorial.active && tutorial.step === "review";
+  const targetEdgeForAction = (action: SimulationAction) => ("targetEdge" in action ? (action.targetEdge ?? null) : null);
+  const actionsMatch = (left: SimulationAction | null, right: SimulationAction) => {
+    if (!left || left.type !== right.type) return false;
+    if (left.type === "REROUTE" && right.type === "REROUTE") {
+      return left.targetEdge === right.targetEdge && left.avoidEdge === right.avoidEdge && left.percentage === right.percentage;
+    }
+    if (left.type === "DELAY_DEPARTURES" && right.type === "DELAY_DEPARTURES") {
+      return left.targetEdge === right.targetEdge && left.origin === right.origin && left.destination === right.destination && left.durationMinutes === right.durationMinutes && left.percentage === right.percentage;
+    }
+    return false;
+  };
+  const actionPreviewState = (action: SimulationAction) => {
+    const matches = actionsMatch(preview.action, action) && preview.targetEdgeId === targetEdgeForAction(action);
+    return {
+      matches,
+      loading: matches && preview.status === "loading",
+      ready: matches && preview.status === "ready" && !!preview.result,
+      error: matches && preview.status === "error",
+      result: matches ? preview.result : null
+    };
+  };
+  const handleActionFocus = (action: SimulationAction) => {
+    const stateForAction = actionPreviewState(action);
+    if (!stateForAction.matches || preview.status === "idle" || preview.status === "stale" || preview.status === "error") requestPreview(action);
+  };
+  const handleActionClick = (action: SimulationAction) => {
+    const stateForAction = actionPreviewState(action);
+    if (stateForAction.ready) {
+      confirmPreview();
+      return;
+    }
+    requestPreview(action);
+  };
+  const actionStats = (action: SimulationAction) => {
+    const stateForAction = actionPreviewState(action);
+    const result = stateForAction.result;
+    const changes = result?.forecastChanges.filter((change) => change.edgeId === edge.id) ?? [];
+    const selectedChange =
+      changes.find((change) => Math.abs(change.actualHorizonMinutes - (result?.horizonMinutes ?? 0)) < 0.000001) ??
+      changes.find((change) => change.requestedHorizonMinutes === result?.requestedHorizonMinutes);
+    if (stateForAction.loading) return <span>Calculating measured effect...</span>;
+    if (stateForAction.error) return <span>Preview failed. Focus again to retry.</span>;
+    if (!result) return <span>Focus this action to preview measured effect before applying it.</span>;
+    return (
+      <dl className="actionStats">
+        <div>
+          <dt>Affected</dt>
+          <dd>{result.affectedVehicles}</dd>
+        </div>
+        <div>
+          <dt>This road</dt>
+          <dd>{selectedChange ? `${(selectedChange.before * 100).toFixed(0)}% -> ${(selectedChange.after * 100).toFixed(0)}%` : "Unavailable"}</dd>
+        </div>
+        <div>
+          <dt>Delay</dt>
+          <dd>{result.passengerDelayDeltaMinutes.toFixed(1)} min</dd>
+        </div>
+        <div>
+          <dt>Score</dt>
+          <dd>{result.networkCostDelta.toFixed(0)}</dd>
+        </div>
+        <div>
+          <dt>Horizon</dt>
+          <dd>
+            {result.horizonMinutes}m{result.truncated ? " end" : ""}
+          </dd>
+        </div>
+      </dl>
+    );
+  };
+  const normalPlayerPreview = preview.action?.type === "REROUTE" || preview.action?.type === "DELAY_DEPARTURES";
 
   return (
     <section className="panel">
@@ -69,22 +140,37 @@ export function RoadInspector() {
       )}
       <div className="actionGrid" aria-label="Action choices">
         <div className="actionChoice">
-          <button className={highlightPreview ? "tutorialTarget" : ""} onClick={() => requestPreview(rerouteAction)} aria-describedby="reroute-help">
-            <Route size={16} /> Preview Reroute
+          <button
+            className={highlightPreview ? "tutorialTarget" : ""}
+            onFocus={() => handleActionFocus(rerouteAction)}
+            onMouseEnter={() => handleActionFocus(rerouteAction)}
+            onClick={() => handleActionClick(rerouteAction)}
+            aria-describedby="reroute-help"
+          >
+            <Route size={16} /> Reroute
           </button>
           <div className="actionHint" id="reroute-help" role="tooltip">
             <strong>Reroute 25%</strong>
             <span>Moves eligible approaching vehicles around this road. Best for a bridge or approach forecast to overload soon.</span>
+            {actionStats(rerouteAction)}
+            <em>{actionPreviewState(rerouteAction).ready ? "Click to apply this reroute now." : "Wait for stats before applying."}</em>
           </div>
         </div>
         {showHold && (
           <div className="actionChoice">
-            <button onClick={() => requestPreview(holdAction)} aria-describedby="hold-help">
-              <TimerReset size={16} /> Preview Hold
+            <button
+              onFocus={() => handleActionFocus(holdAction)}
+              onMouseEnter={() => handleActionFocus(holdAction)}
+              onClick={() => handleActionClick(holdAction)}
+              aria-describedby="hold-help"
+            >
+              <TimerReset size={16} /> Hold
             </button>
             <div className="actionHint" id="hold-help" role="tooltip">
               <strong>Hold trips 5m</strong>
               <span>Keeps eligible waiting trips off the network briefly. Useful when adding more cars would make a jam worse.</span>
+              {actionStats(holdAction)}
+              <em>{actionPreviewState(holdAction).ready ? "Click to apply this hold now." : "Wait for stats before applying."}</em>
             </div>
           </div>
         )}
@@ -96,7 +182,7 @@ export function RoadInspector() {
           <button onClick={clearActionNotice}>Dismiss</button>
         </div>
       )}
-      {preview.status !== "idle" && (
+      {preview.status !== "idle" && (highlightReview || !normalPlayerPreview) && (
         <div className={`previewDialog ${highlightReview ? "tutorialTarget" : ""}`}>
           <strong>
             {previewActionLabel} on {reviewedEdge?.name ?? reviewedEdgeId}

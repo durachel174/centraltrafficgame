@@ -299,14 +299,14 @@ small {
 }
 
 .actionHint {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
   z-index: 5;
-  width: min(260px, 82vw);
+  width: min(320px, calc(100vw - 32px));
   display: grid;
-  gap: 4px;
-  padding: 10px;
+  gap: 8px;
+  padding: 12px;
   border: 1px solid rgba(248, 242, 165, 0.34);
   border-radius: 8px;
   background: rgba(8, 18, 15, 0.98);
@@ -316,7 +316,7 @@ small {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 5px);
+  transform: translateY(5px);
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
@@ -327,7 +327,37 @@ small {
 .actionChoice:hover .actionHint,
 .actionChoice:focus-within .actionHint {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translateY(0);
+}
+
+.actionHint em {
+  color: #f8f2a5;
+  font-style: normal;
+}
+
+.actionStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 0;
+}
+
+.actionStats div {
+  padding: 7px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.actionStats dt {
+  color: #9db0aa;
+  font-size: 11px;
+}
+
+.actionStats dd {
+  margin: 2px 0 0;
+  color: #e9f2ee;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .actionNotice {

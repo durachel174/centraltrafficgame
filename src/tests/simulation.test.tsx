@@ -1131,8 +1131,8 @@ describe("preview UI flow", () => {
     });
 
     const { host, root } = renderInspector();
-    expect(host.textContent).toMatch(/Selected road\d+% -> \d+%/);
-    expect(host.textContent).toContain("Horizon15 min");
+    expect(host.textContent).toMatch(/This road\d+% -> \d+%/);
+    expect(host.textContent).toContain("Horizon15m");
     expect(host.textContent).not.toContain("Unavailable");
     act(() => {
       root.unmount();
@@ -1322,7 +1322,7 @@ describe("player interface and tutorial", () => {
       root.render(<App />);
     });
     expect(host.textContent).toContain("1x");
-    expect(host.textContent).toContain("Preview Hold");
+    expect(host.textContent).toContain("Hold");
     expect(host.textContent).toContain("Keeps eligible waiting trips off the network briefly");
     expect(host.textContent).not.toContain("Keep The Morning Commute Moving");
     act(() => root.unmount());
@@ -1396,7 +1396,7 @@ describe("player interface and tutorial", () => {
   it("advanced controls are revealed at the intended tutorial stages", () => {
     useGameStore.getState().replayTutorial();
     const { host, root } = renderApp();
-    expect(host.textContent).not.toContain("Preview Hold");
+    expect(host.textContent).not.toContain("Hold trips 5m");
     expect(host.textContent).not.toContain("Detailed stats");
     expect(host.textContent).not.toContain("1x");
     act(() => {
@@ -1405,7 +1405,7 @@ describe("player interface and tutorial", () => {
     act(() => {
       root.render(<App />);
     });
-    expect(host.textContent).toContain("Preview Hold");
+    expect(host.textContent).toContain("Hold");
     expect(host.textContent).toContain("Keeps eligible waiting trips off the network briefly");
     expect(host.textContent).toContain("Detailed stats");
     expect(host.textContent).toContain("1x");
