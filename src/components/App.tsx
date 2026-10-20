@@ -1,3 +1,4 @@
+import { PerformancePanel } from "./PerformancePanel";
 import { useEffect } from "react";
 import { ChevronDown, Gauge, HelpCircle, Pause, Play, RotateCcw, Wrench } from "lucide-react";
 import { useGameStore } from "../game/GameStore";
@@ -89,6 +90,7 @@ export function App() {
             </details>
           )}
           {devAvailable && !tutorialActive && !replay && devToolsOpen && <DebugPanel />}
+          {devAvailable && !tutorialActive && <PerformancePanel />}
         </aside>
       </main>
       <TutorialCoach />

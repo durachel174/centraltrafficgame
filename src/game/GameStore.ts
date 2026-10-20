@@ -1,3 +1,4 @@
+import { recordBrowserTiming } from "../performance/Recorder";
 import { create } from "zustand";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
 import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
@@ -119,7 +120,7 @@ const saveTutorialComplete = () => {
 };
 
 const createEngine = (scenario: Scenario) => {
-  const engine = new SimulationEngine(scenario);
+  const engine = new SimulationEngine(scenario, recordBrowserTiming);
   engine.reset(scenario.seed);
   if (scenario.id === practiceScenario.id) {
     for (let i = 0; i < practiceCheckpointTicks; i++) engine.step({ type: "NO_OP" });
@@ -483,6 +484,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const roundTripStart = performance.now();
     worker.onmessage = (event: MessageEvent<PreviewWorkerResponse>) => {
       const message = event.data;
+      recordBrowserTiming?.("previewWorker", message.timings.calculationMs);
+      recordBrowserTiming?.("previewRoundTrip", performance.now() - roundTripStart);
       worker.terminate();
       if (activePreviewWorker === worker) activePreviewWorker = null;
       const current = get().preview;
@@ -543,12 +546,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         });
       }
     };
+    const snapshot = engine.exportSnapshot();
+    const serializationStart = performance.now();
     worker.postMessage({
       requestId,
       sessionId,
-      snapshot: engine.exportSnapshot(),
+      snapshot,
       action: copiedAction
     } satisfies PreviewWorkerRequest);
+    recordBrowserTiming?.("snapshotPostMessage", performance.now() - serializationStart);
   },
   cancelPreview: () => {
     stopActiveWorker();

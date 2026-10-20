@@ -1,3 +1,4 @@
+import { recordBrowserTiming } from "../performance/Recorder";
 import { useEffect, useRef } from "react";
 import { useGameStore } from "../game/GameStore";
 import { renderTrafficMap } from "../rendering/TrafficRenderer";
@@ -7,7 +8,9 @@ export function TrafficMap() {
   const { engine, version, selectedEdgeId, selectEdge, preview } = useGameStore();
 
   useEffect(() => {
+    const started = recordBrowserTiming ? performance.now() : 0;
     if (canvasRef.current) renderTrafficMap(canvasRef.current, engine, selectedEdgeId, preview.result);
+    recordBrowserTiming?.("canvasDraw", performance.now() - started);
   }, [engine, selectedEdgeId, version, preview.result]);
 
   return (

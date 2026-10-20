@@ -49,7 +49,7 @@ export class SimulationEngine {
   forecasts: TrafficForecast[] = [];
   alerts: TrafficAlert[] = [];
 
-  constructor(private scenario: Scenario) {
+  constructor(private scenario: Scenario, private readonly timing?: (name: string, milliseconds: number) => void) {
     this.graph = new TrafficGraph(scenario.graph);
     this.rng = new SeededRandom(scenario.seed ?? 1);
     this.router = new Router(this.graph, scenario.congestion);
@@ -84,6 +84,7 @@ export class SimulationEngine {
   }
 
   step(action: SimulationAction = { type: "NO_OP" }) {
+    const measuredStart = this.timing ? performance.now() : 0;
     if (this.isDone()) {
       return { observation: this.getObservation(), reward: 0, done: true, info: this.getInfo() };
     }
@@ -116,7 +117,9 @@ export class SimulationEngine {
       });
     }
     this.previousObjective = this.metrics.objective;
-    return { observation: this.getObservation(), reward, done: this.isDone(), info: this.getInfo() };
+    const result = { observation: this.getObservation(), reward, done: this.isDone(), info: this.getInfo() };
+    this.timing?.("tick", performance.now() - measuredStart);
+    return result;
   }
 
   getState() {
@@ -230,7 +233,10 @@ export class SimulationEngine {
   }
 
   exportSnapshot(): SimulationSnapshot {
-    return this.createSnapshot();
+    const started = this.timing ? performance.now() : 0;
+    const snapshot = this.createSnapshot();
+    this.timing?.("snapshot", performance.now() - started);
+    return snapshot;
   }
 
   restoreFromSnapshot(snapshot: SimulationSnapshot) {
@@ -452,7 +458,9 @@ export class SimulationEngine {
       satisfaction: this.scenario.satisfaction
     });
     if (this.forecastingEnabled && this.time - this.lastForecastTime >= (this.scenario.forecast?.refreshIntervalMinutes ?? 1)) {
+      const started = this.timing ? performance.now() : 0;
       this.forecasts = this.computeForecastsFromCurrent();
+      this.timing?.("forecastMain", performance.now() - started);
       this.alerts = createAlerts(this.forecasts, {
         warningUtilization: this.scenario.forecast?.warningUtilization ?? 1,
         criticalUtilization: this.scenario.forecast?.criticalUtilization ?? 1.25
