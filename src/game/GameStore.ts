@@ -36,6 +36,7 @@ interface GameStore {
   selectedEdgeId: string | null;
   baselineObjective: number | null;
   devToolsOpen: boolean;
+  previewCanceled: boolean;
   lastActionNotice: { text: string; affected: number; actionType: SimulationAction["type"] } | null;
   tutorial: TutorialState;
   help: { open: boolean; confirmingReplay: boolean; previousSpeed: Speed | null };
@@ -184,6 +185,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   selectedEdgeId: null,
   baselineObjective: null,
   devToolsOpen: false,
+  previewCanceled: false,
   lastActionNotice: null,
   tutorial: initialTutorial(!hasCompletedTutorial(), hasCompletedTutorial()),
   help: { open: false, confirmingReplay: false, previousSpeed: null },
@@ -191,7 +193,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSpeed: (speed) =>
     set((state) => {
       if (state.tutorial.active && state.tutorial.step === "review" && speed > 0) {
-        return { speed: 0, tutorial: { ...state.tutorial, message: "Confirm or cancel the preview before resuming time." } };
+        return { speed: 0, tutorial: { ...state.tutorial, message: "Apply or cancel the preview before resuming time." } };
       }
       return { speed };
     }),
@@ -240,6 +242,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selectedEdgeId: null,
       baselineObjective: null,
       preview: idlePreview(requestCounter, sessionCounter),
+      previewCanceled: false,
       lastActionNotice: null,
       help: { open: false, confirmingReplay: false, previousSpeed: null },
       tutorial: scenarioMode === "monday" ? completeTutorial() : initialTutorial(!completed, completed)
@@ -300,6 +303,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       speed: scenarioMode === "practice" && tutorial.active ? 0 : get().speed,
       selectedEdgeId: null,
       preview: idlePreview(requestCounter, sessionCounter),
+      previewCanceled: false,
       lastActionNotice: null,
       help: { open: false, confirmingReplay: false, previousSpeed: null },
       tutorial: tutorial.active ? initialTutorial(true, tutorial.completed) : tutorial
@@ -321,6 +325,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const activeTutorial = get().tutorial;
     set({
       speed: 0,
+      previewCanceled: false,
       tutorial:
         activeTutorial.active && activeTutorial.step === "preview" && isNorthBridgeReroute(copiedAction)
           ? cached
@@ -430,12 +435,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     requestCounter += 1;
     set((state) => ({
       preview: idlePreview(Math.max(requestCounter, state.preview.requestId + 1), sessionCounter),
+      previewCanceled: true,
       tutorial: state.tutorial.active && state.tutorial.step === "review" ? { ...state.tutorial, step: "preview", message: "Preview canceled. Try the reroute again, or Skip." } : state.tutorial
     }));
   },
   confirmPreview: () => {
     const { preview, version, step, engine, tutorial } = get();
-    if (preview.status !== "ready" || !preview.action || preview.baseVersion !== version || preview.baseSessionId !== sessionCounter) {
+    if (preview.status === "idle") return;
+    if (preview.status !== "ready" || !preview.action || !preview.result || preview.baseVersion !== version || preview.baseSessionId !== sessionCounter) {
       set({ preview: { ...preview, status: "stale" } });
       return;
     }
@@ -459,19 +466,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
               : "Action applied",
         affected,
         actionType: action.type
-      },
-      tutorial:
-        tutorial.active && tutorial.step === "review"
-          ? {
-              ...tutorial,
-              step: "observe",
-              observedFromTime: engine.getObservation().time,
-              observationStart: { northBridgeVehicles: beforeNorth, southBridgeVehicles: beforeSouth },
-              message: null
-            }
-          : tutorial
+      }
     }));
     step(action);
+    if (tutorial.active && tutorial.step === "review") {
+      set({ tutorial: {
+        ...tutorial,
+        step: "observe",
+        observedFromTime: engine.getObservation().time,
+        observationStart: { northBridgeVehicles: beforeNorth, southBridgeVehicles: beforeSouth },
+        message: null
+      } });
+    }
   },
   advanceTutorial: () => {
     set((state) => {
@@ -484,7 +490,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   skipTutorial: () => {
     saveTutorialComplete();
-    set({ tutorial: completeTutorial(), speed: 1, selectedEdgeId: "north_bridge" });
+    get().cancelPreview();
+    set({ tutorial: completeTutorial(), previewCanceled: false, speed: 1, selectedEdgeId: "north_bridge" });
   },
   replayTutorial: () => {
     get().setScenarioMode("practice");

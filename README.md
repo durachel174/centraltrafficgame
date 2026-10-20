@@ -15,7 +15,7 @@ npm run benchmark
 
 ## Player Flow
 
-The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage` and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, confirm, resume time, and watch the observed result.
+The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage` and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, apply or cancel, resume time, and watch the observed result.
 
 Help opens as a safe in-game panel. It explains the controls without replacing the current run, and replaying the tutorial requires a separate Start Practice confirmation because it starts a fresh practice session. The tutorial recovers if the player cancels, changes roads, resets, or receives an unusable preview.
 
@@ -45,8 +45,17 @@ Each simulation step covers `[time, time + 0.25]` simulated minutes. Player acti
 
 ## Preview Flow
 
-Road previews are calculated only after the player requests one. In the browser, expensive preview rollouts run in a dedicated Web Worker from a serializable engine snapshot. The game pauses while reviewing a preview, caches results by simulation session, revision, and action parameters, and marks a preview stale if the simulation advances or the selected road changes. Confirm applies the exact reviewed action once; Cancel changes nothing. Preview delay fields are passenger-minutes total and minutes per passenger over the same branch cohort.
+Road previews are calculated only after the player requests one. In the browser, expensive preview rollouts run in a dedicated Web Worker from a serializable engine snapshot. Hover and keyboard focus show an explanation only and preserve playback speed. Clicking **Preview Reroute** or **Preview Hold** explicitly pauses time and requests a calculation. The original card always remains a Preview control. A shared review for normal play and tutorial has separate **Apply** and **Cancel** buttons. Apply executes the exact reviewed action once, guarded by session and revision. Cancel changes no engine state or logs and offers **Resume 1x** while paused.
+
+Results are cached by session, revision, and action parameters. Playback makes a review stale; changing roads dismisses it. Retry recomputes stale or failed previews. Reset invalidates pending responses and cached results; Help stops pending workers. The review shows the actual affected count, selected-road utilization, passenger-delay delta in **passenger-minutes** and **minutes per rider**, satisfaction in percentage points, and system-cost delta (**lower cost is better**). Alternative roads are ranked by their largest absolute utilization change, with each road listed once in the summary and all sampled horizons in expandable details. Projection labels show actual horizons and scenario-end truncation. Every preview assumes no further intervention; unfavorable effects remain visible and projected effects remain separate from observed tutorial outcomes.
 
 Forecast and preview labels use actual elapsed projection time when a scenario ends before the requested horizon, and mark those samples as scenario end. Forecast and preview horizons must align to the 0.25-minute simulation tick.
 
 The road hold control holds currently eligible waiting trips whose fastest route would traverse the selected road. It does not create a persistent future-demand control; future trips are unaffected unless they are already waiting when the action is applied.
+
+
+## Results and validation
+
+Results use the actual scenario name. Practice reports completion and observed metrics without a competitive rating or baseline improvement, and offers **Start Monday Morning** and **Practice Again**. Monday Morning shows final system cost and a compatible no-action baseline (same scenario, seed, and end time); higher improvement and lower system cost are better. Both screens display waiting and active unfinished trips alongside arrivals. Completed-travel statistics cover arrivals only. No best/worst decision commentary or optimality rating is inferred.
+
+The regression suite includes UI clicks for explicit preview, review, Apply, Cancel, Retry, tutorial recovery, and results actions, alongside deterministic engine, worker protocol, and replay tests. JSDOM uses a simulated worker and does not render Canvas; those tests are not browser validation. See [implementation status](docs/IMPLEMENTATION_STATUS.md) for the actual browser checks and remaining limitations.

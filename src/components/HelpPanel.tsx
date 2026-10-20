@@ -12,11 +12,11 @@ export function HelpPanel() {
           <HelpCircle size={18} />
           <h2 id="help-title">How To Play</h2>
         </div>
-        <p>Keep the morning commute moving by watching forecasts, previewing actions, and confirming only the tradeoffs you want.</p>
+        <p>Keep the morning commute moving by watching forecasts, previewing actions, and applying only the tradeoffs you want.</p>
         <ul>
           <li>Select a road to inspect current traffic and forecast pressure.</li>
           <li>Preview reroutes or holds before applying them.</li>
-          <li>Confirm applies the reviewed action once. Cancel leaves the run unchanged.</li>
+          <li>Apply executes the reviewed action once. Cancel leaves the run unchanged.</li>
           <li>Worst road pressure is the busiest road, not a citywide average.</li>
         </ul>
         {help.confirmingReplay ? (

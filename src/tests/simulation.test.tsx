@@ -3,6 +3,8 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, canUseDevTools } from "../components/App";
+import { EndScreen } from "../components/EndScreen";
+import { TutorialCoach } from "../components/TutorialCoach";
 import { RoadInspector } from "../components/RoadInspector";
 import { useGameStore } from "../game/GameStore";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
@@ -1131,8 +1133,8 @@ describe("preview UI flow", () => {
     });
 
     const { host, root } = renderInspector();
-    expect(host.textContent).toMatch(/This road\d+% -> \d+%/);
-    expect(host.textContent).toContain("Horizon15m");
+    expect(host.textContent).toMatch(/This road utilization\d+% -> \d+%/);
+    expect(host.textContent).toContain("Projection horizon15 min");
     expect(host.textContent).not.toContain("Unavailable");
     act(() => {
       root.unmount();
@@ -1537,5 +1539,195 @@ describe("player interface and tutorial", () => {
     const southNo = noAction.getState().graph.edge("south_bridge").currentVehicleCount;
     const southYes = rerouted.getState().graph.edge("south_bridge").currentVehicleCount;
     expect(southYes).toBeGreaterThan(southNo);
+  });
+});
+
+
+describe("explicit preview and final-results interactions", () => {
+  function freePractice() {
+    useGameStore.getState().startFreePractice();
+    useGameStore.getState().setSpeed(4);
+  }
+
+  it("hover and keyboard focus preserve speed, engine, logs, and tutorial without starting workers", () => {
+    freePractice();
+    const before = useGameStore.getState().engine.exportSnapshot();
+    const logs = useGameStore.getState().engine.createRun();
+    const workers = fakeWorkers.length;
+    const tutorial = useGameStore.getState().tutorial;
+    const { host, root } = renderInspector();
+    act(() => {
+      for (const button of host.querySelectorAll(".actionChoice button")) {
+        button.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+        button.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+      }
+    });
+    expect(fakeWorkers).toHaveLength(workers);
+    expect(useGameStore.getState().speed).toBe(4);
+    expect(useGameStore.getState().engine.exportSnapshot()).toEqual(before);
+    expect(useGameStore.getState().engine.createRun()).toEqual(logs);
+    expect(useGameStore.getState().tutorial).toEqual(tutorial);
+    act(() => root.unmount());
+  });
+
+  it("clicking Preview pauses once, keeps a separate Apply, and executes the exact reviewed action once", async () => {
+    vi.useFakeTimers();
+    freePractice();
+    const { host, root } = renderInspector();
+    const engine = useGameStore.getState().engine;
+    const step = vi.spyOn(engine, "step");
+    const workers = fakeWorkers.length;
+    clickButton(host, "Preview Reroute");
+    expect(fakeWorkers).toHaveLength(workers + 1);
+    expect(useGameStore.getState().speed).toBe(0);
+    expect(host.textContent).toContain("Calculating preview");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    const reviewed = { ...useGameStore.getState().preview.action! };
+    expect(step).not.toHaveBeenCalled();
+    expect(host.textContent).toContain("Other affected roads");
+    expect(host.textContent).toContain("South Bridge");
+    expect(host.textContent).toContain("passenger-minutes");
+    expect(host.textContent).toContain("minutes per rider");
+    expect(host.textContent).toContain("lower cost is better");
+    expect(host.textContent).toContain("no further intervention");
+    expect(host.textContent).not.toContain("Score");
+    // The original card can only request another review, even when a result is ready.
+    clickButton(host, "Preview Reroute");
+    expect(step).not.toHaveBeenCalled();
+    const apply = [...host.querySelectorAll("button")].find(button => button.textContent === "Apply")!;
+    act(() => {
+      apply.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      apply.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(step).toHaveBeenCalledTimes(1);
+    expect(step).toHaveBeenCalledWith(reviewed);
+    expect(engine.createRun().actions.filter(entry => entry.action.type === "REROUTE")).toHaveLength(1);
+    act(() => root.unmount());
+  });
+
+  it("Cancel leaves state and logs unchanged and explicitly offers Resume", async () => {
+    vi.useFakeTimers();
+    freePractice();
+    const { host, root } = renderInspector();
+    const before = useGameStore.getState().engine.exportSnapshot();
+    const logs = useGameStore.getState().engine.createRun();
+    clickButton(host, "Preview Hold");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    expect(host.textContent).toContain("Hold 25% of eligible waiting trips for 5 min");
+    clickButton(host, "Cancel");
+    expect(useGameStore.getState().engine.exportSnapshot()).toEqual(before);
+    expect(useGameStore.getState().engine.createRun()).toEqual(logs);
+    expect(host.textContent).toContain("No action applied");
+    clickButton(host, "Resume 1x");
+    expect(useGameStore.getState().speed).toBe(1);
+    act(() => root.unmount());
+  });
+
+  it("stale reviews cannot apply and Retry and reset recover through the UI", async () => {
+    vi.useFakeTimers();
+    freePractice();
+    const { host, root } = renderInspector();
+    FakePreviewWorker.failNext = true;
+    clickButton(host, "Preview Reroute");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    expect(host.textContent).toContain("forced worker failure");
+    clickButton(host, "Retry");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    const oldApply = [...host.querySelectorAll("button")].find(button => button.textContent === "Apply")!;
+    act(() => useGameStore.getState().step());
+    act(() => oldApply.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+    expect(useGameStore.getState().engine.createRun().actions.filter(entry => entry.action.type === "REROUTE")).toHaveLength(0);
+    expect(host.textContent).toContain("Recompute before applying");
+    clickButton(host, "Retry");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    expect(host.textContent).toContain("Apply");
+    act(() => useGameStore.getState().reset());
+    expect(host.querySelector('[aria-label="Action review"]')).toBeNull();
+    act(() => root.unmount());
+  });
+
+  it("ranks distinct alternative roads by strongest change and puts other horizons in details", async () => {
+    vi.useFakeTimers();
+    freePractice();
+    const { host, root } = renderInspector();
+    clickButton(host, "Preview Reroute");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    const sample = useGameStore.getState().preview.result!.forecastChanges[0];
+    act(() => useGameStore.setState(state => ({ preview: { ...state.preview, result: {
+      ...state.preview.result!, passengerDelayDeltaMinutes: 12.5, passengerDelayDeltaPerPassenger: 0.25,
+      forecastChanges: [
+        { ...sample, edgeId: "small", before: 0.5, after: 0.52 },
+        { ...sample, edgeId: "south_bridge", before: 0.2, after: 0.8 },
+        { ...sample, edgeId: "south_bridge", before: 0.2, after: 0.7, actualHorizonMinutes: 10 },
+        { ...sample, edgeId: "west_bypass", before: 0.7, after: 0.4 },
+        { ...sample, edgeId: "north_feed", before: 0.5, after: 0.6 }
+      ]
+    } } })));
+    const summary = host.querySelector('[aria-label="Other affected roads"]')!.textContent!;
+    expect(summary.indexOf("South Bridge")).toBeLessThan(summary.indexOf("west bypass"));
+    expect(summary.match(/South Bridge/g)).toHaveLength(1);
+    expect(summary).not.toContain("small");
+    expect(host.querySelector("details")!.textContent).toContain("small");
+    expect(host.textContent).toContain("12.5 passenger-minutes (0.25 minutes per rider)");
+    act(() => root.unmount());
+  });
+
+  it("tutorial uses the same review, Cancel recovers, and Apply precedes observation", async () => {
+    vi.useFakeTimers();
+    useGameStore.getState().replayTutorial();
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    act(() => root.render(<><RoadInspector /><TutorialCoach /></>));
+    clickButton(host, "Continue");
+    clickButton(host, "Select North Bridge");
+    clickButton(host, "Continue");
+    act(() => host.querySelector(".actionChoice button")!.dispatchEvent(new FocusEvent("focusin", { bubbles: true })));
+    expect(useGameStore.getState().tutorial.step).toBe("preview");
+    clickButton(host, "Preview Reroute");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    expect(useGameStore.getState().tutorial.step).toBe("review");
+    expect(host.querySelectorAll('[aria-label="Action review"]')).toHaveLength(1);
+    clickButton(host, "Cancel");
+    expect(useGameStore.getState().tutorial.step).toBe("preview");
+    clickButton(host, "Preview Reroute");
+    await act(async () => { await vi.runAllTimersAsync(); });
+    clickButton(host, "Apply");
+    expect(useGameStore.getState().tutorial.step).toBe("observe");
+    expect(useGameStore.getState().engine.createRun().actions.filter(entry => entry.action.type === "REROUTE")).toHaveLength(1);
+    act(() => root.unmount());
+  });
+
+  it("practice and Monday results have truthful titles, metrics, and restart actions", () => {
+    freePractice();
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    act(() => root.render(<EndScreen />));
+    expect(host.textContent).toContain(`${practiceScenario.name} Complete`);
+    expect(host.textContent).toContain("Practice complete");
+    expect(host.textContent).not.toContain("Improvement");
+    clickButton(host, "Practice Again");
+    expect(useGameStore.getState().tutorial.active).toBe(false);
+    expect(useGameStore.getState().speed).toBe(1);
+    expect(useGameStore.getState().preview.status).toBe("idle");
+    clickButton(host, "Start Monday Morning");
+    expect(host.textContent).toContain(`${mondayMorningScenario.name} Complete`);
+    expect(host.textContent).toContain("higher is better");
+    expect(host.textContent).toContain("lower is better");
+    // Advance a real scenario to completion; verify the displayed unfinished counts.
+    act(() => {
+      const engine = useGameStore.getState().engine;
+      while (!engine.isDone()) engine.step();
+      useGameStore.setState(state => ({ version: state.version + 1 }));
+    });
+    const metrics = useGameStore.getState().engine.getState().metrics;
+    expect(metrics.waitingTrips + metrics.activeTrips).toBeGreaterThan(0);
+    expect(host.textContent).toContain(`Waiting unfinished trips${metrics.waitingTrips}`);
+    expect(host.textContent).toContain(`Active unfinished trips${metrics.activeTrips}`);
+    expect(metrics.tripsCompleted + metrics.waitingTrips + metrics.activeTrips).toBe(metrics.tripsRequested);
+    expect(host.textContent).not.toMatch(/Best decision|Worst decision|Rating|optimal/i);
+    clickButton(host, "Run Again");
+    expect(useGameStore.getState().engine.isDone()).toBe(false);
+    expect(useGameStore.getState().speed).toBe(1);
+    act(() => root.unmount());
   });
 });

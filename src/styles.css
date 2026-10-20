@@ -542,3 +542,37 @@ small {
     animation: none !important;
   }
 }
+
+/* Keep contextual help from obscuring an active review. */
+.actionGrid.hasPreview .actionHint {
+  display: none;
+}
+
+.previewDialog .statGrid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.previewDialog .statGrid strong {
+  overflow-wrap: anywhere;
+}
+
+.previewDialog details {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.endScreen {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.previewDialog {
+  font-size: 12px;
+  line-height: 1.35;
+  gap: 8px;
+}
+
+.previewDialog .statGrid {
+  gap: 6px 10px;
+}
