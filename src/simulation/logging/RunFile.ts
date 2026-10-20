@@ -72,6 +72,7 @@ export function createCompletedRun(engine: SimulationEngine): CompletedRun {
   const snapshot = engine.exportSnapshot();
   const run = engine.createRun();
   validateActionTiming(run.actions, snapshot.scenario);
+  if (run.actions.some(entry => !Number.isInteger(entry.affectedCount))) fail("Recorded affected counts are unavailable. Older snapshots cannot be exported as this run format.");
   return {
     ...run,
     schemaVersion: RUN_SCHEMA_VERSION,
@@ -131,6 +132,7 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
 
 export function verifyCompletedRun(engine: SimulationEngine, run: CompletedRun): string | null {
   if (!engine.isDone()) return "Replay has not reached scenario end.";
+  if (canonicalJSON(engine.createRun().actions) !== canonicalJSON(run.actions)) return "Replay verification failed: recorded action log differs from executed actions, affected counts, or tick rewards.";
   if (canonicalJSON(engine.getState().metrics) !== canonicalJSON(run.finalMetrics)) return "Replay verification failed: final metrics differ from the recorded run.";
   if (finalStateChecksum(engine.exportSnapshot()) !== run.finalStateChecksum) return "Replay verification failed: deterministic final simulation state differs.";
   return null;

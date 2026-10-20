@@ -56,6 +56,21 @@ The road hold control holds currently eligible waiting trips whose fastest route
 
 ## Results and validation
 
-Results use the actual scenario name. Practice reports completion and observed metrics without a competitive rating or baseline improvement, and offers **Start Monday Morning** and **Practice Again**. Monday Morning shows final system cost and a compatible no-action baseline (same scenario, seed, and end time); higher improvement and lower system cost are better. Both screens display waiting and active unfinished trips alongside arrivals. Completed-travel statistics cover arrivals only. No best/worst decision commentary or optimality rating is inferred.
+Results use the actual scenario name. Practice reports completion and observed metrics without a competitive rating or baseline improvement, and offers **Start Monday Morning** and **Practice Again**. Monday Morning shows final system cost, weighted objective components, and a compatible no-action baseline computed in a dedicated worker; higher improvement and lower system cost are better. Compatibility includes engine/scenario versions, all scenario configuration and objective weights, seed, and start/end time. Both screens display waiting and active unfinished trips alongside arrivals. Completed-travel statistics cover arrivals only. No best/worst decision commentary or optimality rating is inferred.
 
 The regression suite includes UI clicks for explicit preview, review, Apply, Cancel, Retry, tutorial recovery, and results actions, alongside deterministic engine, worker protocol, and replay tests. JSDOM uses a simulated worker and does not render Canvas; those tests are not browser validation. See [implementation status](docs/IMPLEMENTATION_STATUS.md) for the actual browser checks and remaining limitations.
+
+
+## Monday Morning challenge
+
+Start Monday Morning at 07:00, anticipate the configured rush-hour pressure, handle the scheduled **08:12 North Bridge incident** (40% capacity reduction for 15 minutes), observe the **08:27 capacity restoration**, and finish at 09:00. A compact stage/status strip shows commute building, rush hour, incident, recovery, and completion. Restoration means capacity is available again; it does not claim the traffic has cleared. Incident facts and remaining scheduled duration come from configuration and actual event state, under any playback speed.
+
+**Decision history** records actual applied interventions once, with simulation time, target, parameters, affected count, and immediate tick system-cost change. That change includes traffic evolution during the interval; it is not a long-term causal rating. Canceled previews are excluded. The explicit Preview → Review → Apply/Cancel controls remain available during live play.
+
+At results, inspect the objective components and baseline conditions. **Try This Seed Again** creates a clean identical challenge; **New Seed** uses a new nonzero 32-bit seed consistently for demand, baseline, logging, export, and replay. The current seed is available in the header and results.
+
+**Watch Replay** starts a paused replay from the original 07:00 state. Resume with 1x/2x/4x; pause whenever needed. Live interventions are disabled. **Restart Replay** restarts the recorded stream. At 09:00 the app verifies every final metric and a checksum of all deterministic simulation state, displaying success or a specific failure.
+
+**Export Completed Run JSON** downloads a local versioned file. Import through **Run files** during free play or the results screen. Invalid/unsupported/incompatible files report an error without replacing the session. A valid import shows its seed/decision count and requires **Start Imported Replay** before replacing the active run. No file is uploaded. The importer supports this version of Monday Morning, not older internal run formats or practice exports. Files may contain at most one intervention per tick; duplicate same-tick entries are rejected explicitly rather than discarded.
+
+See [replay format and compatibility](docs/replay.md) for validation rules, deterministic representation, and versioning. Baseline worker failures show an unavailable comparison and Retry; there is no blocking fallback. The checksum detects consistency problems and is not a tamper-proof signature.

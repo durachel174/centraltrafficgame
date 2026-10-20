@@ -2,7 +2,12 @@ import { create } from "zustand";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
 import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
 import { practiceCheckpointTicks, practiceScenario } from "../simulation/scenarios/PracticeScenario";
-import type { ActionPreview, Scenario, SimulationAction } from "../simulation/types";
+import { formatClock } from "./ScenarioProgress";
+import { actionForReplayTick } from "../simulation/logging/Replay";
+import { baselineIdentity } from "../simulation/logging/Identity";
+import { createCompletedRun, parseRunFile, verifyCompletedRun, type CompletedRun } from "../simulation/logging/RunFile";
+import type { BaselineResponse } from "../workers/baselineWorker";
+import type { ActionPreview, LoggedAction, Scenario, SimulationAction, SimulationMetrics } from "../simulation/types";
 import type { PreviewWorkerRequest, PreviewWorkerResponse } from "../workers/previewWorker";
 
 export type Speed = 0 | 1 | 2 | 4;
@@ -34,7 +39,21 @@ interface GameStore {
   version: number;
   speed: Speed;
   selectedEdgeId: string | null;
+  seed: number;
   baselineObjective: number | null;
+  baseline: { status: "idle" | "loading" | "ready" | "error"; identity: string | null; metrics: SimulationMetrics | null; error: string | null; calculationMs: number | null };
+  decisionHistory: LoggedAction[];
+  incidentNotice: string | null;
+  dismissIncidentNotice: () => void;
+  completedRun: CompletedRun | null;
+  replay: { run: CompletedRun; verification: "pending" | "verified" | "failed"; error: string | null } | null;
+  pendingImport: CompletedRun | null;
+  importError: string | null;
+  importRun: (text: string) => void;
+  cancelImport: () => void;
+  startReplay: (run?: CompletedRun) => void;
+  retrySameSeed: () => void;
+  newSeed: () => void;
   devToolsOpen: boolean;
   previewCanceled: boolean;
   lastActionNotice: { text: string; affected: number; actionType: SimulationAction["type"] } | null;
@@ -59,7 +78,7 @@ interface GameStore {
   startPracticeFromHelp: () => void;
   startFreePractice: () => void;
   toggleDevTools: () => void;
-  setScenarioMode: (mode: ScenarioMode) => void;
+  setScenarioMode: (mode: ScenarioMode, seed?: number) => void;
   selectEdge: (edgeId: string | null) => void;
   step: (action?: SimulationAction) => void;
   reset: () => void;
@@ -133,6 +152,10 @@ const previewCache = new Map<string, ActionPreview>();
 let sessionCounter = 1;
 let requestCounter = 0;
 let activePreviewWorker: Worker | null = null;
+let activeBaselineWorker: Worker | null = null;
+const baselineCache = new Map<string, BaselineResponse>();
+const emptyBaseline = (): GameStore["baseline"] => ({ status: "idle", identity: null, metrics: null, error: null, calculationMs: null });
+const stopBaselineWorker = () => { activeBaselineWorker?.terminate(); activeBaselineWorker = null; };
 
 const cloneAction = <T extends SimulationAction>(action: T): T => ({ ...action }) as T;
 const clonePreview = (preview: ActionPreview): ActionPreview => ({
@@ -183,7 +206,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
   version: 0,
   speed: hasCompletedTutorial() ? 1 : 0,
   selectedEdgeId: null,
+  seed: (hasCompletedTutorial() ? mondayMorningScenario : practiceScenario).seed ?? 1,
   baselineObjective: null,
+  baseline: emptyBaseline(),
+  decisionHistory: [],
+  incidentNotice: null,
+  dismissIncidentNotice: () => set({ incidentNotice: null }),
+  completedRun: null,
+  replay: null,
+  pendingImport: null,
+  importError: null,
+  importRun: (text) => {
+    try { set({ pendingImport: parseRunFile(text, mondayMorningScenario), importError: null }); }
+    catch (error) { set({ pendingImport: null, importError: error instanceof Error ? error.message : String(error) }); }
+  },
+  cancelImport: () => set({ pendingImport: null, importError: null }),
+  startReplay: (source) => {
+    const run = source ?? get().completedRun;
+    if (!run) return;
+    // Validate even in-memory runs, so replay never silently accepts a stale configuration.
+    let validated: CompletedRun;
+    try { validated = parseRunFile(JSON.stringify(run), mondayMorningScenario); }
+    catch (error) { set({ importError: error instanceof Error ? error.message : String(error) }); return; }
+    get().setScenarioMode("monday", validated.seed);
+    set({ speed: 0, completedRun: validated, replay: { run: validated, verification: "pending", error: null }, pendingImport: null });
+  },
+  retrySameSeed: () => { get().setScenarioMode(get().scenarioMode, get().seed); },
+  newSeed: () => {
+    const value = typeof crypto !== "undefined" && crypto.getRandomValues ? crypto.getRandomValues(new Uint32Array(1))[0] : Date.now() >>> 0;
+    const seed = value > 0 && value !== get().seed ? value : (get().seed % 0xffffffff) + 1;
+    get().setScenarioMode(get().scenarioMode, seed);
+  },
   devToolsOpen: false,
   previewCanceled: false,
   lastActionNotice: null,
@@ -226,16 +279,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ tutorial: completeTutorial(), speed: 1, selectedEdgeId: "north_bridge" });
   },
   toggleDevTools: () => set((state) => ({ devToolsOpen: !state.devToolsOpen })),
-  setScenarioMode: (scenarioMode) => {
+  setScenarioMode: (scenarioMode, selectedSeed) => {
+    stopBaselineWorker();
     stopActiveWorker();
     previewCache.clear();
     sessionCounter += 1;
     requestCounter += 1;
-    const scenario = scenarioByMode[scenarioMode];
+    const scenario = { ...scenarioByMode[scenarioMode], seed: selectedSeed ?? scenarioByMode[scenarioMode].seed ?? 1 };
     const completed = hasCompletedTutorial() || get().tutorial.completed;
     set({
       scenario,
       scenarioMode,
+      seed: scenario.seed,
+      baseline: emptyBaseline(),
+      decisionHistory: [],
+      incidentNotice: null,
+      completedRun: null,
+      replay: null,
+      pendingImport: null,
+      importError: null,
       engine: createEngine(scenario),
       version: 0,
       speed: scenarioMode === "practice" ? 0 : 1,
@@ -265,7 +327,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return { selectedEdgeId, preview: idlePreview(requestCounter, sessionCounter), tutorial };
     }),
   step: (action = { type: "NO_OP" }) => {
-    get().engine.step(action);
+    const { engine, replay } = get();
+    if (engine.isDone()) return;
+    // Replay owns the action stream. Even debug/store calls cannot insert live actions.
+    const applied = replay ? actionForReplayTick(replay.run, engine.getState().time + engine.dtMinutes) : action;
+    const beforeEvents = engine.getInfo().activeEventIds;
+    engine.step(applied);
+    const afterEvents = engine.getInfo().activeEventIds;
+    const changedEvent = get().scenario.events.find(event => beforeEvents.includes(event.id) !== afterEvents.includes(event.id));
+    const eventNotice = changedEvent ? afterEvents.includes(changedEvent.id)
+      ? `${changedEvent.title}. Scheduled ${formatClock(get().scenario.startTime + changedEvent.time)}–${formatClock(get().scenario.startTime + changedEvent.time + changedEvent.duration)}.`
+      : `${get().scenario.graph.edges.find(edge => edge.id === changedEvent.edgeId)?.name ?? changedEvent.edgeId}: scheduled restriction ended. Traffic may still be congested.`
+      : null;
+    const done = engine.isDone();
+    const verificationError = done && replay ? verifyCompletedRun(engine, replay.run) : null;
     set((state) => {
       const elapsed = state.tutorial.observedFromTime === null ? 0 : get().engine.getObservation().time - state.tutorial.observedFromTime;
       const observationComplete =
@@ -279,6 +354,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const startSouth = state.tutorial.observationStart?.southBridgeVehicles ?? 0;
       return {
         version: state.version + 1,
+        incidentNotice: eventNotice ?? state.incidentNotice,
+        decisionHistory: applied.type === "NO_OP" ? state.decisionHistory : engine.createRun().actions,
+        completedRun: done && !replay && state.scenarioMode === "monday" ? createCompletedRun(engine) : state.completedRun,
+        replay: done && replay ? { ...replay, verification: verificationError ? "failed" : "verified", error: verificationError } : state.replay,
         speed: observationComplete ? 0 : state.speed,
         preview: state.preview.status === "idle" ? state.preview : { ...state.preview, status: "stale" },
         tutorial: observationComplete
@@ -292,6 +371,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
   reset: () => {
+    if (get().replay) { get().startReplay(get().replay!.run); return; }
+    stopBaselineWorker();
     stopActiveWorker();
     previewCache.clear();
     sessionCounter += 1;
@@ -299,6 +380,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { scenario, scenarioMode, tutorial } = get();
     set({
       engine: createEngine(scenario),
+      baseline: emptyBaseline(),
+      baselineObjective: null,
+      decisionHistory: [],
+      incidentNotice: null,
+      completedRun: null,
+      pendingImport: null,
+      importError: null,
       version: 0,
       speed: scenarioMode === "practice" && tutorial.active ? 0 : get().speed,
       selectedEdgeId: null,
@@ -308,13 +396,45 @@ export const useGameStore = create<GameStore>((set, get) => ({
       help: { open: false, confirmingReplay: false, previousSpeed: null },
       tutorial: tutorial.active ? initialTutorial(true, tutorial.completed) : tutorial
     });
+    get().computeBaseline();
   },
   computeBaseline: () => {
-    const baseline = createEngine(get().scenario);
-    while (!baseline.isDone()) baseline.step({ type: "NO_OP" });
-    set({ baselineObjective: baseline.getState().metrics.objective });
+    const { scenario, seed, scenarioMode } = get();
+    if (scenarioMode !== "monday") return;
+    const identity = baselineIdentity(scenario, seed);
+    if (get().baseline.identity === identity && (get().baseline.status === "ready" || (get().baseline.status === "loading" && activeBaselineWorker))) return;
+    stopBaselineWorker();
+    const cached = baselineCache.get(identity);
+    if (cached?.metrics) {
+      set({ baseline: { status: "ready", identity, metrics: cached.metrics, error: null, calculationMs: cached.calculationMs }, baselineObjective: cached.metrics.objective });
+      return;
+    }
+    set({ baseline: { status: "loading", identity, metrics: null, error: null, calculationMs: null }, baselineObjective: null });
+    let worker: Worker;
+    const failed = (message: string) => {
+      if (get().baseline.identity === identity) set({ baseline: { status: "error", identity, metrics: null, error: message, calculationMs: null }, baselineObjective: null });
+    };
+    try { worker = new Worker(new URL("../workers/baselineWorker.ts", import.meta.url), { type: "module" }); }
+    catch (error) { failed(error instanceof Error ? error.message : String(error)); return; }
+    activeBaselineWorker = worker;
+    worker.onmessage = (event: MessageEvent<BaselineResponse>) => {
+      if (activeBaselineWorker !== worker) return;
+      worker.terminate(); activeBaselineWorker = null;
+      const result = event.data;
+      if (get().baseline.identity !== identity) return;
+      if (result.identity !== identity || !result.metrics || result.error) { failed(result.error ?? "Baseline identity mismatch or missing metrics."); return; }
+      baselineCache.set(identity, result);
+      if (baselineCache.size > 8) baselineCache.delete(baselineCache.keys().next().value!);
+      set({ baseline: { status: "ready", identity, metrics: result.metrics, error: null, calculationMs: result.calculationMs }, baselineObjective: result.metrics.objective });
+    };
+    worker.onerror = event => {
+      if (activeBaselineWorker !== worker) return;
+      worker.terminate(); activeBaselineWorker = null; failed(event.message || "Baseline worker failed. Retry the baseline calculation.");
+    };
+    worker.postMessage({ kind: "baseline", scenario, seed });
   },
   requestPreview: (action) => {
+    if (get().replay || get().engine.isDone()) return;
     stopActiveWorker();
     const { engine, version } = get();
     const copiedAction = cloneAction(action);
@@ -440,6 +560,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
   confirmPreview: () => {
+    if (get().replay || get().engine.isDone()) return;
     const { preview, version, step, engine, tutorial } = get();
     if (preview.status === "idle") return;
     if (preview.status !== "ready" || !preview.action || !preview.result || preview.baseVersion !== version || preview.baseSessionId !== sessionCounter) {

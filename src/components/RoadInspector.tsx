@@ -4,7 +4,7 @@ import { useGameStore } from "../game/GameStore";
 import type { SimulationAction } from "../simulation/types";
 
 export function RoadInspector() {
-  const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, setSpeed, lastActionNotice, clearActionNotice, tutorial } = useGameStore();
+  const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
   const state = engine.getState();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
   const forecast = state.forecasts.find((item) => item.edgeId === edge.id);
@@ -50,11 +50,12 @@ export function RoadInspector() {
           ))}
         </div>
       )}
+      {replay && <p>Replay is read-only. Recorded interventions execute at their original ticks.</p>}
       <div className={`actionGrid ${preview.status !== "idle" ? "hasPreview" : ""}`} aria-label="Action choices">
         <div className="actionChoice">
           <button
             className={highlightPreview ? "tutorialTarget" : ""}
-            disabled={preview.status === "loading"}
+            disabled={preview.status === "loading" || !!replay}
             onClick={() => requestPreview(rerouteAction)}
             aria-describedby="reroute-help"
           >
@@ -69,7 +70,7 @@ export function RoadInspector() {
         {showHold && (
           <div className="actionChoice">
             <button
-              disabled={preview.status === "loading"}
+              disabled={preview.status === "loading" || !!replay}
               onClick={() => requestPreview(holdAction)}
               aria-describedby="hold-help"
             >

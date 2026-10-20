@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, canUseDevTools } from "../components/App";
+import { calculateBaseline, type BaselineRequest } from "../workers/baselineWorker";
 import { EndScreen } from "../components/EndScreen";
 import { TutorialCoach } from "../components/TutorialCoach";
 import { RoadInspector } from "../components/RoadInspector";
@@ -34,9 +35,10 @@ class FakePreviewWorker {
     fakeWorkers.push(this);
   }
 
-  postMessage(message: { requestId: number; sessionId: number; snapshot: SimulationSnapshot; action: SimulationAction }) {
+  postMessage(message: { requestId: number; sessionId: number; snapshot: SimulationSnapshot; action: SimulationAction } | BaselineRequest) {
     window.setTimeout(() => {
       if (this.terminated) return;
+      if ("kind" in message) { this.onmessage?.({ data: calculateBaseline(message) } as MessageEvent); return; }
       if (FakePreviewWorker.failNext) {
         FakePreviewWorker.failNext = false;
         this.onerror?.(new ErrorEvent("error", { message: "forced worker failure" }));
@@ -1725,7 +1727,7 @@ describe("explicit preview and final-results interactions", () => {
     expect(host.textContent).toContain(`Active unfinished trips${metrics.activeTrips}`);
     expect(metrics.tripsCompleted + metrics.waitingTrips + metrics.activeTrips).toBe(metrics.tripsRequested);
     expect(host.textContent).not.toMatch(/Best decision|Worst decision|Rating|optimal/i);
-    clickButton(host, "Run Again");
+    clickButton(host, "Try This Seed Again");
     expect(useGameStore.getState().engine.isDone()).toBe(false);
     expect(useGameStore.getState().speed).toBe(1);
     act(() => root.unmount());

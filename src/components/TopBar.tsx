@@ -7,13 +7,14 @@ const formatClock = (minutes: number) => {
 };
 
 export function TopBar() {
-  const { engine, scenario, scenarioMode, setScenarioMode, startFreePractice } = useGameStore();
+  const { engine, scenario, scenarioMode, setScenarioMode, startFreePractice, seed } = useGameStore();
   const time = engine.getObservation().time;
   return (
     <header className="topBar">
       <div>
         <h1>Central Traffic</h1>
         <span>{scenario.name}</span>
+        <details className="seedDetails"><summary>Seed {seed}</summary><span>Demand, baseline, export, and replay use this seed.</span></details>
       </div>
       <div className="scenarioSwitch" aria-label="Scenario">
         <button className={scenarioMode === "practice" ? "active" : ""} onClick={startFreePractice}>Practice</button>

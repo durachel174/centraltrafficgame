@@ -576,3 +576,28 @@ small {
 .previewDialog .statGrid {
   gap: 6px 10px;
 }
+
+.roundStatus {
+  padding: 8px 20px;
+  background: #10251e;
+  border-bottom: 1px solid #2c453a;
+  font-size: 13px;
+}
+.roundStatus > div { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.roundStatus p { margin: 5px 0; }
+.incidentNotice { margin-top: 5px; color: #f8f2a5; }
+.incidentNotice button { padding: 4px 8px; font-size: 12px; }
+.seedDetails { font-size: 12px; color: #b8c9c1; margin-top: 4px; }
+.seedDetails span { display: block; }
+.decisionHistory { font-size: 12px; }
+.decisionHistory p { line-height: 1.4; color: #b8c9c1; }
+.decisionHistory ol { max-height: 240px; overflow: auto; padding-left: 18px; }
+.decisionHistory li { margin: 10px 0; }
+.decisionHistory li span { display: block; margin-top: 5px; }
+.runFiles { display: grid; gap: 8px; margin-top: 12px; font-size: 13px; }
+.runFiles input { width: 100%; }
+.resultActions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.costDetails { margin: 14px 0; font-size: 13px; }
+.costDetails table { width: 100%; border-collapse: collapse; text-align: left; }
+.costDetails th, .costDetails td { padding: 7px; border-bottom: 1px solid #2c453a; }
+.costDetails small { display: block; font-weight: normal; color: #b8c9c1; }

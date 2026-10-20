@@ -44,3 +44,12 @@ Configured forecast and preview horizons must align to the fixed 0.25-minute sim
 Passenger delay is reported as both total passenger-minutes and minutes per passenger over the same action/no-action cohort; it combines departure delay plus travel delay beyond free-flow baseline travel time, including unfinished trips at the preview horizon. The selected road is included in preview utilization results even if it is not marked as a major road.
 
 The road hold action is serializable as `DELAY_DEPARTURES` with an optional `targetEdge`. When `targetEdge` is present, the engine selects currently waiting trips whose current fastest route would traverse that road, then applies the configured percentage and duration to that eligible set. Origin and destination filters still narrow the eligible set when supplied. The action does not affect future demand; adding a persistent future hold would require an explicit expiring control.
+
+
+## Objective breakdown and final comparisons
+
+`objectiveBreakdown` exposes weighted travel time, congestion, departure delay, dissatisfaction, and excess-distance cost. The unrounded five components sum to `objective`. Raw travel and waiting inputs are passenger-minutes; congestion input is integrated squared excess utilization; dissatisfaction input sums satisfaction-point deficits; excess distance is km. Results label all weighted outputs as cost units rather than mixing them with raw minutes. Display rounding may make the displayed rows differ slightly from the displayed total.
+
+Completed travel statistics measure dispatch-to-arrival travel and exclude pre-dispatch waiting. Completed trips contribute full travel; active trips contribute elapsed travel and remaining planned excess distance at the scenario end. Waiting trips contribute accumulated waiting delay and dissatisfaction. Satisfaction averages include completed, active, and waiting riders. Results explicitly show requested, completed, active unfinished, and waiting unfinished counts.
+
+The no-intervention comparison uses identical engine/scenario versions, complete configuration, weights, seed, and full scenario end. Percentage improvement is `(baseline - player) / baseline * 100`: positive means lower player cost; negative means higher player cost. The baseline executes in a worker and cannot install an obsolete or mismatched response.

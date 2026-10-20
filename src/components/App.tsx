@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { ChevronDown, Gauge, HelpCircle, Pause, Play, RotateCcw, Wrench } from "lucide-react";
 import { useGameStore } from "../game/GameStore";
+import { ScenarioStatus } from "./ScenarioStatus";
+import { DecisionHistory } from "./DecisionHistory";
+import { RunFiles } from "./RunFiles";
 import { TopBar } from "./TopBar";
 import { MetricsBar } from "./MetricsBar";
 import { TrafficMap } from "./TrafficMap";
@@ -14,7 +17,7 @@ import { HelpPanel } from "./HelpPanel";
 export const canUseDevTools = (env: { DEV?: boolean } = import.meta.env) => env.DEV === true;
 
 export function App() {
-  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, openHelp, tutorial } = useGameStore();
+  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, openHelp, tutorial, replay } = useGameStore();
   const done = engine.isDone();
   const tutorialActive = tutorial.active;
   const revealPlayback = !tutorialActive || tutorial.step === "observe" || tutorial.step === "hold" || tutorial.step === "complete";
@@ -47,15 +50,15 @@ export function App() {
                 <Play size={15} /> {value}x
               </button>
             ))}
-          <button onClick={reset} title="Reset">
-            <RotateCcw size={16} /> Reset
+          <button onClick={reset} title={replay ? "Restart Replay" : "Reset"}>
+            <RotateCcw size={16} /> {replay ? "Restart Replay" : "Reset"}
           </button>
         </div>
         <div className="utilityControls">
           <button onClick={openHelp}>
             <HelpCircle size={16} /> Help
           </button>
-          {devAvailable && !tutorialActive && (
+          {devAvailable && !tutorialActive && !replay && (
             <button onClick={toggleDevTools} className={devToolsOpen ? "active" : ""}>
               <Wrench size={16} /> Dev
             </button>
@@ -63,6 +66,7 @@ export function App() {
         </div>
       </div>
       <MetricsBar />
+      <ScenarioStatus />
       <main className="mainGrid">
         <section className="mapPanel">
           <div className="mapLegend" aria-label="Traffic legend">
@@ -75,6 +79,7 @@ export function App() {
         <aside className="sidePanel">
           <RoadInspector />
           <AlertPanel />
+          {!tutorialActive && <><DecisionHistory /><details className="panel"><summary>Run files</summary><RunFiles /></details></>}
           {revealAdvanced && (
             <details className="panel detailPanel">
               <summary>
@@ -83,7 +88,7 @@ export function App() {
               <MetricsBar detailed />
             </details>
           )}
-          {devAvailable && !tutorialActive && devToolsOpen && <DebugPanel />}
+          {devAvailable && !tutorialActive && !replay && devToolsOpen && <DebugPanel />}
         </aside>
       </main>
       <TutorialCoach />
