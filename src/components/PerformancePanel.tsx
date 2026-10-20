@@ -41,6 +41,7 @@ export function PerformancePanel() {
     const target = (label.startsWith("rush") || label === "preview-map") ? 60 : label.startsWith("incident") ? 73 : 0;
     while (useGameStore.getState().engine.getState().time < target) step();
     if (label.startsWith("5000")) step({ type: "DEBUG_SPAWN", count: 5000 });
+    useGameStore.getState().refreshForecasts(true);
     setSpeed(label.endsWith("1x") ? 1 : 4);
   };
   return <details className="panel performancePanel"><summary>Local performance capture (development only)</summary>

@@ -3,6 +3,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App, canUseDevTools } from "../components/App";
+import { calculateForecast, type ForecastRequest } from "../workers/forecastWorker";
 import { calculateBaseline, type BaselineRequest } from "../workers/baselineWorker";
 import { EndScreen } from "../components/EndScreen";
 import { TutorialCoach } from "../components/TutorialCoach";
@@ -31,14 +32,14 @@ class FakePreviewWorker {
   onerror: ((event: ErrorEvent) => void) | null = null;
   terminated = false;
 
-  constructor() {
+  constructor(readonly url?: URL) {
     fakeWorkers.push(this);
   }
 
-  postMessage(message: { requestId: number; sessionId: number; snapshot: SimulationSnapshot; action: SimulationAction } | BaselineRequest) {
+  postMessage(message: { requestId: number; sessionId: number; snapshot: SimulationSnapshot; action: SimulationAction } | BaselineRequest | ForecastRequest) {
     window.setTimeout(() => {
       if (this.terminated) return;
-      if ("kind" in message) { this.onmessage?.({ data: calculateBaseline(message) } as MessageEvent); return; }
+      if ("kind" in message) { this.onmessage?.({ data: message.kind === "baseline" ? calculateBaseline(message) : calculateForecast(message) } as MessageEvent); return; }
       if (FakePreviewWorker.failNext) {
         FakePreviewWorker.failNext = false;
         this.onerror?.(new ErrorEvent("error", { message: "forced worker failure" }));
@@ -1161,7 +1162,7 @@ describe("preview UI flow", () => {
     useGameStore.getState().reset();
     useGameStore.getState().requestPreview({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage: 0.25 });
     expect(useGameStore.getState().preview.status).toBe("loading");
-    expect(fakeWorkers).toHaveLength(2);
+    expect(fakeWorkers.filter(worker => !worker.url || worker.url.href.includes("previewWorker"))).toHaveLength(2);
   });
 
   it("reset clears cached previews and ignores old worker responses", async () => {

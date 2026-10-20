@@ -8,7 +8,8 @@ const componentLabels = {
   congestion: ["Congestion cost", "utilization²-minutes"],
   departureDelay: ["Waiting-delay cost", "passenger-minutes"],
   dissatisfaction: ["Dissatisfaction cost", "satisfaction points"],
-  excessDistance: ["Excess-distance cost", "km"]
+  excessDistance: ["Excess-distance cost", "km"],
+  terminalHoldDelay: ["Committed hold beyond finish", "passenger-minutes"]
 } as const;
 
 export function EndScreen() {
@@ -35,6 +36,7 @@ export function EndScreen() {
           <span>95th percentile completed travel</span><strong>{metrics.p95TripTime.toFixed(1)} min</strong>
           <span>Maximum completed travel</span><strong>{metrics.maxTripTime.toFixed(1)} min</strong>
           <span>Passenger satisfaction</span><strong>{metrics.averageSatisfaction.toFixed(1)}%</strong>
+          {!practice && <><span>Remaining imposed hold after 9:00</span><strong>{(metrics.remainingHoldPassengerMinutes ?? 0).toFixed(1)} passenger-minutes</strong></>}
           <span>Worst bottleneck</span><strong>{metrics.worstBottleneck || "None"}</strong>
           {!practice && <>
             <span>System cost (lower is better)</span><strong>{metrics.objective.toFixed(1)}</strong>
@@ -46,11 +48,11 @@ export function EndScreen() {
         {!practice && <>
           <p>Improvement = (baseline cost − your cost) ÷ baseline cost × 100%. Positive means lower cost than baseline; negative means higher cost. Unfinished trips still contribute elapsed travel, waiting, dissatisfaction, and planned excess distance.</p>
           <details className="costDetails"><summary>Objective components and baseline conditions</summary>
-            <p>Weighted cost units, rounded for display. The unrounded components sum to total system cost.</p>
+            <p>Weighted cost units, rounded for display. The unrounded components sum to total system cost. Remaining player-imposed hold time beyond 9:00 is charged separately at the existing waiting weight; it is not observed waiting or a post-9:00 traffic rollout.</p>
             <table><thead><tr><th>Component</th><th>Your cost</th><th>Baseline cost</th></tr></thead><tbody>
               {Object.entries(componentLabels).map(([key, [label, unit]]) => {
                 const component = key as keyof typeof componentLabels;
-                return <tr key={key}><th>{label}<small>{scenario.objectiveWeights[component]} × {unit}</small></th><td>{metrics.objectiveBreakdown?.[component].toFixed(1) ?? "Unavailable"}</td><td>{compatible?.objectiveBreakdown?.[component].toFixed(1) ?? "Unavailable"}</td></tr>;
+                return <tr key={key}><th>{label}<small>{scenario.objectiveWeights[component === "terminalHoldDelay" ? "departureDelay" : component]} × {unit}</small></th><td>{metrics.objectiveBreakdown?.[component].toFixed(1) ?? "Unavailable"}</td><td>{compatible?.objectiveBreakdown?.[component].toFixed(1) ?? "Unavailable"}</td></tr>;
               })}
               <tr><th>Total system cost</th><td>{metrics.objective.toFixed(1)}</td><td>{compatible?.objective.toFixed(1) ?? "Unavailable"}</td></tr>
             </tbody></table>

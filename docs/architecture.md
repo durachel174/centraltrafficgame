@@ -14,7 +14,7 @@ React creates serializable `SimulationAction` objects and reads observations. Ca
 
 ## State Boundaries
 
-The engine owns all mutable simulation state. Public observations, run exports, alerts, forecasts, nested forecast samples, snapshots, and UI-facing state are returned as copies so callers cannot mutate the live engine accidentally. React sends the same serializable action objects that a future controller can send.
+The engine owns all mutable authoritative simulation state. Browser forecast presentation is a separate store cache. Public observations, run exports, alerts, forecasts, nested forecast samples, snapshots, and UI-facing state are returned as copies so callers cannot mutate the live engine accidentally. React sends the same serializable action objects that a future controller can send.
 
 Forecasts and action previews use serializable engine snapshots. The snapshot includes scenario/configuration, graph state, vehicles, waiting trips, RNG state, demand-generator carry/id state, active events, temporary capacity reductions, metrics, logs, and cached forecast metadata. Rollout clones disable nested forecasting so a forecast cannot recursively forecast itself or perturb the live RNG/log.
 
@@ -33,6 +33,17 @@ Browser preview rollout work runs in `src/workers/previewWorker.ts`, which resto
 
 `ScenarioProgress` derives stage and incident presentation from scenario progression configuration, simulated time, and actual active event IDs. Monday-specific progression configuration lives in the Monday scenario. No new Monday-specific control rules live in `SimulationEngine`. Event processing still follows the original interval-start convention. The first post-activation observation is at 08:12:15; the restored-capacity observation is at 08:27:15. The affected intervals start at the configured 08:12 and 08:27 boundaries. A stable transition notice is separate from the persistent remaining-duration status, so pause/rerender does not repeatedly announce the incident.
 
-The scoring layer exposes a copied structured weighted breakdown alongside the original total. It keeps the same operations/weights/order and does not alter traffic physics or objective meaning. Engine logs add the actual executed affected count. Decision history reads those logs after execution, outside rendering; previews do not add history.
+The scoring layer exposes a copied structured weighted breakdown alongside the total. Phase 12 adds a separate terminal hold liability for Monday Morning using the existing departure-delay weight, without changing traffic physics. Engine logs add the actual executed affected count. Decision history reads those logs after execution, outside rendering; previews do not add history.
 
 `RunFile` validates version/configuration compatibility and local files. `Replay` supplies the shared interval-end action lookup used by headless replay and the interactive store. The store guards live actions at the action-source boundary as well as disabling UI intervention buttons. At scenario end, verification compares all metrics and the canonical deterministic final-state checksum. Only a checksum, not a snapshot per tick, is stored in the file. Details are in [replay.md](replay.md).
+
+
+## Browser forecast scheduling (Phase 12)
+
+The browser creates `SimulationEngine(config, timingCallback, true)`: the third runtime argument disables only automatic in-engine forecast refresh. It is not serialized and does not change ticks, metrics, RNG or actions. The default headless engine still refreshes synchronously. `calculateForecasts()` and `forecastWorker.ts` use the same deterministic rollout from the identical source snapshot; clones disable nested forecasting.
+
+`ForecastScheduler` owns one persistent worker, one active request and one pending bit. No queue of snapshots accumulates. A due refresh uses the latest snapshot when dispatched. Requests/responses carry request ID, session, invalidation epoch, revision and source simulation time. Reset, seed/scenario change, applied action and actual incident-state transitions terminate/invalidate old requests. Worker failures expose Retry; no synchronous browser fallback blocks play. Completion updates only the presentation cache, never the engine.
+
+A result from an earlier revision is usable only within one configured refresh interval (5 simulated minutes for Monday). Source time cannot be in the future. Expired samples/results disappear; actual sample horizons are rebased by current source age, including near-end truncation. A valid cached result may stay visible during ordinary refresh with its honest age. Invalidating actions/events clear it immediately. Late session/epoch responses are rejected. App initialization requests the first forecast; replay follows the same presentation path without affecting verification.
+
+Development-only timing uses optional callbacks outside authoritative state and bounded 4096-sample per-metric buffers. Capture is opt-in, stops after 20 seconds, observes supported long tasks and rAF, and sends nothing. Engine clones do not inherit timing callbacks. Production passes no recorder callback or capture UI. Snapshot preparation and `postMessage` main-thread structured-clone posting are measured separately from worker runtime and end-to-end latency.

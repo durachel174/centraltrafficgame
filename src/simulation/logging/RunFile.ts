@@ -64,7 +64,8 @@ export function validateActionTiming(actions: LoggedAction[], scenario: Scenario
 }
 
 export function finalStateChecksum(snapshot: SimulationSnapshot): string {
-  return checksum({ ...snapshot, scenario: { ...snapshot.scenario, seed: snapshot.seed } });
+  const { forecasts: _forecasts, alerts: _alerts, lastForecastTime: _lastForecastTime, forecastingEnabled: _forecastingEnabled, ...authoritative } = snapshot;
+  return checksum({ ...authoritative, scenario: { ...snapshot.scenario, seed: snapshot.seed } });
 }
 
 export function createCompletedRun(engine: SimulationEngine): CompletedRun {
@@ -120,7 +121,7 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
   if (metrics.worstBottleneck !== undefined && typeof metrics.worstBottleneck !== "string") fail("Invalid bottleneck metric.");
   if (!record(metrics.objectiveBreakdown)) fail("Missing objective breakdown.");
   const components = metrics.objectiveBreakdown as Record<string, unknown>;
-  const componentKeys = ["travelTime", "congestion", "departureDelay", "dissatisfaction", "excessDistance"];
+  const componentKeys = ["travelTime", "congestion", "departureDelay", "dissatisfaction", "excessDistance", "terminalHoldDelay"];
   keys(components, componentKeys, "objective component");
   if (componentKeys.some(key => !finite(components[key]) || (components[key] as number) < 0)) fail("Invalid objective component.");
   const sum = componentKeys.reduce((total, key) => total + (components[key] as number), 0);

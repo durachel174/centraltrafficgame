@@ -39,6 +39,7 @@ export function PreviewReview() {
           <span>Actual affected trips</span><strong>{result.affectedVehicles}</strong>
           <span>This road utilization</span><strong>{selected ? utilization(selected) : "Unavailable"}</strong>
           <span>Passenger-delay delta</span><strong>{result.passengerDelayDeltaMinutes.toFixed(1)} passenger-minutes ({result.passengerDelayDeltaPerPassenger.toFixed(2)} minutes per rider)</strong>
+          {!!result.terminalHoldDeltaPassengerMinutes && <><span>Committed hold beyond finish delta</span><strong>{result.terminalHoldDeltaPassengerMinutes.toFixed(1)} passenger-minutes (included in system cost, separate from observed delay)</strong></>}
           <span>Satisfaction delta</span><strong>{result.satisfactionDelta.toFixed(1)} percentage points</strong>
           <span>System-cost delta (lower cost is better)</span><strong>{result.networkCostDelta.toFixed(0)}</strong>
           <span>Projection horizon</span><strong>{result.horizonMinutes} min{result.truncated ? " (scenario end)" : ""}</strong>

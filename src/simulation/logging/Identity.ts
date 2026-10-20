@@ -1,7 +1,7 @@
 import type { Scenario } from "../types";
 
 // Bump when deterministic state, scoring, or run/log semantics change.
-export const ENGINE_VERSION = "0.2.0";
+export const ENGINE_VERSION = "0.3.0";
 export const RUN_SCHEMA_VERSION = 1;
 export const DT_MINUTES = 0.25;
 

@@ -17,6 +17,7 @@ export function calculateMetrics(args: {
   weights: ObjectiveWeights;
   utilizationThreshold: number;
   currentTime: number;
+  chargeTerminalHolds?: boolean;
   satisfaction: { departureDelay: number; lateDelay: number; reroute: number };
 }): SimulationMetrics {
   const completed = args.vehicles.filter((vehicle) => vehicle.status === "arrived");
@@ -66,17 +67,21 @@ export function calculateMetrics(args: {
     }
   }
   const dissatisfaction = allSatisfaction.reduce((sum, value) => sum + (100 - value), 0);
+  const remainingHoldPassengerMinutes = args.chargeTerminalHolds
+    ? args.waitingTrips.reduce((sum, trip) => sum + Math.max(0, (trip.heldUntil ?? args.currentTime) - args.currentTime), 0) : 0;
   const objectiveBreakdown = {
     travelTime: args.weights.travelTime * travelTime,
     congestion: args.weights.congestion * args.congestionCost,
     departureDelay: args.weights.departureDelay * args.departureDelay,
     dissatisfaction: args.weights.dissatisfaction * dissatisfaction,
-    excessDistance: args.weights.excessDistance * excessDistance
+    excessDistance: args.weights.excessDistance * excessDistance,
+    terminalHoldDelay: args.weights.departureDelay * remainingHoldPassengerMinutes
   };
   const objective = Object.values(objectiveBreakdown).reduce((sum, value) => sum + value, 0);
 
   return {
     objectiveBreakdown,
+    remainingHoldPassengerMinutes,
     tripsRequested: args.vehicles.length + args.waitingTrips.length,
     tripsCompleted: completed.length,
     activeTrips: active,

@@ -1,3 +1,4 @@
+import { ForecastSource, useForecastDisplay } from "./ForecastSource";
 import { Route, TimerReset } from "lucide-react";
 import { PreviewReview } from "./PreviewReview";
 import { useGameStore } from "../game/GameStore";
@@ -7,7 +8,8 @@ export function RoadInspector() {
   const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
   const state = engine.getState();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
-  const forecast = state.forecasts.find((item) => item.edgeId === edge.id);
+  const display = useForecastDisplay();
+  const forecast = display.forecasts.find((item) => item.edgeId === edge.id);
   const speedKph = edge.lengthKm / Math.max(0.01, edge.currentTravelTime / 60);
   const rerouteAction: SimulationAction = { type: "REROUTE", targetEdge: edge.id, percentage: 0.25, avoidEdge: edge.id };
   const holdAction: SimulationAction = { type: "DELAY_DEPARTURES", targetEdge: edge.id, durationMinutes: 5, percentage: 0.25 };
@@ -20,7 +22,7 @@ export function RoadInspector() {
           { requestedHorizonMinutes: 15, actualHorizonMinutes: 15, truncated: false, utilization: forecast.utilization15m }
         ]
       : [];
-  const horizonLabel = (actual: number, truncated: boolean) => `+${actual}m${truncated ? " scenario end" : ""}`;
+  const horizonLabel = (actual: number, truncated: boolean) => `+${Number(actual.toFixed(2))}m${truncated ? " scenario end" : ""}`;
   const showHold = !tutorial.active || tutorial.step === "hold" || tutorial.step === "complete";
   const highlightForecast = tutorial.active && tutorial.step === "forecast";
   const highlightPreview = tutorial.active && tutorial.step === "preview";
@@ -41,6 +43,7 @@ export function RoadInspector() {
         <span>Avg Speed</span>
         <strong>{speedKph.toFixed(0)} kph</strong>
       </div>
+      <ForecastSource />
       {forecast && (
         <div className={`forecastRow ${highlightForecast ? "tutorialTarget" : ""}`}>
           {forecastSamples.map((sample) => (

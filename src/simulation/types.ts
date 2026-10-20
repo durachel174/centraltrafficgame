@@ -39,6 +39,7 @@ export interface ObjectiveWeights {
 }
 
 export interface ObjectiveBreakdown {
+  terminalHoldDelay: number;
   travelTime: number;
   congestion: number;
   departureDelay: number;
@@ -47,6 +48,7 @@ export interface ObjectiveBreakdown {
 }
 
 export interface SimulationMetrics {
+  remainingHoldPassengerMinutes?: number;
   objectiveBreakdown?: ObjectiveBreakdown;
   tripsRequested: number;
   tripsCompleted: number;
@@ -120,6 +122,7 @@ export interface ForecastSample {
 }
 
 export interface ActionPreview {
+  terminalHoldDeltaPassengerMinutes?: number;
   affectedVehicles: number;
   networkCostDelta: number;
   forecastChanges: ForecastDelta[];
@@ -191,6 +194,7 @@ export interface ScenarioEvent {
 export interface Scenario {
   version?: number;
   progression?: { rushHourMinute: number };
+  terminalHoldAccounting?: boolean;
   id: string;
   name: string;
   seed?: number;

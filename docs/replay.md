@@ -1,6 +1,6 @@
 # Local runs and deterministic replay
 
-The challenge export is schema **1**, engine **0.2.0**, Monday Morning scenario **1**. Original internal `SimulationRun` objects without this schema are not imported or silently upgraded. Practice remains a separate tutorial/experiment session and is not exposed as a scored challenge export.
+The challenge export is schema **1**, engine **0.3.0**, Monday Morning scenario **2**. Original internal `SimulationRun` objects without this schema are not imported or silently upgraded. Practice remains a separate tutorial/experiment session and is not exposed as a scored challenge export.
 
 A completed run records schema and engine versions, scenario ID/version, seed, full configuration identity, export timestamp, timestamped interventions, actual affected counts, immediate tick rewards, every final metric (including weighted objective components), and a deterministic final-state checksum. No state snapshot is stored for each tick. There are no uploads, accounts, or telemetry.
 
@@ -22,7 +22,7 @@ Replay starts at the scenario's original 07:00 state with the recorded seed, the
 
 ## Final verification
 
-At completion, replay compares the complete executed action log (including actual affected counts and tick rewards), **every final metric** using exact canonical JSON equality, and the final simulation snapshot checksum. The snapshot covers graph/vehicle/trip state and progress, RNG state, demand carry/ID state, accumulated costs, rewards, action logs and affected counts, event IDs, temporary restrictions, forecasts/alerts, and forecast bookkeeping. `scenario.seed` is normalized to the effective snapshot seed so a caller's explicit `reset(seed)` has the same representation as a session configured with that seed.
+At completion, replay compares the complete executed action log (including actual affected counts and tick rewards), **every final metric** using exact canonical JSON equality, and the final simulation snapshot checksum. The snapshot covers graph/vehicle/trip state and progress, RNG state, demand carry/ID state, accumulated costs, rewards, action logs and affected counts, event IDs, temporary restrictions. Derived forecasts/alerts, last-forecast time and the runtime forecasting-enabled flag are excluded: worker completion order is presentation state and must not affect authoritative checksums. `scenario.seed` is normalized to the effective snapshot seed so a caller's explicit `reset(seed)` has the same representation as a session configured with that seed.
 
 Canonical JSON normalizes through JSON serialization (omits undefined object properties), sorts object keys recursively, and preserves array order. The checksum is FNV-1a/64 over the resulting UTF-16 code units, with unsigned 64-bit overflow after each multiplication, returned as 16 lowercase hexadecimal characters. It detects accidental inconsistency; it is not an authentication signature. Verification assumes compatible JavaScript number behavior and exactly matching versions/configuration. A mismatch is shown as failed verification; it is never relabeled as success. Re-export from replay is enabled only after successful verification.
 
@@ -33,3 +33,8 @@ Baseline rollouts execute in a dedicated worker, with no blocking main-thread fa
 The baseline uses the same deterministic engine, demand, events, scoring weights, seed, and full start/end, with no intervention. Results display each weighted component and the total in cost units. Positive percentage improvement means lower system cost; negative means higher cost. Travel-time statistics cover completed dispatch-to-arrival trips, while satisfaction and system cost include unfinished trips as described in [traffic-model.md](traffic-model.md).
 
 History comes from actual applied engine log entries, outside rendering and outside preview calculation. The affected count is the executed count, not a preview estimate. Immediate cost change is `-immediateReward`, including traffic evolution during the whole tick; it does not establish an action's isolated or long-term causal impact. History makes no best/worst ranking. Canceled previews leave no history entry.
+
+
+## Phase 12 compatibility change
+
+Engine 0.3.0 introduces the six-component metric contract and excludes derived forecast caches from final-state verification. Monday Morning version 2 enables `terminalHoldAccounting`: at 09:00, remaining waiting-trip `max(heldUntil - endTime, 0)` is separately charged at the existing departure-delay weight. Exports include raw `remainingHoldPassengerMinutes` and weighted `terminalHoldDelay`. Old engine 0.2.0 / Monday 1 files are rejected, not upgraded or rescored. Schema remains 1; exact engine/configuration compatibility is required. Baseline caches also use the new identity. The 07:00–09:00 action/evaluation window is unchanged; no implicit clearance simulation is added.

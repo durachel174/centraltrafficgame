@@ -1,3 +1,4 @@
+import { ForecastScheduler, emptyForecast, forecastMaxAge, type ForecastView } from "./ForecastScheduler";
 import { recordBrowserTiming } from "../performance/Recorder";
 import { create } from "zustand";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
@@ -41,6 +42,8 @@ interface GameStore {
   speed: Speed;
   selectedEdgeId: string | null;
   seed: number;
+  forecastView: ForecastView;
+  refreshForecasts: (invalidate?: boolean) => void;
   baselineObjective: number | null;
   baseline: { status: "idle" | "loading" | "ready" | "error"; identity: string | null; metrics: SimulationMetrics | null; error: string | null; calculationMs: number | null };
   decisionHistory: LoggedAction[];
@@ -120,7 +123,7 @@ const saveTutorialComplete = () => {
 };
 
 const createEngine = (scenario: Scenario) => {
-  const engine = new SimulationEngine(scenario, recordBrowserTiming);
+  const engine = new SimulationEngine(scenario, recordBrowserTiming, true);
   engine.reset(scenario.seed);
   if (scenario.id === practiceScenario.id) {
     for (let i = 0; i < practiceCheckpointTicks; i++) engine.step({ type: "NO_OP" });
@@ -153,6 +156,7 @@ const previewCache = new Map<string, ActionPreview>();
 let sessionCounter = 1;
 let requestCounter = 0;
 let activePreviewWorker: Worker | null = null;
+let forecastScheduler: ForecastScheduler | null = null;
 let activeBaselineWorker: Worker | null = null;
 const baselineCache = new Map<string, BaselineResponse>();
 const emptyBaseline = (): GameStore["baseline"] => ({ status: "idle", identity: null, metrics: null, error: null, calculationMs: null });
@@ -208,6 +212,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   speed: hasCompletedTutorial() ? 1 : 0,
   selectedEdgeId: null,
   seed: (hasCompletedTutorial() ? mondayMorningScenario : practiceScenario).seed ?? 1,
+  forecastView: emptyForecast(sessionCounter),
+  refreshForecasts: (invalidate = false) => {
+    if (!get().engine.externalForecasts) return;
+    forecastScheduler ??= new ForecastScheduler(() => {
+      const state = get(); const config = state.scenario.forecast;
+      return { session: sessionCounter, revision: state.version, time: state.engine.getObservation().time - state.scenario.startTime,
+        interval: config?.refreshIntervalMinutes ?? 1, maxAge: forecastMaxAge(config?.refreshIntervalMinutes ?? 1, config?.horizonsMinutes ?? [5, 10, 15]), engine: state.engine };
+    }, view => set({ forecastView: view.status === "loading" && get().forecastView.sourceTime !== null && get().forecastView.session === view.session
+      ? { ...get().forecastView, status: "loading", error: null } : view }),
+    () => new Worker(new URL("../workers/forecastWorker.ts", import.meta.url), { type: "module" }), recordBrowserTiming);
+    forecastScheduler.update(invalidate);
+  },
   baselineObjective: null,
   baseline: emptyBaseline(),
   decisionHistory: [],
@@ -281,6 +297,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   toggleDevTools: () => set((state) => ({ devToolsOpen: !state.devToolsOpen })),
   setScenarioMode: (scenarioMode, selectedSeed) => {
+    forecastScheduler?.reset();
     stopBaselineWorker();
     stopActiveWorker();
     previewCache.clear();
@@ -292,6 +309,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       scenario,
       scenarioMode,
       seed: scenario.seed,
+      forecastView: emptyForecast(sessionCounter),
       baseline: emptyBaseline(),
       decisionHistory: [],
       incidentNotice: null,
@@ -311,6 +329,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       tutorial: scenarioMode === "monday" ? completeTutorial() : initialTutorial(!completed, completed)
     });
     get().computeBaseline();
+    get().refreshForecasts(true);
   },
   selectEdge: (selectedEdgeId) =>
     set((state) => {
@@ -370,9 +389,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
           : state.tutorial
       };
     });
+    get().refreshForecasts(applied.type !== "NO_OP" || !!changedEvent);
   },
   reset: () => {
     if (get().replay) { get().startReplay(get().replay!.run); return; }
+    forecastScheduler?.reset();
     stopBaselineWorker();
     stopActiveWorker();
     previewCache.clear();
@@ -381,6 +402,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { scenario, scenarioMode, tutorial } = get();
     set({
       engine: createEngine(scenario),
+      forecastView: emptyForecast(sessionCounter),
       baseline: emptyBaseline(),
       baselineObjective: null,
       decisionHistory: [],
@@ -398,6 +420,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       tutorial: tutorial.active ? initialTutorial(true, tutorial.completed) : tutorial
     });
     get().computeBaseline();
+    get().refreshForecasts(true);
   },
   computeBaseline: () => {
     const { scenario, seed, scenarioMode } = get();

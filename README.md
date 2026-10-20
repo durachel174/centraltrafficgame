@@ -11,6 +11,9 @@ npm test
 npm run build
 npm run simulate -- --runs=10 --controller=reactive
 npm run benchmark
+npm run audit:policies -- --runs=10 --clearance-minutes=0
+npm run audit:holds -- --runs=10
+npm run audit:pacing -- --runs=10
 ```
 
 ## Player Flow
@@ -35,7 +38,7 @@ Development-only spawn and incident controls are available only in Vite developm
 
 The objective includes completed travel time plus elapsed travel time for active vehicles, so unfinished trips remain costly. Waiting trips accrue departure delay once per simulated minute while waiting, including held trips and trips with no available route. Passenger dissatisfaction is estimated for waiting and active passengers and finalized on arrival.
 
-Excess distance is measured in kilometers. The baseline is the free-flow fastest route, using each edge's base travel time, and the score compares the current or completed route distance against that baseline distance. At scenario end, unfinished trips still contribute elapsed travel time, accumulated departure delay, dissatisfaction, and planned excess distance.
+Excess distance is measured in kilometers. The baseline is the free-flow fastest route, using each edge's base travel time, and the score compares the current or completed route distance against that baseline distance. At scenario end, unfinished trips still contribute elapsed travel time, accumulated departure delay, dissatisfaction, and planned excess distance. Monday Morning also charges the remaining player-imposed hold beyond 09:00, separately, at the existing departure-delay weight (2.2 cost units per passenger-minute). This is a known minimum obligation, not a prediction of complete clearance or future congestion. Observed waiting is never charged twice. Practice keeps its existing unscored checkpoint behavior.
 
 Forecasts and action previews are deterministic no-further-intervention rollouts from the current state. A preview compares two identical-future simulations: no action versus the proposed action. Positive `networkCostDelta` and passenger delay deltas are worse; positive `satisfactionDelta` is better. The UI shows baseline improvement only after a scenario finishes so it does not compare an unfinished player run against a completed baseline.
 
@@ -74,3 +77,14 @@ At results, inspect the objective components and baseline conditions. **Try This
 **Export Completed Run JSON** downloads a local versioned file. Import through **Run files** during free play or the results screen. Invalid/unsupported/incompatible files report an error without replacing the session. A valid import shows its seed/decision count and requires **Start Imported Replay** before replacing the active run. No file is uploaded. The importer supports this version of Monday Morning, not older internal run formats or practice exports. Files may contain at most one intervention per tick; duplicate same-tick entries are rejected explicitly rather than discarded.
 
 See [replay format and compatibility](docs/replay.md) for validation rules, deterministic representation, and versioning. Baseline worker failures show an unavailable comparison and Retry; there is no blocking fallback. The checksum detects consistency problems and is not a tamper-proof signature.
+
+
+## Phase 12 performance and balancing milestone
+
+Browser scheduled forecasts now run in a separate worker. One request is active and at most one latest refresh is pending; snapshots are taken only when dispatched. Actions and event changes invalidate projections. Results may come from an earlier revision only within one configured refresh interval (Monday: 5 simulated minutes). The inspector shows source time and age; horizon chips count from the current time. Expired samples disappear. Errors offer Retry Forecast. Headless engines retain synchronous forecasting.
+
+Performance recording is local and development-only. Run `npm run dev`, finish/skip the tutorial, expand **Local performance capture**, choose a workload, click **Prepare measurement workload** (resets the run), then **Capture 20 seconds**. For `preview-map`, request a preview immediately after capture starts. Keep the tab visible at the same viewport and avoid concurrent CPU work. Save the report textarea for comparison. The bounded reports distinguish rAF cadence, Canvas draw cost, simulation ticks, snapshot/structured-clone posting, and worker calculation/round-trip time. Production renders no capture panel and has no active timing callback. No telemetry is sent.
+
+Scoring and pacing audits write local JSON under `/private/tmp` by default; use `--out=/absolute/path.json` to choose another location. Policy and hold audits accept `--legacy-cutoff` to reproduce the old terminal-cost omission using fresh simulations. Optional `--clearance-minutes=120` is a capped diagnostic continuation with no new demand/actions, **not** the gameplay evaluation window; unfinished continuations are censored. `node --import tsx scripts/benchmark.ts` (or `scripts/simulate.ts`) avoids restricted-environment tsx CLI IPC errors.
+
+Engine **0.3.0** / Monday Morning **2** reject old incompatible exports. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.

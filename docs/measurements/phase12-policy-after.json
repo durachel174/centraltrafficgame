@@ -1,0 +1,391 @@
+{
+  "conditions": {
+    "unusedForecastsSkipped": true,
+    "terminalHoldAccounting": true,
+    "seeds": [
+      428193,
+      428202
+    ],
+    "decisionWindowMinutes": 120,
+    "diagnosticClearanceCapMinutes": 0,
+    "noFurtherDemandOrIntervention": true
+  },
+  "aggregate": [
+    {
+      "policy": "baseline",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.94096581080451,
+        "congestion": 5637.245390975871,
+        "excessDistanceKm": 7195.180000000022,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 77551.4772517335,
+          "excessDistance": 6475.662000000021,
+          "terminalHoldDelay": 0
+        },
+        "objective": 729623.2485731445
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.94096581080451,
+        "congestion": 5637.245390975871,
+        "excessDistanceKm": 7195.180000000022,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 77551.4772517335,
+          "excessDistance": 6475.662000000021,
+          "terminalHoldDelay": 0
+        },
+        "objective": 729623.2485731445
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "reactive",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1926.6,
+        "active": 2196.4,
+        "waiting": 2,
+        "travelPassengerMinutes": 111112.75461682952,
+        "waitingPassengerMinutes": 22,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.65223719914094,
+        "congestion": 5572.9470510397205,
+        "excessDistanceKm": 7230.6600000000235,
+        "components": {
+          "travelTime": 111112.75461682952,
+          "congestion": 529429.9698487733,
+          "departureDelay": 48.4,
+          "dissatisfaction": 79576.1866410241,
+          "excessDistance": 6507.594000000022,
+          "terminalHoldDelay": 0
+        },
+        "objective": 726674.905106627
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1926.6,
+        "active": 2196.4,
+        "waiting": 2,
+        "travelPassengerMinutes": 111112.75461682952,
+        "waitingPassengerMinutes": 22,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.65223719914094,
+        "congestion": 5572.9470510397205,
+        "excessDistanceKm": 7230.6600000000235,
+        "components": {
+          "travelTime": 111112.75461682952,
+          "congestion": 529429.9698487733,
+          "departureDelay": 48.4,
+          "dissatisfaction": 79576.1866410241,
+          "excessDistance": 6507.594000000022,
+          "terminalHoldDelay": 0
+        },
+        "objective": 726674.905106627
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "repeated-road-hold",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1947.4,
+        "active": 2175.3,
+        "waiting": 2.3,
+        "travelPassengerMinutes": 110186.80261073227,
+        "waitingPassengerMinutes": 115.6,
+        "committedWaitingPassengerMinutes": 0.4,
+        "satisfaction": 88.88304230789547,
+        "congestion": 5560.947583628193,
+        "excessDistanceKm": 7692.070000000031,
+        "components": {
+          "travelTime": 110186.80261073227,
+          "congestion": 528290.0204446784,
+          "departureDelay": 254.32000000000002,
+          "dissatisfaction": 77957.66581588291,
+          "excessDistance": 6922.8630000000285,
+          "terminalHoldDelay": 0.8800000000000001
+        },
+        "objective": 723612.5518712935
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1947.4,
+        "active": 2175.3,
+        "waiting": 2.3,
+        "travelPassengerMinutes": 110186.80261073227,
+        "waitingPassengerMinutes": 115.6,
+        "committedWaitingPassengerMinutes": 0.4,
+        "satisfaction": 88.88304230789547,
+        "congestion": 5560.947583628193,
+        "excessDistanceKm": 7692.070000000031,
+        "components": {
+          "travelTime": 110186.80261073227,
+          "congestion": 528290.0204446784,
+          "departureDelay": 254.32000000000002,
+          "dissatisfaction": 77957.66581588291,
+          "excessDistance": 6922.8630000000285,
+          "terminalHoldDelay": 0.8800000000000001
+        },
+        "objective": 723612.5518712935
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "long-all-hold",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1921,
+        "active": 1998,
+        "waiting": 206,
+        "travelPassengerMinutes": 101627.19806998209,
+        "waitingPassengerMinutes": 10650,
+        "committedWaitingPassengerMinutes": 23460,
+        "satisfaction": 88.16687187962262,
+        "congestion": 5076.231733863276,
+        "excessDistanceKm": 7161.070000000031,
+        "components": {
+          "travelTime": 101627.19806998209,
+          "congestion": 482242.01471701113,
+          "departureDelay": 23430.000000000004,
+          "dissatisfaction": 82979.81094414626,
+          "excessDistance": 6444.963000000028,
+          "terminalHoldDelay": 51612.00000000001
+        },
+        "objective": 748335.9867311394
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1921,
+        "active": 1998,
+        "waiting": 206,
+        "travelPassengerMinutes": 101627.19806998209,
+        "waitingPassengerMinutes": 10650,
+        "committedWaitingPassengerMinutes": 23460,
+        "satisfaction": 88.16687187962262,
+        "congestion": 5076.231733863276,
+        "excessDistanceKm": 7161.070000000031,
+        "components": {
+          "travelTime": 101627.19806998209,
+          "congestion": 482242.01471701113,
+          "departureDelay": 23430.000000000004,
+          "dissatisfaction": 82979.81094414626,
+          "excessDistance": 6444.963000000028,
+          "terminalHoldDelay": 51612.00000000001
+        },
+        "objective": 748335.9867311394
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "continuous-long-hold",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 0,
+        "active": 0,
+        "waiting": 4125,
+        "travelPassengerMinutes": 0,
+        "waitingPassengerMinutes": 216270.5,
+        "committedWaitingPassengerMinutes": 493729.25,
+        "satisfaction": 58.056630303030275,
+        "congestion": 0,
+        "excessDistanceKm": 0,
+        "components": {
+          "travelTime": 0,
+          "congestion": 0,
+          "departureDelay": 475795.1,
+          "dissatisfaction": 294127.8799999999,
+          "excessDistance": 0,
+          "terminalHoldDelay": 1086204.3499999999
+        },
+        "objective": 1856127.33
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 0,
+        "active": 0,
+        "waiting": 4125,
+        "travelPassengerMinutes": 0,
+        "waitingPassengerMinutes": 216270.5,
+        "committedWaitingPassengerMinutes": 493729.25,
+        "satisfaction": 58.056630303030275,
+        "congestion": 0,
+        "excessDistanceKm": 0,
+        "components": {
+          "travelTime": 0,
+          "congestion": 0,
+          "departureDelay": 475795.1,
+          "dissatisfaction": 294127.8799999999,
+          "excessDistance": 0,
+          "terminalHoldDelay": 1086204.3499999999
+        },
+        "objective": 1856127.33
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "aggressive-reroute",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 505.7,
+        "active": 3617.3,
+        "waiting": 2,
+        "travelPassengerMinutes": 177529.42419115102,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 69.5280396862649,
+        "congestion": 16042.378173193176,
+        "excessDistanceKm": 21762.159999999363,
+        "components": {
+          "travelTime": 177529.42419115102,
+          "congestion": 1524025.9264533515,
+          "departureDelay": 0,
+          "dissatisfaction": 213684.62170007633,
+          "excessDistance": 19585.94399999943,
+          "terminalHoldDelay": 0
+        },
+        "objective": 1934825.916344578
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 505.7,
+        "active": 3617.3,
+        "waiting": 2,
+        "travelPassengerMinutes": 177529.42419115102,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 69.5280396862649,
+        "congestion": 16042.378173193176,
+        "excessDistanceKm": 21762.159999999363,
+        "components": {
+          "travelTime": 177529.42419115102,
+          "congestion": 1524025.9264533515,
+          "departureDelay": 0,
+          "dissatisfaction": 213684.62170007633,
+          "excessDistance": 19585.94399999943,
+          "terminalHoldDelay": 0
+        },
+        "objective": 1934825.916344578
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "late-hold",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2150.5,
+        "waiting": 25.1,
+        "travelPassengerMinutes": 109848.19717870322,
+        "waitingPassengerMinutes": 209.6,
+        "committedWaitingPassengerMinutes": 1362.9,
+        "satisfaction": 88.9006894286911,
+        "congestion": 5608.043271080038,
+        "excessDistanceKm": 7189.720000000021,
+        "components": {
+          "travelTime": 109848.19717870322,
+          "congestion": 532764.1107526034,
+          "departureDelay": 461.12000000000006,
+          "dissatisfaction": 77833.91538130374,
+          "excessDistance": 6470.74800000002,
+          "terminalHoldDelay": 2998.38
+        },
+        "objective": 730376.4713126104
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2150.5,
+        "waiting": 25.1,
+        "travelPassengerMinutes": 109848.19717870322,
+        "waitingPassengerMinutes": 209.6,
+        "committedWaitingPassengerMinutes": 1362.9,
+        "satisfaction": 88.9006894286911,
+        "congestion": 5608.043271080038,
+        "excessDistanceKm": 7189.720000000021,
+        "components": {
+          "travelTime": 109848.19717870322,
+          "congestion": 532764.1107526034,
+          "departureDelay": 461.12000000000006,
+          "dissatisfaction": 77833.91538130374,
+          "excessDistance": 6470.74800000002,
+          "terminalHoldDelay": 2998.38
+        },
+        "objective": 730376.4713126104
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    },
+    {
+      "policy": "late-reroute",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.77825065929005,
+        "congestion": 5637.245390975871,
+        "excessDistanceKm": 11336.549999999948,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 78692.51725173318,
+          "excessDistance": 10202.894999999955,
+          "terminalHoldDelay": 0
+        },
+        "objective": 734491.521573144
+      },
+      "clearance": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "waitingPassengerMinutes": 0,
+        "committedWaitingPassengerMinutes": 0,
+        "satisfaction": 88.77825065929005,
+        "congestion": 5637.245390975871,
+        "excessDistanceKm": 11336.549999999948,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 78692.51725173318,
+          "excessDistance": 10202.894999999955,
+          "terminalHoldDelay": 0
+        },
+        "objective": 734491.521573144
+      },
+      "clearedRuns": 0,
+      "reversals": 0
+    }
+  ]
+}

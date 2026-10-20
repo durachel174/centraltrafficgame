@@ -18,7 +18,7 @@ import { HelpPanel } from "./HelpPanel";
 export const canUseDevTools = (env: { DEV?: boolean } = import.meta.env) => env.DEV === true;
 
 export function App() {
-  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, openHelp, tutorial, replay } = useGameStore();
+  const { engine, speed, setSpeed, step, reset, computeBaseline, version, devToolsOpen, toggleDevTools, openHelp, tutorial, replay, refreshForecasts } = useGameStore();
   const done = engine.isDone();
   const tutorialActive = tutorial.active;
   const revealPlayback = !tutorialActive || tutorial.step === "observe" || tutorial.step === "hold" || tutorial.step === "complete";
@@ -27,7 +27,8 @@ export function App() {
 
   useEffect(() => {
     computeBaseline();
-  }, [computeBaseline]);
+    refreshForecasts();
+  }, [computeBaseline, refreshForecasts]);
 
   useEffect(() => {
     if (!speed || done) return;

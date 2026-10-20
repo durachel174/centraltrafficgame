@@ -1,0 +1,511 @@
+{
+  "phase": "after browser forecast offload; engine 0.3.0 / Monday 2",
+  "reports": [
+    {
+      "workload": "normal-1x",
+      "durationMs": 20002.899999976158,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2394,
+          "median": 8.300000000001091,
+          "p95": 10.100000000002183,
+          "maximum": 18.099999999998545,
+          "totalSeen": 2394
+        },
+        "tick": {
+          "count": 75,
+          "median": 0.6000000238418579,
+          "p95": 1.5,
+          "maximum": 3.0999999046325684,
+          "totalSeen": 75
+        },
+        "canvasDraw": {
+          "count": 75,
+          "median": 1.2999999523162842,
+          "p95": 1.600000023841858,
+          "maximum": 1.899999976158142,
+          "totalSeen": 75
+        },
+        "snapshot": {
+          "count": 3,
+          "median": 0.09999990463256836,
+          "p95": 0.10000002384185791,
+          "maximum": 0.10000002384185791,
+          "totalSeen": 3
+        },
+        "snapshotPostMessage": {
+          "count": 3,
+          "median": 0.3999999761581421,
+          "p95": 0.40000009536743164,
+          "maximum": 0.40000009536743164,
+          "totalSeen": 3
+        },
+        "forecastWorker": {
+          "count": 3,
+          "median": 20.100000023841858,
+          "p95": 21.100000023841858,
+          "maximum": 21.100000023841858,
+          "totalSeen": 3
+        },
+        "forecastRoundTrip": {
+          "count": 3,
+          "median": 21.100000023841858,
+          "p95": 22.200000047683716,
+          "maximum": 22.200000047683716,
+          "totalSeen": 3
+        }
+      },
+      "approximateRAFfps": 120.48192771082753,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 1,
+        "time": 420.25,
+        "activeVehicles": 0,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 1,
+        "time": 439,
+        "activeVehicles": 166,
+        "visibility": "visible"
+      }
+    },
+    {
+      "workload": "normal-4x",
+      "durationMs": 20002,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2347,
+          "median": 8.30000000000291,
+          "p95": 10.19999999999709,
+          "maximum": 27,
+          "totalSeen": 2347
+        },
+        "tick": {
+          "count": 292,
+          "median": 1.100000023841858,
+          "p95": 3.899999976158142,
+          "maximum": 9.100000023841858,
+          "totalSeen": 292
+        },
+        "canvasDraw": {
+          "count": 73,
+          "median": 1.2999999523162842,
+          "p95": 1.7999999523162842,
+          "maximum": 1.8000000715255737,
+          "totalSeen": 73
+        },
+        "snapshot": {
+          "count": 15,
+          "median": 0.19999992847442627,
+          "p95": 0.5999999046325684,
+          "maximum": 0.5999999046325684,
+          "totalSeen": 15
+        },
+        "snapshotPostMessage": {
+          "count": 15,
+          "median": 1,
+          "p95": 2.899999976158142,
+          "maximum": 2.899999976158142,
+          "totalSeen": 15
+        },
+        "forecastWorker": {
+          "count": 15,
+          "median": 37.60000002384186,
+          "p95": 75.5,
+          "maximum": 75.5,
+          "totalSeen": 15
+        },
+        "forecastRoundTrip": {
+          "count": 15,
+          "median": 40.10000002384186,
+          "p95": 113.69999992847443,
+          "maximum": 113.69999992847443,
+          "totalSeen": 15
+        }
+      },
+      "approximateRAFfps": 120.48192771080113,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 421,
+        "activeVehicles": 6,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 494,
+        "activeVehicles": 1034,
+        "visibility": "visible"
+      }
+    },
+    {
+      "workload": "rush-4x",
+      "durationMs": 20001.5,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2312,
+          "median": 8.30000000000291,
+          "p95": 10,
+          "maximum": 51.60000000000582,
+          "totalSeen": 2312
+        },
+        "tick": {
+          "count": 240,
+          "median": 2.850000023841858,
+          "p95": 6,
+          "maximum": 7.899999976158142,
+          "totalSeen": 240
+        },
+        "canvasDraw": {
+          "count": 60,
+          "median": 1.2999999523162842,
+          "p95": 1.6999999284744263,
+          "maximum": 2.600000023841858,
+          "totalSeen": 60
+        },
+        "snapshot": {
+          "count": 13,
+          "median": 0.5999999046325684,
+          "p95": 0.8999999761581421,
+          "maximum": 0.8999999761581421,
+          "totalSeen": 13
+        },
+        "snapshotPostMessage": {
+          "count": 12,
+          "median": 3.550000011920929,
+          "p95": 5.100000023841858,
+          "maximum": 5.100000023841858,
+          "totalSeen": 12
+        },
+        "forecastWorker": {
+          "count": 12,
+          "median": 83.69999998807907,
+          "p95": 98,
+          "maximum": 98,
+          "totalSeen": 12
+        },
+        "forecastRoundTrip": {
+          "count": 12,
+          "median": 95.19999998807907,
+          "p95": 130.29999995231628,
+          "maximum": 130.29999995231628,
+          "totalSeen": 12
+        },
+        "longTask": {
+          "count": 1,
+          "median": 53,
+          "p95": 53,
+          "maximum": 53,
+          "totalSeen": 1
+        }
+      },
+      "approximateRAFfps": 120.48192771080113,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 480,
+        "activeVehicles": 700,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 540,
+        "activeVehicles": 1956,
+        "visibility": "visible"
+      }
+    },
+    {
+      "workload": "incident-4x",
+      "durationMs": 20002.400000095367,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2302,
+          "median": 8.30000000000291,
+          "p95": 10,
+          "maximum": 58,
+          "totalSeen": 2302
+        },
+        "tick": {
+          "count": 188,
+          "median": 3.5,
+          "p95": 7.199999928474426,
+          "maximum": 9.299999952316284,
+          "totalSeen": 188
+        },
+        "canvasDraw": {
+          "count": 47,
+          "median": 1.3000000715255737,
+          "p95": 1.7000000476837158,
+          "maximum": 1.899999976158142,
+          "totalSeen": 47
+        },
+        "snapshot": {
+          "count": 10,
+          "median": 0.8499999642372131,
+          "p95": 1,
+          "maximum": 1,
+          "totalSeen": 10
+        },
+        "snapshotPostMessage": {
+          "count": 9,
+          "median": 4.5,
+          "p95": 5.100000023841858,
+          "maximum": 5.100000023841858,
+          "totalSeen": 9
+        },
+        "forecastWorker": {
+          "count": 9,
+          "median": 87.89999997615814,
+          "p95": 101,
+          "maximum": 101,
+          "totalSeen": 9
+        },
+        "forecastRoundTrip": {
+          "count": 9,
+          "median": 98.19999992847443,
+          "p95": 135.59999990463257,
+          "maximum": 135.59999990463257,
+          "totalSeen": 9
+        },
+        "longTask": {
+          "count": 1,
+          "median": 66,
+          "p95": 66,
+          "maximum": 66,
+          "totalSeen": 1
+        }
+      },
+      "approximateRAFfps": 120.48192771080113,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 493,
+        "activeVehicles": 1007,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 540,
+        "activeVehicles": 1956,
+        "visibility": "visible"
+      }
+    },
+    {
+      "workload": "5000-4x",
+      "durationMs": 20001.699999928474,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2226,
+          "median": 8.300000000017462,
+          "p95": 10,
+          "maximum": 42.60000000000582,
+          "totalSeen": 2226
+        },
+        "tick": {
+          "count": 280,
+          "median": 3.399999976158142,
+          "p95": 7.600000023841858,
+          "maximum": 8.899999976158142,
+          "totalSeen": 280
+        },
+        "canvasDraw": {
+          "count": 70,
+          "median": 1.7999999523162842,
+          "p95": 2.100000023841858,
+          "maximum": 2.3000000715255737,
+          "totalSeen": 70
+        },
+        "snapshot": {
+          "count": 14,
+          "median": 0.6000000238418579,
+          "p95": 0.8999999761581421,
+          "maximum": 0.8999999761581421,
+          "totalSeen": 14
+        },
+        "snapshotPostMessage": {
+          "count": 14,
+          "median": 4.900000035762787,
+          "p95": 6,
+          "maximum": 6,
+          "totalSeen": 14
+        },
+        "forecastWorker": {
+          "count": 13,
+          "median": 90.90000009536743,
+          "p95": 122,
+          "maximum": 122,
+          "totalSeen": 13
+        },
+        "forecastRoundTrip": {
+          "count": 13,
+          "median": 100.29999995231628,
+          "p95": 134.10000002384186,
+          "maximum": 134.10000002384186,
+          "totalSeen": 13
+        }
+      },
+      "approximateRAFfps": 120.48192771058989,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 420.25,
+        "activeVehicles": 5000,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 490.25,
+        "activeVehicles": 7078,
+        "visibility": "visible"
+      }
+    },
+    {
+      "workload": "preview-map",
+      "durationMs": 20002,
+      "capacityPerMetric": 4096,
+      "metrics": {
+        "frameInterval": {
+          "count": 2400,
+          "median": 8.300000000017462,
+          "p95": 10.199999999982538,
+          "maximum": 10.400000000023283,
+          "totalSeen": 2400
+        },
+        "tick": {
+          "count": 4,
+          "median": 0.6500000357627869,
+          "p95": 0.7000000476837158,
+          "maximum": 0.7000000476837158,
+          "totalSeen": 4
+        },
+        "canvasDraw": {
+          "count": 2,
+          "median": 0.949999988079071,
+          "p95": 1,
+          "maximum": 1,
+          "totalSeen": 2
+        },
+        "snapshot": {
+          "count": 1,
+          "median": 0.20000004768371582,
+          "p95": 0.20000004768371582,
+          "maximum": 0.20000004768371582,
+          "totalSeen": 1
+        },
+        "snapshotPostMessage": {
+          "count": 1,
+          "median": 1.1999999284744263,
+          "p95": 1.1999999284744263,
+          "maximum": 1.1999999284744263,
+          "totalSeen": 1
+        },
+        "previewWorker": {
+          "count": 1,
+          "median": 115.30000007152557,
+          "p95": 115.30000007152557,
+          "maximum": 115.30000007152557,
+          "totalSeen": 1
+        },
+        "previewRoundTrip": {
+          "count": 1,
+          "median": 137.60000002384186,
+          "p95": 137.60000002384186,
+          "maximum": 137.60000002384186,
+          "totalSeen": 1
+        }
+      },
+      "approximateRAFfps": 120.48192771058989,
+      "notes": "rAF cadence, not unique Canvas updates or simulation throughput. Durations in milliseconds. Distributions use bounded retained samples.",
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+      "viewport": [
+        1280,
+        800
+      ],
+      "hardwareConcurrency": 11,
+      "deviceMemoryGB": 16,
+      "longTaskSupported": true,
+      "start": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 4,
+        "time": 480,
+        "activeVehicles": 700,
+        "visibility": "visible"
+      },
+      "end": {
+        "scenario": "monday_morning",
+        "seed": 428193,
+        "speed": 0,
+        "time": 481,
+        "activeVehicles": 728,
+        "visibility": "visible"
+      }
+    }
+  ]
+}

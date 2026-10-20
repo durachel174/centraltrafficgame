@@ -8,7 +8,10 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "simulate": "tsx scripts/simulate.ts",
-    "benchmark": "tsx scripts/benchmark.ts"
+    "benchmark": "tsx scripts/benchmark.ts",
+    "audit:policies": "node --import tsx scripts/audit-policies.ts",
+    "audit:pacing": "node --import tsx scripts/audit-pacing.ts",
+    "audit:holds": "node --import tsx scripts/audit-hold-horizon.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.3",

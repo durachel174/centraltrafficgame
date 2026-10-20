@@ -23,7 +23,7 @@ This convention prevents newly generated trips from moving before departure and 
 
 ## Objective Units
 
-Travel-time cost is measured in passenger-minutes. Completed vehicles contribute full trip duration, and active vehicles contribute elapsed travel time so leaving trips unfinished cannot improve the objective.
+Travel-time cost is measured in passenger-minutes. Completed vehicles contribute full trip duration, and active vehicles contribute elapsed travel time so elapsed costs do not disappear when a trip is unfinished. This is a finite-window evaluation, not full journey clearance.
 
 Departure delay is passenger-minutes spent waiting before dispatch. The engine adds this once per fixed tick for every trip already waiting at the start of that tick, including held trips and trips whose route is unavailable.
 
@@ -48,8 +48,19 @@ The road hold action is serializable as `DELAY_DEPARTURES` with an optional `tar
 
 ## Objective breakdown and final comparisons
 
-`objectiveBreakdown` exposes weighted travel time, congestion, departure delay, dissatisfaction, and excess-distance cost. The unrounded five components sum to `objective`. Raw travel and waiting inputs are passenger-minutes; congestion input is integrated squared excess utilization; dissatisfaction input sums satisfaction-point deficits; excess distance is km. Results label all weighted outputs as cost units rather than mixing them with raw minutes. Display rounding may make the displayed rows differ slightly from the displayed total.
+`objectiveBreakdown` exposes weighted travel time, congestion, departure delay, dissatisfaction, excess-distance cost, and terminal imposed-hold delay. The unrounded six components sum to `objective`. Raw travel and waiting inputs are passenger-minutes; congestion input is integrated squared excess utilization; dissatisfaction input sums satisfaction-point deficits; excess distance is km. Results label all weighted outputs as cost units rather than mixing them with raw minutes. Display rounding may make the displayed rows differ slightly from the displayed total.
 
 Completed travel statistics measure dispatch-to-arrival travel and exclude pre-dispatch waiting. Completed trips contribute full travel; active trips contribute elapsed travel and remaining planned excess distance at the scenario end. Waiting trips contribute accumulated waiting delay and dissatisfaction. Satisfaction averages include completed, active, and waiting riders. Results explicitly show requested, completed, active unfinished, and waiting unfinished counts.
 
 The no-intervention comparison uses identical engine/scenario versions, complete configuration, weights, seed, and full scenario end. Percentage improvement is `(baseline - player) / baseline * 100`: positive means lower player cost; negative means higher player cost. The baseline executes in a worker and cannot install an obsolete or mismatched response.
+
+
+## Terminal imposed-hold accounting (Monday Morning version 2)
+
+The decision and evaluation window remains 07:00–09:00. At the final tick only, sum `max(heldUntil - currentTime, 0)` for still-waiting trips. This is `remainingHoldPassengerMinutes`. Add a separate `terminalHoldDelay = departureDelayWeight * remainingHoldPassengerMinutes` (Monday weight 2.2). It charges the known minimum waiting obligation imposed by an applied hold beyond the cutoff. It does not guess post-09:00 travel, congestion, dissatisfaction or complete clearance. Accrued pre-cutoff departure delay remains separate and is not counted again. Expired/unheld trips incur zero terminal hold liability, and stepping a finished engine is a no-op.
+
+Preview branches reaching scenario end include the same liability in system-cost delta and expose its passenger-minute delta separately. The ordinary passenger-delay delta remains observed delay to the actual projection horizon. Results distinguish remaining imposed hold from observed elapsed waiting and weighted cost units. Short horizons that do not reach scenario end do not invent terminal charges. Practice disables this scored terminal policy.
+
+Ten paired seeds demonstrated equal old costs for 5-minute and 1440-minute holds with identical through-cutoff dispatch but 83,230 additional committed passenger-minutes per seed. The correction prices that exact difference, rather than tuning penalties to make a controller win. It is intentionally a lower bound: unfinished active-trip downstream congestion and full clearance remain outside this evaluation. See [audit evidence](PHASE12_VALIDATION.md).
+
+Browser projections have source-labelled presentation age and rebased remaining horizons; synchronous headless projections retain their source-relative samples. Refresh intervals and projection physics are unchanged.

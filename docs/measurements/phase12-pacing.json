@@ -1,0 +1,507 @@
+{
+  "definition": "5-minute sampled warning on North/South Bridge with affected>0 and |cost delta|>=1 OR |delay delta|>=0.1 passenger-min OR road utilization change>=1 percentage point. Candidate snapshots are not independent decisions; no-action source trajectory; negative cost is not required.",
+  "seeds": [
+    428193,
+    428202
+  ],
+  "rows": [
+    {
+      "seed": 428193,
+      "firstWarning": {
+        "north_approach": 50,
+        "north_bridge": 50,
+        "south_bridge": 50,
+        "south_approach": 60,
+        "downtown_gate": 105
+      },
+      "firstOverload": {
+        "north_bridge": 53.25,
+        "south_bridge": 61.25,
+        "north_approach": 61.75,
+        "south_approach": 63.5,
+        "north_feed": 63.75,
+        "downtown_core": 65,
+        "south_feed": 76,
+        "bypass_south": 90.75,
+        "midtown_south": 93.25,
+        "midtown_downtown": 96.25,
+        "downtown_gate": 118.25
+      },
+      "leadTimes": {
+        "north_approach": 11.75,
+        "north_bridge": 3.25,
+        "south_bridge": 11.25,
+        "south_approach": 3.5,
+        "downtown_gate": 13.25
+      },
+      "comparisons": 42,
+      "zeroAffected": 8,
+      "firstCandidateMinute": 50,
+      "candidateTimeCount": 13,
+      "candidateCount": 34,
+      "lowerCostChoices": 10,
+      "unfavorableChoices": 24,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        190
+      ]
+    },
+    {
+      "seed": 428194,
+      "firstWarning": {
+        "north_approach": 50,
+        "north_bridge": 50,
+        "south_bridge": 50,
+        "south_approach": 55,
+        "downtown_gate": 85
+      },
+      "firstOverload": {
+        "north_feed": 59,
+        "north_bridge": 60.25,
+        "north_approach": 61.5,
+        "south_bridge": 61.5,
+        "downtown_core": 63.5,
+        "south_approach": 64.25,
+        "south_feed": 70.75,
+        "downtown_gate": 98
+      },
+      "leadTimes": {
+        "north_approach": 11.5,
+        "north_bridge": 10.25,
+        "south_bridge": 11.5,
+        "south_approach": 9.25,
+        "downtown_gate": 13
+      },
+      "comparisons": 26,
+      "zeroAffected": 5,
+      "firstCandidateMinute": 50,
+      "candidateTimeCount": 9,
+      "candidateCount": 21,
+      "lowerCostChoices": 8,
+      "unfavorableChoices": 13,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        56
+      ]
+    },
+    {
+      "seed": 428195,
+      "firstWarning": {
+        "north_approach": 45,
+        "north_bridge": 50,
+        "south_approach": 50,
+        "south_bridge": 50
+      },
+      "firstOverload": {
+        "north_bridge": 59.25,
+        "south_bridge": 59.25,
+        "north_approach": 59.5,
+        "south_approach": 63,
+        "north_feed": 63.75,
+        "downtown_core": 65.5,
+        "south_feed": 73.75
+      },
+      "leadTimes": {
+        "north_approach": 14.5,
+        "north_bridge": 9.25,
+        "south_approach": 13,
+        "south_bridge": 9.25
+      },
+      "comparisons": 38,
+      "zeroAffected": 10,
+      "firstCandidateMinute": 50,
+      "candidateTimeCount": 14,
+      "candidateCount": 28,
+      "lowerCostChoices": 10,
+      "unfavorableChoices": 18,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        57
+      ]
+    },
+    {
+      "seed": 428196,
+      "firstWarning": {
+        "north_approach": 45,
+        "north_bridge": 50,
+        "south_bridge": 50,
+        "south_approach": 60
+      },
+      "firstOverload": {
+        "north_feed": 58.75,
+        "north_approach": 59.75,
+        "south_bridge": 61,
+        "north_bridge": 61.25,
+        "downtown_core": 61.5,
+        "south_approach": 66,
+        "south_feed": 74,
+        "midtown_south": 88.5,
+        "midtown_downtown": 91.75
+      },
+      "leadTimes": {
+        "north_approach": 14.75,
+        "north_bridge": 11.25,
+        "south_bridge": 11,
+        "south_approach": 6
+      },
+      "comparisons": 42,
+      "zeroAffected": 10,
+      "firstCandidateMinute": 50,
+      "candidateTimeCount": 14,
+      "candidateCount": 32,
+      "lowerCostChoices": 6,
+      "unfavorableChoices": 26,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        129
+      ]
+    },
+    {
+      "seed": 428197,
+      "firstWarning": {
+        "north_bridge": 45,
+        "north_approach": 50,
+        "south_approach": 50,
+        "south_bridge": 50
+      },
+      "firstOverload": {
+        "north_bridge": 60,
+        "south_bridge": 61,
+        "north_approach": 62.5,
+        "south_approach": 63.75,
+        "north_feed": 65.25,
+        "south_feed": 68.75,
+        "north_hill_feed": 71,
+        "downtown_core": 74.75,
+        "midtown_south": 85,
+        "midtown_downtown": 88.25
+      },
+      "leadTimes": {
+        "north_bridge": 15,
+        "north_approach": 12.5,
+        "south_approach": 13.75,
+        "south_bridge": 11
+      },
+      "comparisons": 26,
+      "zeroAffected": 0,
+      "firstCandidateMinute": 45,
+      "candidateTimeCount": 7,
+      "candidateCount": 26,
+      "lowerCostChoices": 8,
+      "unfavorableChoices": 18,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        76
+      ]
+    },
+    {
+      "seed": 428198,
+      "firstWarning": {
+        "north_bridge": 45,
+        "north_approach": 50,
+        "south_approach": 50,
+        "south_bridge": 50
+      },
+      "firstOverload": {
+        "north_bridge": 58,
+        "south_approach": 61.25,
+        "south_bridge": 62.75,
+        "downtown_core": 63,
+        "north_approach": 64.25,
+        "north_feed": 66.25,
+        "south_feed": 70.75,
+        "midtown_south": 85.5,
+        "midtown_downtown": 89.5
+      },
+      "leadTimes": {
+        "north_bridge": 13,
+        "north_approach": 14.25,
+        "south_approach": 11.25,
+        "south_bridge": 12.75
+      },
+      "comparisons": 28,
+      "zeroAffected": 2,
+      "firstCandidateMinute": 45,
+      "candidateTimeCount": 8,
+      "candidateCount": 26,
+      "lowerCostChoices": 9,
+      "unfavorableChoices": 17,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        76
+      ]
+    },
+    {
+      "seed": 428199,
+      "firstWarning": {
+        "south_bridge": 45,
+        "north_bridge": 50,
+        "south_approach": 50,
+        "north_approach": 55,
+        "downtown_gate": 90
+      },
+      "firstOverload": {
+        "south_bridge": 59.5,
+        "north_approach": 60.5,
+        "north_bridge": 61.5,
+        "south_approach": 62.25,
+        "downtown_core": 68,
+        "north_feed": 71.25,
+        "south_feed": 74,
+        "downtown_gate": 102.5
+      },
+      "leadTimes": {
+        "south_bridge": 14.5,
+        "north_bridge": 11.5,
+        "south_approach": 12.25,
+        "north_approach": 5.5,
+        "downtown_gate": 12.5
+      },
+      "comparisons": 30,
+      "zeroAffected": 6,
+      "firstCandidateMinute": 45,
+      "candidateTimeCount": 11,
+      "candidateCount": 24,
+      "lowerCostChoices": 9,
+      "unfavorableChoices": 15,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        53
+      ]
+    },
+    {
+      "seed": 428200,
+      "firstWarning": {
+        "north_bridge": 40,
+        "north_approach": 45,
+        "south_approach": 50,
+        "south_bridge": 50
+      },
+      "firstOverload": {
+        "north_bridge": 54,
+        "north_approach": 57.5,
+        "downtown_core": 62.25,
+        "south_approach": 62.75,
+        "south_bridge": 64,
+        "north_feed": 64.25,
+        "midtown_south": 81,
+        "south_feed": 82.5,
+        "midtown_downtown": 84
+      },
+      "leadTimes": {
+        "north_bridge": 14,
+        "north_approach": 12.5,
+        "south_approach": 12.75,
+        "south_bridge": 14
+      },
+      "comparisons": 42,
+      "zeroAffected": 11,
+      "firstCandidateMinute": 40,
+      "candidateTimeCount": 16,
+      "candidateCount": 31,
+      "lowerCostChoices": 9,
+      "unfavorableChoices": 22,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        56
+      ]
+    },
+    {
+      "seed": 428201,
+      "firstWarning": {
+        "north_approach": 45,
+        "north_bridge": 45,
+        "south_approach": 50,
+        "south_bridge": 50
+      },
+      "firstOverload": {
+        "north_bridge": 57,
+        "north_approach": 60,
+        "south_bridge": 61.5,
+        "downtown_core": 62.75,
+        "south_approach": 64.25,
+        "north_feed": 66.5,
+        "south_feed": 68.5,
+        "midtown_downtown": 83.75,
+        "downtown_gate": 95.25
+      },
+      "leadTimes": {
+        "north_approach": 15,
+        "north_bridge": 12,
+        "south_approach": 14.25,
+        "south_bridge": 11.5
+      },
+      "comparisons": 28,
+      "zeroAffected": 6,
+      "firstCandidateMinute": 45,
+      "candidateTimeCount": 9,
+      "candidateCount": 22,
+      "lowerCostChoices": 8,
+      "unfavorableChoices": 14,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        55
+      ]
+    },
+    {
+      "seed": 428202,
+      "firstWarning": {
+        "north_approach": 45,
+        "north_bridge": 50,
+        "south_approach": 50,
+        "south_bridge": 50,
+        "downtown_gate": 95
+      },
+      "firstOverload": {
+        "north_approach": 59.75,
+        "south_bridge": 60.5,
+        "north_bridge": 62.25,
+        "downtown_core": 63.5,
+        "south_approach": 64.5,
+        "north_feed": 67.75,
+        "south_feed": 69.25,
+        "downtown_gate": 105.5
+      },
+      "leadTimes": {
+        "north_approach": 14.75,
+        "north_bridge": 12.25,
+        "south_approach": 14.5,
+        "south_bridge": 10.5,
+        "downtown_gate": 10.5
+      },
+      "comparisons": 30,
+      "zeroAffected": 6,
+      "firstCandidateMinute": 50,
+      "candidateTimeCount": 11,
+      "candidateCount": 24,
+      "lowerCostChoices": 8,
+      "unfavorableChoices": 16,
+      "gapsMinutes": [
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "affectedRange": [
+        1,
+        52
+      ]
+    }
+  ]
+}

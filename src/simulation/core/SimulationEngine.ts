@@ -49,7 +49,7 @@ export class SimulationEngine {
   forecasts: TrafficForecast[] = [];
   alerts: TrafficAlert[] = [];
 
-  constructor(private scenario: Scenario, private readonly timing?: (name: string, milliseconds: number) => void) {
+  constructor(private scenario: Scenario, private readonly timing?: (name: string, milliseconds: number) => void, readonly externalForecasts = false) {
     this.graph = new TrafficGraph(scenario.graph);
     this.rng = new SeededRandom(scenario.seed ?? 1);
     this.router = new Router(this.graph, scenario.congestion);
@@ -220,6 +220,7 @@ export class SimulationEngine {
       }
     }
     return {
+      terminalHoldDeltaPassengerMinutes: (after.remainingHoldPassengerMinutes ?? 0) - (before.remainingHoldPassengerMinutes ?? 0),
       affectedVehicles: actionSamples[0]?.affectedTrips ?? 0,
       networkCostDelta: after.objective - before.objective,
       forecastChanges,
@@ -455,11 +456,12 @@ export class SimulationEngine {
       weights: this.scenario.objectiveWeights,
       utilizationThreshold: this.scenario.congestion.utilizationThreshold,
       currentTime: this.time,
+      chargeTerminalHolds: !!this.scenario.terminalHoldAccounting && this.isDone(),
       satisfaction: this.scenario.satisfaction
     });
-    if (this.forecastingEnabled && this.time - this.lastForecastTime >= (this.scenario.forecast?.refreshIntervalMinutes ?? 1)) {
+    if (this.forecastingEnabled && !this.externalForecasts && this.time - this.lastForecastTime >= (this.scenario.forecast?.refreshIntervalMinutes ?? 1)) {
       const started = this.timing ? performance.now() : 0;
-      this.forecasts = this.computeForecastsFromCurrent();
+      this.forecasts = this.calculateForecasts();
       this.timing?.("forecastMain", performance.now() - started);
       this.alerts = createAlerts(this.forecasts, {
         warningUtilization: this.scenario.forecast?.warningUtilization ?? 1,
@@ -710,7 +712,7 @@ export class SimulationEngine {
     };
   }
 
-  private computeForecastsFromCurrent(): TrafficForecast[] {
+  calculateForecasts(): TrafficForecast[] {
     this.validateForecastConfig();
     const horizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
     const clone = this.cloneForRollout();
@@ -767,7 +769,8 @@ export class SimulationEngine {
 
   private emptyMetrics(): SimulationMetrics {
     return {
-      objectiveBreakdown: { travelTime: 0, congestion: 0, departureDelay: 0, dissatisfaction: 0, excessDistance: 0 },
+      remainingHoldPassengerMinutes: 0,
+      objectiveBreakdown: { terminalHoldDelay: 0, travelTime: 0, congestion: 0, departureDelay: 0, dissatisfaction: 0, excessDistance: 0 },
       tripsRequested: 0,
       tripsCompleted: 0,
       activeTrips: 0,

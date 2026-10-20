@@ -114,12 +114,12 @@ describe("objective breakdown and compatible asynchronous baseline", () => {
   });
   it("computes off-thread, matches the selected seed/configuration, and ignores obsolete worker results", () => {
     useGameStore.getState().setScenarioMode("monday", 301);
-    const first = ControlledWorker.instances.at(-1)!;
+    const first = ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!;
     expect(first.message.seed).toBe(301); expect(first.message.kind).toBe("baseline");
     const spy = vi.spyOn(SimulationEngine.prototype, "step");
     useGameStore.getState().computeBaseline(); expect(spy).not.toHaveBeenCalled();
     useGameStore.getState().setScenarioMode("monday", 302);
-    const second = ControlledWorker.instances.at(-1)!;
+    const second = ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!;
     expect(first.terminated).toBe(true);
     first.reply({ identity: baselineIdentity(mondayMorningScenario, 301), metrics: fixtureRun().finalMetrics, calculationMs: 1 });
     expect(useGameStore.getState().baseline.status).toBe("loading");
@@ -127,7 +127,7 @@ describe("objective breakdown and compatible asynchronous baseline", () => {
     expect(useGameStore.getState().baseline.status).toBe("error");
     expect(useGameStore.getState().baselineObjective).toBeNull();
     useGameStore.getState().computeBaseline();
-    const worker = ControlledWorker.instances.at(-1)!;
+    const worker = ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!;
     const response = calculateBaseline({ kind: "baseline", scenario: fixture, seed: 302 });
     // A fixture result cannot masquerade as the selected challenge.
     worker.reply(response);
@@ -245,9 +245,9 @@ describe("session, history, and file UI", () => {
 
   it("same-seed retry reproduces demand/baseline and new seed resets every session surface", () => {
     useGameStore.getState().setScenarioMode("monday", 12345);
-    const request = ControlledWorker.instances.at(-1)!.message;
+    const request = ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!.message;
     const response = calculateBaseline(request);
-    ControlledWorker.instances.at(-1)!.reply(response);
+    ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!.reply(response);
     for (let tick = 0; tick < 20; tick++) useGameStore.getState().step();
     const firstDemand = useGameStore.getState().engine.exportSnapshot().vehicles;
     const firstBaseline = useGameStore.getState().baseline.metrics;
@@ -264,7 +264,7 @@ describe("session, history, and file UI", () => {
     expect(store.seed).not.toBe(12345);
     expect(store.scenario.seed).toBe(store.seed);
     expect(store.engine.createRun().seed).toBe(store.seed);
-    expect(ControlledWorker.instances.at(-1)!.message.seed).toBe(store.seed);
+    expect(ControlledWorker.instances.filter(worker => worker.message?.kind === "baseline").at(-1)!.message.seed).toBe(store.seed);
     expect(store.baseline.identity).toBe(baselineIdentity(store.scenario, store.seed));
     expect(pending.terminated).toBe(true); expect(store.preview.status).toBe("idle");
     expect(store.decisionHistory).toHaveLength(0); expect(store.incidentNotice).toBeNull(); expect(store.importError).toBeNull();

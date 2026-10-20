@@ -1,0 +1,515 @@
+{
+  "definition": "Same-seed no-action versus 100% waiting hold every tick during final 5 decision minutes, duration 5 vs 1440. Only the contractual post-end hold differs between short/day; both impose identical dispatch suppression before 09:00.",
+  "rows": [
+    {
+      "seed": 428193,
+      "baseline": {
+        "cost": 690161.0392689593,
+        "completed": 2167,
+        "active": 1956,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 108078.19356272586,
+          "congestion": 499507.7889775064,
+          "departureDelay": 0,
+          "dissatisfaction": 73088.24672872706,
+          "excessDistance": 9486.810000000005,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 688084.0763163827,
+        "completed": 2167,
+        "active": 1898,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 107912.94356272586,
+          "congestion": 496491.1460249299,
+          "departureDelay": 363.55,
+          "dissatisfaction": 73312.98672872706,
+          "excessDistance": 9397.35,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 871190.0763163827,
+        "completed": 2167,
+        "active": 1898,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 107912.94356272586,
+          "congestion": 496491.1460249299,
+          "departureDelay": 363.55,
+          "dissatisfaction": 73312.98672872706,
+          "excessDistance": 9397.35,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428194,
+      "baseline": {
+        "cost": 801828.6255846552,
+        "completed": 1892,
+        "active": 2231,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 111730.76768595673,
+          "congestion": 603411.5729404243,
+          "departureDelay": 0,
+          "dissatisfaction": 80835.02495827404,
+          "excessDistance": 5851.260000000019,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 801955.5087942592,
+        "completed": 1892,
+        "active": 2173,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 111565.51768595673,
+          "congestion": 602509.3161500283,
+          "departureDelay": 363.55,
+          "dissatisfaction": 81059.76495827403,
+          "excessDistance": 5851.260000000019,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 985061.5087942592,
+        "completed": 1892,
+        "active": 2173,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 111565.51768595673,
+          "congestion": 602509.3161500283,
+          "departureDelay": 363.55,
+          "dissatisfaction": 81059.76495827403,
+          "excessDistance": 5851.260000000019,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428195,
+      "baseline": {
+        "cost": 794324.5699969983,
+        "completed": 1905,
+        "active": 2218,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 112546.67952308399,
+          "congestion": 589361.5264783675,
+          "departureDelay": 0,
+          "dissatisfaction": 83179.75399554685,
+          "excessDistance": 9236.609999999997,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 793327.7493209529,
+        "completed": 1905,
+        "active": 2160,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 112381.42952308399,
+          "congestion": 587628.875802322,
+          "departureDelay": 363.55,
+          "dissatisfaction": 83404.49399554684,
+          "excessDistance": 8943.300000000007,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 976433.7493209529,
+        "completed": 1905,
+        "active": 2160,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 112381.42952308399,
+          "congestion": 587628.875802322,
+          "departureDelay": 363.55,
+          "dissatisfaction": 83404.49399554684,
+          "excessDistance": 8943.300000000007,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428196,
+      "baseline": {
+        "cost": 673686.3928597284,
+        "completed": 2104,
+        "active": 2019,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 107972.74369931062,
+          "congestion": 483163.49178167107,
+          "departureDelay": 0,
+          "dissatisfaction": 73248.38737874677,
+          "excessDistance": 9301.77000000001,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 671419.7717593854,
+        "completed": 2104,
+        "active": 1961,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 107807.49369931062,
+          "congestion": 480168.06068132794,
+          "departureDelay": 363.55,
+          "dissatisfaction": 73473.12737874677,
+          "excessDistance": 9001.44000000002,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 854525.7717593854,
+        "completed": 2104,
+        "active": 1961,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 107807.49369931062,
+          "congestion": 480168.06068132794,
+          "departureDelay": 363.55,
+          "dissatisfaction": 73473.12737874677,
+          "excessDistance": 9001.44000000002,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428197,
+      "baseline": {
+        "cost": 722754.563504604,
+        "completed": 1969,
+        "active": 2154,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 106007.15857617778,
+          "congestion": 546496.663907757,
+          "departureDelay": 0,
+          "dissatisfaction": 69792.55102066911,
+          "excessDistance": 458.19000000000403,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 722517.0843829759,
+        "completed": 1969,
+        "active": 2096,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 105841.90857617778,
+          "congestion": 545230.044786129,
+          "departureDelay": 363.55,
+          "dissatisfaction": 70017.2910206691,
+          "excessDistance": 458.190000000004,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 905623.0843829759,
+        "completed": 1969,
+        "active": 2096,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 105841.90857617778,
+          "congestion": 545230.044786129,
+          "departureDelay": 363.55,
+          "dissatisfaction": 70017.2910206691,
+          "excessDistance": 458.190000000004,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428198,
+      "baseline": {
+        "cost": 665257.1913191569,
+        "completed": 1958,
+        "active": 2165,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 107012.69641317162,
+          "congestion": 485325.232812715,
+          "departureDelay": 0,
+          "dissatisfaction": 71301.9620932703,
+          "excessDistance": 1617.300000000002,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 664383.1595694738,
+        "completed": 1958,
+        "active": 2107,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 106847.44641317162,
+          "congestion": 483422.06106303184,
+          "departureDelay": 363.55,
+          "dissatisfaction": 71526.70209327029,
+          "excessDistance": 1617.300000000002,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 847489.1595694738,
+        "completed": 1958,
+        "active": 2107,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 106847.44641317162,
+          "congestion": 483422.06106303184,
+          "departureDelay": 363.55,
+          "dissatisfaction": 71526.70209327029,
+          "excessDistance": 1617.300000000002,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428199,
+      "baseline": {
+        "cost": 779722.190421287,
+        "completed": 1813,
+        "active": 2310,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 112963.64752815355,
+          "congestion": 576124.6521052853,
+          "departureDelay": 0,
+          "dissatisfaction": 83774.81078784793,
+          "excessDistance": 6859.08000000004,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 779220.7472485421,
+        "completed": 1813,
+        "active": 2252,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 112798.39752815355,
+          "congestion": 574607.2989325405,
+          "departureDelay": 363.55,
+          "dissatisfaction": 83999.55078784793,
+          "excessDistance": 6845.850000000043,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 962326.7472485421,
+        "completed": 1813,
+        "active": 2252,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 112798.39752815355,
+          "congestion": 574607.2989325405,
+          "departureDelay": 363.55,
+          "dissatisfaction": 83999.55078784793,
+          "excessDistance": 6845.850000000043,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428200,
+      "baseline": {
+        "cost": 775279.1076899901,
+        "completed": 1948,
+        "active": 2175,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 110844.85737292816,
+          "congestion": 576388.4520776157,
+          "departureDelay": 0,
+          "dissatisfaction": 78502.6482394462,
+          "excessDistance": 9543.149999999985,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 773078.3122157778,
+        "completed": 1948,
+        "active": 2117,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 110679.60737292816,
+          "congestion": 573479.9966034034,
+          "departureDelay": 363.55,
+          "dissatisfaction": 78727.3882394462,
+          "excessDistance": 9221.670000000002,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 956184.3122157778,
+        "completed": 1948,
+        "active": 2117,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 110679.60737292816,
+          "congestion": 573479.9966034034,
+          "departureDelay": 363.55,
+          "dissatisfaction": 78727.3882394462,
+          "excessDistance": 9221.670000000002,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428201,
+      "baseline": {
+        "cost": 626240.1387964515,
+        "completed": 1932,
+        "active": 2191,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 109717.24668489696,
+          "congestion": 435031.9624445629,
+          "departureDelay": 0,
+          "dissatisfaction": 76522.47966699177,
+          "excessDistance": 4968.450000000009,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 626000.5822049141,
+        "completed": 1932,
+        "active": 2133,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 109551.99668489696,
+          "congestion": 433763.2658530254,
+          "departureDelay": 363.55,
+          "dissatisfaction": 76747.21966699176,
+          "excessDistance": 4968.450000000009,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 809106.5822049141,
+        "completed": 1932,
+        "active": 2133,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 109551.99668489696,
+          "congestion": 433763.2658530254,
+          "departureDelay": 363.55,
+          "dissatisfaction": 76747.21966699176,
+          "excessDistance": 4968.450000000009,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    },
+    {
+      "seed": 428202,
+      "baseline": {
+        "cost": 766978.6662896142,
+        "completed": 1806,
+        "active": 2317,
+        "waiting": 2,
+        "observedWaitingPassengerMinutes": 0,
+        "committedWaitingBeyondEnd": 0,
+        "components": {
+          "travelTime": 113703.98074062703,
+          "congestion": 560571.7779011722,
+          "departureDelay": 0,
+          "dissatisfaction": 85268.90764781482,
+          "excessDistance": 7434.000000000135,
+          "terminalHoldDelay": 0
+        }
+      },
+      "short": {
+        "cost": 766644.5366504622,
+        "completed": 1806,
+        "active": 2259,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 275.5,
+        "components": {
+          "travelTime": 113538.73074062703,
+          "congestion": 559222.9982620202,
+          "departureDelay": 363.55,
+          "dissatisfaction": 85493.64764781481,
+          "excessDistance": 7419.510000000119,
+          "terminalHoldDelay": 606.1
+        }
+      },
+      "day": {
+        "cost": 949750.5366504622,
+        "completed": 1806,
+        "active": 2259,
+        "waiting": 60,
+        "observedWaitingPassengerMinutes": 165.25,
+        "committedWaitingBeyondEnd": 83505.5,
+        "components": {
+          "travelTime": 113538.73074062703,
+          "congestion": 559222.9982620202,
+          "departureDelay": 363.55,
+          "dissatisfaction": 85493.64764781481,
+          "excessDistance": 7419.510000000119,
+          "terminalHoldDelay": 183712.1
+        }
+      }
+    }
+  ]
+}

@@ -10,7 +10,7 @@ export function createAlerts(
   return forecasts
     .filter(
       (forecast) =>
-        forecast.samples.some((sample) => sample.utilization > thresholds.warningUtilization) ||
+        forecast.samples.length ? forecast.samples.some((sample) => sample.utilization > thresholds.warningUtilization) :
         forecast.utilization5m > thresholds.warningUtilization ||
         forecast.utilization10m > thresholds.warningUtilization ||
         forecast.utilization15m > thresholds.warningUtilization
