@@ -5,7 +5,7 @@ import { useGameStore } from "../game/GameStore";
 import type { SimulationAction } from "../simulation/types";
 
 export function RoadInspector() {
-  const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
+  const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, selectEdge, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
   const state = engine.getState();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
   const display = useForecastDisplay();
@@ -29,7 +29,13 @@ export function RoadInspector() {
 
   return (
     <section className="panel">
-      <h2>{edge.name ?? edge.id}</h2>
+      <div className="roadSelector"><label htmlFor="road-selector">Inspect road</label>
+        <select id="road-selector" value={selectedEdgeId ?? ""} onChange={event => selectEdge(event.target.value || null)}>
+          <option value="">Choose a road</option>
+          {Array.from(state.graph.edges.values()).map(road => <option key={road.id} value={road.id}>{road.name ?? road.id}{road.id.endsWith("_rev") ? " (reverse direction)" : ""}</option>)}
+        </select>
+      </div>
+      <h2 id="inspected-road">{edge.name ?? edge.id}</h2>
       <p className="plainLead">{edge.currentVehicleCount > 0 ? `${edge.name ?? edge.id} is carrying ${edge.currentVehicleCount} vehicles.` : "Select a road to inspect traffic and preview an intervention."}</p>
       <div className="statGrid">
         <span>Vehicles</span>
@@ -43,6 +49,7 @@ export function RoadInspector() {
         <span>Avg Speed</span>
         <strong>{speedKph.toFixed(0)} kph</strong>
       </div>
+      <div tabIndex={0} role="region" aria-label="Selected road forecast">
       <ForecastSource />
       {forecast && (
         <div className={`forecastRow ${highlightForecast ? "tutorialTarget" : ""}`}>
@@ -53,10 +60,12 @@ export function RoadInspector() {
           ))}
         </div>
       )}
+      </div>
       {replay && <p>Replay is read-only. Recorded interventions execute at their original ticks.</p>}
       <div className={`actionGrid ${preview.status !== "idle" ? "hasPreview" : ""}`} aria-label="Action choices">
         <div className="actionChoice">
           <button
+            id="preview-reroute"
             className={highlightPreview ? "tutorialTarget" : ""}
             disabled={preview.status === "loading" || !!replay}
             onClick={() => requestPreview(rerouteAction)}
@@ -73,6 +82,7 @@ export function RoadInspector() {
         {showHold && (
           <div className="actionChoice">
             <button
+              id="preview-hold"
               disabled={preview.status === "loading" || !!replay}
               onClick={() => requestPreview(holdAction)}
               aria-describedby="hold-help"

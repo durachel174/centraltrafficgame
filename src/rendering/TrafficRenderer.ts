@@ -8,7 +8,7 @@ const trafficColor = (u: number) => {
   return "#53d69b";
 };
 
-export function renderTrafficMap(canvas: HTMLCanvasElement, engine: SimulationEngine, selectedEdgeId: string | null, preview?: ActionPreview | null) {
+export function renderTrafficMap(canvas: HTMLCanvasElement, engine: SimulationEngine, selectedEdgeId: string | null, preview?: ActionPreview | null, reducedMotion = false) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const ratio = window.devicePixelRatio || 1;
@@ -91,7 +91,7 @@ export function renderTrafficMap(canvas: HTMLCanvasElement, engine: SimulationEn
   }
 
   ctx.fillStyle = "#e9f7ff";
-  for (const vehicle of state.vehicles) {
+  for (const vehicle of reducedMotion ? [] : state.vehicles) {
     if (vehicle.status !== "traveling") continue;
     const edge = state.graph.edge(vehicle.route[vehicle.currentEdgeIndex]);
     const from = state.graph.node(edge.from);

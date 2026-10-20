@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { useGameStore } from "../game/GameStore";
 
 const copy = {
@@ -37,6 +38,20 @@ const copy = {
 
 export function TutorialCoach() {
   const { tutorial, advanceTutorial, skipTutorial, finishTutorial, selectEdge, setSpeed } = useGameStore();
+  const coach = useRef<HTMLElement>(null), wasActive = useRef(false);
+  useLayoutEffect(() => {
+    if (!tutorial.active) {
+      if (wasActive.current) document.getElementById("road-selector")?.focus();
+      wasActive.current = false; return;
+    }
+    wasActive.current = true;
+    const target = tutorial.step === "select" ? document.getElementById("road-selector")
+      : tutorial.step === "forecast" ? document.querySelector<HTMLElement>('[aria-label="Selected road forecast"]')
+      : tutorial.step === "preview" ? document.getElementById("preview-reroute")
+      : tutorial.step === "review" ? document.querySelector<HTMLElement>('[aria-label="Action review"]')
+      : coach.current?.querySelector<HTMLElement>("button");
+    target?.focus();
+  }, [tutorial.active, tutorial.step]);
   if (!tutorial.active && tutorial.completed) return null;
   const step = copy[tutorial.step];
   const actionButton =
@@ -53,7 +68,7 @@ export function TutorialCoach() {
       </>
     ) : null;
   return (
-    <section className={`tutorialCoach tutorial-${tutorial.step}`} aria-live="polite">
+    <section ref={coach} className={`tutorialCoach tutorial-${tutorial.step}`} role="region" aria-label="Tutorial" aria-live="polite">
       <strong>{step.title}</strong>
       <p>{step.body}</p>
       {tutorial.observationSummary && <p>{tutorial.observationSummary}</p>}

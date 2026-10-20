@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import { useEffect, useId, useRef, useState } from "react";
 import { useGameStore } from "../game/GameStore";
 
@@ -35,11 +36,11 @@ export function RunFiles() {
       } catch (error) { if (token !== readToken.current || session !== useGameStore.getState().preview.baseSessionId) return; cancelImport(); setReadError(error instanceof Error ? error.message : String(error)); }
     }} />
     {(readError || importError) && <p role="alert">{readError ?? importError}</p>}
-    {pendingImport && <div className="confirmBox">
+    {pendingImport && <Modal title="Start imported replay?" onDismiss={cancelImport}>
       <strong>Compatible run · seed {pendingImport.seed} · {pendingImport.actions.length} decisions</strong>
       <p>Start this replay from 7:00? This replaces the current session. Final metrics and state will be verified at 9:00.</p>
       <div className="previewActions"><button onClick={() => startReplay(pendingImport)}>Start Imported Replay</button><button onClick={cancelImport}>Keep Current Run</button></div>
-    </div>}
+    </Modal>}
     <p className="muted">Files stay on this device. Imports never start automatically.</p>
   </div>;
 }

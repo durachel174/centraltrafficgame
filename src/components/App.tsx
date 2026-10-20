@@ -57,7 +57,7 @@ export function App() {
           </button>
         </div>
         <div className="utilityControls">
-          <button onClick={openHelp}>
+          <button onClick={openHelp} data-focus-fallback>
             <HelpCircle size={16} /> Help
           </button>
           {devAvailable && !tutorialActive && !replay && (
@@ -81,7 +81,7 @@ export function App() {
         <aside className="sidePanel">
           <RoadInspector />
           <AlertPanel />
-          {!tutorialActive && <><DecisionHistory /><details className="panel"><summary>Run files</summary><RunFiles /></details></>}
+          {!tutorialActive && <><DecisionHistory />{!done && <details className="panel"><summary>Run files</summary><RunFiles /></details>}</>}
           {revealAdvanced && (
             <details className="panel detailPanel">
               <summary>

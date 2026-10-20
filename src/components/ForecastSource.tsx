@@ -16,6 +16,6 @@ export function ForecastSource() {
     {engine.isDone() ? "Scenario complete; no new forecasts." : sourceTime !== null && age !== null && age <= maxAge ?
       <>Forecast source {formatClock(scenario.startTime + sourceTime)}:{String(Math.round((sourceTime % 1) * 60)).padStart(2, "0")} · {age.toFixed(2)} min old. Horizons count from now.</> :
       forecastView.status === "error" ? `Forecast unavailable: ${forecastView.error}` : "Forecast updating; no fresh projection available."}
-    {forecastView.status === "error" && <button onClick={() => refreshForecasts(true)}>Retry Forecast</button>}
+    {forecastView.status === "error" && <><span className="srOnly" role="alert">Forecast unavailable: {forecastView.error}. Retry Forecast is available.</span><button onClick={() => refreshForecasts(true)}>Retry Forecast</button></>}
   </div>;
 }

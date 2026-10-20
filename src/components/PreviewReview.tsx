@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { useGameStore } from "../game/GameStore";
 import type { ForecastDelta } from "../simulation/types";
 
@@ -14,7 +15,20 @@ export function rankRoadChanges(changes: ForecastDelta[], selectedEdgeId: string
 
 export function PreviewReview() {
   const { engine, preview, tutorial, requestPreview, confirmPreview, cancelPreview } = useGameStore();
-  if (preview.status === "idle") return null;
+  const review = useRef<HTMLDivElement>(null), previousActive = useRef(false), origin = useRef<string | null>(null);
+  const active = preview.status !== "idle";
+  useLayoutEffect(() => {
+    if (active && !previousActive.current) {
+      origin.current = preview.action?.type === "DELAY_DEPARTURES" ? "preview-hold" : "preview-reroute";
+      review.current?.focus();
+    } else if (active && document.activeElement === document.body) {
+      review.current?.focus();
+    } else if (!active && previousActive.current && document.activeElement === document.body) {
+      document.getElementById(origin.current ?? "road-selector")?.focus();
+    }
+    previousActive.current = active;
+  }, [active, preview.action, preview.status]);
+  if (!active) return null;
   const result = preview.result;
   const action = preview.action;
   const graph = engine.getState().graph;
@@ -28,7 +42,8 @@ export function PreviewReview() {
   const utilization = (change: ForecastDelta) => `${(change.before * 100).toFixed(0)}% -> ${(change.after * 100).toFixed(0)}%`;
   const horizon = (change: ForecastDelta) => `+${change.actualHorizonMinutes} min${change.truncated ? " (scenario end)" : ""}`;
   return (
-    <div className={`previewDialog ${tutorial.active && tutorial.step === "review" ? "tutorialTarget" : ""}`} aria-label="Action review" aria-live="polite">
+    <div ref={review} tabIndex={-1} role="region" onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); cancelPreview(); } }} className={`previewDialog ${tutorial.active && tutorial.step === "review" ? "tutorialTarget" : ""}`} aria-label="Action review">
+      <p className="srOnly" role="status">{preview.status === "ready" ? `Preview ready. ${result?.affectedVehicles ?? 0} affected trips. Review projected effects, then Apply or Cancel.` : preview.status === "loading" ? "Calculating preview." : preview.status === "stale" ? "Preview is stale. Retry before applying." : `Preview failed: ${preview.error ?? "Unknown error"}. Retry or Cancel.`}</p>
       <strong>{actionLabel} on {preview.targetEdgeId ? roadName(preview.targetEdgeId) : "network"}</strong>
       <p>Projected effects versus no action, assuming no further intervention. These are projections, not observed outcomes.</p>
       {preview.status === "loading" && <p>Calculating preview...</p>}

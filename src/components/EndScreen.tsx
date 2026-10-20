@@ -1,3 +1,4 @@
+import { Modal } from "./Modal";
 import { useGameStore } from "../game/GameStore";
 import { baselineIdentity } from "../simulation/logging/Identity";
 import { DecisionHistory } from "./DecisionHistory";
@@ -19,9 +20,7 @@ export function EndScreen() {
   const compatible = baseline.status === "ready" && baseline.identity === baselineIdentity(scenario, seed) ? baseline.metrics : null;
   const improvement = compatible && compatible.objective > 0 ? ((compatible.objective - metrics.objective) / compatible.objective) * 100 : null;
   return (
-    <div className="endOverlay">
-      <section className="endScreen" aria-label="Scenario results">
-        <h2>{scenario.name} Complete</h2>
+    <Modal title={`${scenario.name} Complete`} label="Scenario results" className="endScreen">
         {replay && <p role="status">{replay.verification === "verified" ? "Replay verified: every final metric and deterministic simulation state match the recorded run." : replay.error ?? "Replay verification pending."}</p>}
         {practice && <p>Practice complete — an opportunity to experiment, with no competitive rating.</p>}
         <div className="endGrid">
@@ -72,7 +71,6 @@ export function EndScreen() {
           </div>
           <RunFiles />
         </>}
-      </section>
-    </div>
+    </Modal>
   );
 }
