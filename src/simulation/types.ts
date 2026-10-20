@@ -53,6 +53,8 @@ export interface SimulationMetrics {
   tripsRequested: number;
   tripsCompleted: number;
   activeTrips: number;
+  /** Subset of active trips stopped at an edge exit awaiting admission. */
+  inNetworkQueuedTrips: number;
   waitingTrips: number;
   averageTravelTime: number;
   medianTripTime: number;
@@ -140,7 +142,8 @@ export interface GraphSnapshot {
 }
 
 export interface SimulationSnapshot {
-  version: 1;
+  version: 2;
+  engineVersion: string;
   scenario: Scenario;
   seed: number;
   time: number;

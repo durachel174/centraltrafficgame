@@ -1,3 +1,4 @@
+import { ENGINE_VERSION, configurationIdentity } from "../src/simulation/logging/Identity";
 import { writeFileSync } from "node:fs";
 import { SimulationEngine } from "../src/simulation/core/SimulationEngine";
 import { mondayMorningScenario } from "../src/simulation/scenarios/MondayMorning";
@@ -36,5 +37,5 @@ for (let index = 0; index < runs; index++) {
     gapsMinutes: times.slice(1).map((time, index) => time - times[index]), opportunities });
   console.log(`Pacing seed ${seed}: ${opportunities.length} candidate comparisons, ${zeroAffected} zero-affected`);
 }
-writeFileSync(out, JSON.stringify({ definition: "5-minute sampled warning on North/South Bridge with affected>0 and |cost delta|>=1 OR |delay delta|>=0.1 passenger-min OR road utilization change>=1 percentage point. Candidate snapshots are not independent decisions; no-action source trajectory; negative cost is not required.", seeds: [428193, 428193 + runs - 1], rows }, null, 2));
+writeFileSync(out, JSON.stringify({ engine: ENGINE_VERSION, scenarioVersion: mondayMorningScenario.version, identity: configurationIdentity(mondayMorningScenario), definition: "5-minute sampled warning on North/South Bridge with affected>0 and |cost delta|>=1 OR |delay delta|>=0.1 passenger-min OR road utilization change>=1 percentage point. Candidate snapshots are not independent decisions; no-action source trajectory; negative cost is not required.", seeds: [428193, 428193 + runs - 1], rows }, null, 2));
 console.log(`Local report: ${out}`);

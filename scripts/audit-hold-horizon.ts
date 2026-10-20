@@ -1,3 +1,4 @@
+import { ENGINE_VERSION, configurationIdentity } from "../src/simulation/logging/Identity";
 import { writeFileSync } from "node:fs";
 import { SimulationEngine } from "../src/simulation/core/SimulationEngine";
 import { mondayMorningScenario } from "../src/simulation/scenarios/MondayMorning";
@@ -16,5 +17,5 @@ for (let index = 0; index < runs; index++) {
   };
   rows.push({ seed, baseline: result(null), short: result(5), day: result(1440) });
 }
-writeFileSync(out, JSON.stringify({ definition: "Same-seed no-action versus 100% waiting hold every tick during final 5 decision minutes, duration 5 vs 1440. Only the contractual post-end hold differs between short/day; both impose identical dispatch suppression before 09:00.", rows }, null, 2));
+writeFileSync(out, JSON.stringify({ engine: ENGINE_VERSION, scenarioVersion: scoringScenario.version, identity: configurationIdentity(scoringScenario), definition: "Same-seed no-action versus 100% waiting hold every tick during final 5 decision minutes, duration 5 vs 1440. Only the contractual post-end hold differs between short/day; both impose identical dispatch suppression before 09:00.", rows }, null, 2));
 console.log(JSON.stringify(rows.map(row => ({ seed: row.seed, baseline: row.baseline.cost, short: row.short.cost, day: row.day.cost, extraCommittedMinutes: row.day.committedWaitingBeyondEnd - row.short.committedWaitingBeyondEnd })), null, 2));

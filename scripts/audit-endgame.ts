@@ -10,21 +10,8 @@ const option = (name: string, fallback: string) => process.argv.find(arg => arg.
 const runs = Number(option("runs", "10")), cap = Number(option("clearance-minutes", "240"));
 if (!Number.isInteger(runs) || runs < 1 || !Number.isFinite(cap) || cap < 0 || cap % 0.25) throw new Error("runs must be a positive integer; clearance cap must be nonnegative and tick-aligned.");
 const output = option("out", "/private/tmp/central-traffic-endgame-audit.json");
-type Policy = { name: string; decide: (tick: number, engine: SimulationEngine) => SimulationAction };
+import { policies } from "./clearance-policies";
 const none: SimulationAction = { type: "NO_OP" };
-const reroute = (percentage: number): SimulationAction => ({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage });
-const hold = (percentage: number, durationMinutes: number): SimulationAction => ({ type: "DELAY_DEPARTURES", percentage, durationMinutes });
-const policies: Policy[] = [
-  { name: "baseline", decide: () => none },
-  { name: "reactive", decide: () => none },
-  { name: "repeated-hold-25-5m", decide: tick => tick % 4 === 0 ? hold(0.25, 5) : none },
-  { name: "extended-hold-100-120m", decide: tick => tick % 20 === 0 ? hold(1, 120) : none },
-  { name: "repeated-reroute-25", decide: tick => tick % 20 === 0 ? reroute(0.25) : none },
-  { name: "repeated-reroute-100", decide: tick => tick % 20 === 0 ? reroute(1) : none },
-  ...[90, 105, 115].flatMap(minute => [0.25, 1].map(percentage => ({ name: `late-reroute-${percentage * 100}-at-${minute}`, decide: (tick: number) => tick === minute * 4 ? reroute(percentage) : none }))),
-  { name: "combined-25-from-90", decide: tick => tick < 360 ? none : tick % 4 === 0 ? hold(0.25, 5) : tick % 4 === 1 ? reroute(0.25) : none },
-  { name: "combined-100-extended-from-105", decide: tick => tick < 420 ? none : tick % 4 === 0 ? hold(1, 120) : tick % 4 === 1 ? reroute(1) : none }
-];
 const metrics = (m: SimulationMetrics) => ({ requested: m.tripsRequested, completed: m.tripsCompleted, active: m.activeTrips, waiting: m.waitingTrips,
   travelPassengerMinutes: m.objectiveBreakdown!.travelTime / mondayMorningScenario.objectiveWeights.travelTime,
   accruedWaitingPassengerMinutes: m.departureDelay, remainingImposedWaitingPassengerMinutes: m.remainingHoldPassengerMinutes ?? 0,

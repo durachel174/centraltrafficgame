@@ -1,3 +1,4 @@
+import { ENGINE_VERSION } from "../src/simulation/logging/Identity";
 import { BaselineController } from "../src/simulation/controllers/BaselineController";
 import { ReactiveController } from "../src/simulation/controllers/ReactiveController";
 import type { TrafficController } from "../src/simulation/controllers/TrafficController";
@@ -21,6 +22,7 @@ const makeController = (): TrafficController =>
 const objectives: number[] = [];
 const travel: number[] = [];
 const trips: number[] = [];
+const completed: number[] = [], active: number[] = [], waiting: number[] = [];
 
 for (let i = 0; i < runs; i++) {
   const env = new TrafficEnvironment(mondayMorningScenario);
@@ -36,14 +38,17 @@ for (let i = 0; i < runs; i++) {
   objectives.push(observation.metrics.objective);
   travel.push(observation.metrics.averageTravelTime);
   trips.push(observation.metrics.tripsRequested);
+  completed.push(observation.metrics.tripsCompleted); active.push(observation.metrics.activeTrips); waiting.push(observation.metrics.waitingTrips);
 }
 
 const avg = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
 console.log(`Scenario: ${mondayMorningScenario.name}`);
+console.log(`Engine: ${ENGINE_VERSION}; scenario version: ${mondayMorningScenario.version}; evaluation: fixed 07:00–09:00 window`);
 console.log(`Seed: ${seed}`);
 console.log(`Controller: ${controllerName}`);
 console.log(`Runs: ${runs}`);
 console.log(`Trips: ${Math.round(avg(trips))}`);
-console.log(`Average travel: ${avg(travel).toFixed(1)} min`);
+console.log(`Mean trips completed: ${avg(completed).toFixed(1)}; active unfinished: ${avg(active).toFixed(1)}; origin waiting unfinished: ${avg(waiting).toFixed(1)}`);
+console.log(`Average completed travel: ${avg(travel).toFixed(1)} min`);
 console.log(`Objective: ${avg(objectives).toFixed(0)}`);

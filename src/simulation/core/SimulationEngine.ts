@@ -357,18 +357,31 @@ export class SimulationEngine {
 
   private dispatchTrips() {
     const remaining: TripRequest[] = [];
+    // Blocked requests with the same OD see identical routing state. Reuse that
+    // result until an admission changes occupancy; never reuse across ticks.
+    const routes = new Map<string, string[]>();
+    const freeFlowRoutes = new Map<string, string[]>();
     for (const trip of this.waiting) {
       if ((trip.heldUntil ?? -1) > this.time) {
         remaining.push(trip);
         continue;
       }
       const context: RoutingContext = {};
-      const route = this.router.findRoute(trip.origin, trip.destination, context);
-      if (!route.length) {
+      const key = JSON.stringify([trip.origin, trip.destination]);
+      let route = routes.get(key);
+      if (!route) {
+        route = this.router.findRoute(trip.origin, trip.destination, context);
+        routes.set(key, route);
+      }
+      if (!route.length || !this.canEnter(route[0])) {
         remaining.push(trip);
         continue;
       }
-      const baselineRoute = this.router.findRoute(trip.origin, trip.destination, { weight: "baseTravelTime" });
+      let baselineRoute = freeFlowRoutes.get(key);
+      if (!baselineRoute) {
+        baselineRoute = this.router.findRoute(trip.origin, trip.destination, { weight: "baseTravelTime" });
+        freeFlowRoutes.set(key, baselineRoute);
+      }
       const baselineTravelTime = (baselineRoute.length ? baselineRoute : route).reduce(
         (sum, edgeId) => sum + this.graph.edge(edgeId).baseTravelTime,
         0
@@ -396,6 +409,8 @@ export class SimulationEngine {
         distanceKm: 0
       };
       this.vehicles.push(vehicle);
+      this.graph.edge(route[0]).currentVehicleCount += 1;
+      routes.clear();
     }
     this.waiting = remaining;
   }
@@ -413,30 +428,47 @@ export class SimulationEngine {
     for (const edge of this.graph.edges.values()) edge.currentTravelTime = travelTime(edge, this.scenario.congestion);
   }
 
+  // maximumCapacity is physical edge storage, independent of an incident's
+  // comfortable-capacity modifier. Existing occupants are never evicted.
+  private canEnter(edgeId: string) {
+    const edge = this.graph.edge(edgeId);
+    return !edge.closed && edge.currentVehicleCount < Math.floor(edge.maximumCapacity);
+  }
+
   private moveVehicles(intervalStart: number) {
+    // Stable vehicle order makes competing admissions deterministic. Travel times
+    // are frozen for the tick; storage counts change immediately on transitions.
     for (const vehicle of this.vehicles) {
       if (vehicle.status !== "traveling") continue;
       let remaining = this.dtMinutes;
       while (remaining > 0 && vehicle.status === "traveling") {
         const edge = this.graph.edge(vehicle.route[vehicle.currentEdgeIndex]);
+        if (edge.closed) break;
         const edgeTime = Math.max(0.01, edge.currentTravelTime);
         const edgeRemaining = (1 - vehicle.edgeProgress) * edgeTime;
-        if (remaining >= edgeRemaining) {
-          remaining -= edgeRemaining;
-          vehicle.distanceKm += edge.lengthKm * (1 - vehicle.edgeProgress);
-          vehicle.currentEdgeIndex += 1;
-          vehicle.edgeProgress = 0;
-          if (vehicle.currentEdgeIndex >= vehicle.route.length) {
-            vehicle.status = "arrived";
-            vehicle.actualArrivalTime = intervalStart + (this.dtMinutes - remaining);
-            const tripTime = vehicle.actualArrivalTime - (vehicle.actualDepartureTime ?? vehicle.actualArrivalTime);
-            const late = Math.max(0, tripTime - vehicle.passengerTolerance);
-            vehicle.satisfaction = Math.max(0, vehicle.satisfaction - late * this.scenario.satisfaction.lateDelay);
-          }
-        } else {
+        if (remaining < edgeRemaining) {
           vehicle.edgeProgress += remaining / edgeTime;
           vehicle.distanceKm += edge.lengthKm * (remaining / edgeTime);
-          remaining = 0;
+          break;
+        }
+        remaining -= edgeRemaining;
+        vehicle.distanceKm += edge.lengthKm * (1 - vehicle.edgeProgress);
+        vehicle.edgeProgress = 1;
+        const next = vehicle.route[vehicle.currentEdgeIndex + 1];
+        // A blocked vehicle remains active on its current edge, at the stop
+        // line. Elapsed travel charges its queue time once; no origin wait charge.
+        if (next && !this.canEnter(next)) break;
+        edge.currentVehicleCount -= 1;
+        vehicle.currentEdgeIndex += 1;
+        vehicle.edgeProgress = 0;
+        if (next) {
+          this.graph.edge(next).currentVehicleCount += 1;
+        } else {
+          vehicle.status = "arrived";
+          vehicle.actualArrivalTime = intervalStart + (this.dtMinutes - remaining);
+          const tripTime = vehicle.actualArrivalTime - (vehicle.actualDepartureTime ?? vehicle.actualArrivalTime);
+          const late = Math.max(0, tripTime - vehicle.passengerTolerance);
+          vehicle.satisfaction = Math.max(0, vehicle.satisfaction - late * this.scenario.satisfaction.lateDelay);
         }
       }
     }
@@ -512,7 +544,8 @@ export class SimulationEngine {
 
   private createSnapshot(): SimulationSnapshot {
     return {
-      version: 1,
+      version: 2,
+      engineVersion: ENGINE_VERSION,
       scenario: this.cloneScenario(this.scenario),
       seed: this.seed,
       time: this.time,
@@ -538,7 +571,7 @@ export class SimulationEngine {
   }
 
   private restoreSnapshot(snapshot: SimulationSnapshot) {
-    if (snapshot.version !== 1) throw new Error(`Unsupported simulation snapshot version: ${snapshot.version}`);
+    if (snapshot.version !== 2 || snapshot.engineVersion !== ENGINE_VERSION) throw new Error(`Incompatible simulation snapshot: version ${snapshot.version}, engine ${snapshot.engineVersion}; expected snapshot 2 / engine ${ENGINE_VERSION}`);
     this.scenario = this.cloneScenario(snapshot.scenario);
     this.seed = snapshot.seed;
     this.time = snapshot.time;
@@ -774,6 +807,7 @@ export class SimulationEngine {
       tripsRequested: 0,
       tripsCompleted: 0,
       activeTrips: 0,
+      inNetworkQueuedTrips: 0,
       waitingTrips: 0,
       averageTravelTime: 0,
       medianTripTime: 0,

@@ -29,6 +29,7 @@ export function EndScreen() {
           <span>Trips completed</span><strong>{metrics.tripsCompleted}</strong>
           <span>Waiting unfinished trips</span><strong>{metrics.waitingTrips}</strong>
           <span>Active unfinished trips</span><strong>{metrics.activeTrips}</strong>
+          <span>Of active trips: queued at road exits</span><strong>{metrics.inNetworkQueuedTrips}</strong>
           <span>Average completed travel</span><strong>{metrics.averageTravelTime.toFixed(1)} min</strong>
           <span>Median completed travel</span><strong>{metrics.medianTripTime.toFixed(1)} min</strong>
           <span>90th percentile completed travel</span><strong>{metrics.p90TripTime.toFixed(1)} min</strong>
@@ -43,9 +44,9 @@ export function EndScreen() {
             <span>Improvement (higher is better)</span><strong>{improvement === null ? "Unavailable" : `${Math.abs(improvement) > 0 && Math.abs(improvement) < 0.001 ? improvement.toExponential(2) : improvement.toFixed(Math.abs(improvement) > 0 && Math.abs(improvement) < 0.1 ? 3 : 1)}%`}</strong>
           </>}
         </div>
-        <p>Completion and travel-time statistics cover arrivals only, from dispatch to arrival. Satisfaction includes completed, active, and waiting riders. Active and waiting trips remain unfinished at scenario end.</p>
+        <p>Completion and travel-time statistics cover arrivals only, from dispatch to arrival. Satisfaction includes completed, active, and waiting riders. Waiting trips are at origins; queues at road exits are a subset of active trips. Active and waiting trips remain unfinished at scenario end.</p>
         {!practice && <>
-          <p>Improvement = (baseline cost − your cost) ÷ baseline cost × 100%. Positive means lower cost than baseline; negative means higher cost. Unfinished trips still contribute elapsed travel, waiting, dissatisfaction, and planned excess distance.</p>
+          <p>Evaluation ends at 09:00; this is a fixed-window comparison, not complete-journey cost. Improvement = (baseline cost − your cost) ÷ baseline cost × 100%. Positive means lower cost than baseline; negative means higher cost. Unfinished trips still contribute elapsed travel, waiting, dissatisfaction, and planned excess distance.</p>
           <details className="costDetails"><summary>Objective components and baseline conditions</summary>
             <p>Weighted cost units, rounded for display. The unrounded components sum to total system cost. Remaining player-imposed hold time beyond 9:00 is charged separately at the existing waiting weight; it is not observed waiting or a post-9:00 traffic rollout.</p>
             <table><thead><tr><th>Component</th><th>Your cost</th><th>Baseline cost</th></tr></thead><tbody>

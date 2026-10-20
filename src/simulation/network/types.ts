@@ -19,7 +19,9 @@ export interface RoadEdge {
   to: string;
   lengthKm: number;
   speedLimitKph: number;
+  /** Simultaneous vehicle occupancy scale, not vehicles/hour. */
   comfortableCapacity: number;
+  /** Physical storage; admissions stop at floor(maximumCapacity). */
   maximumCapacity: number;
   currentVehicleCount: number;
   baseTravelTime: number;

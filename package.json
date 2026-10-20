@@ -12,7 +12,8 @@
     "audit:policies": "node --import tsx scripts/audit-policies.ts",
     "audit:pacing": "node --import tsx scripts/audit-pacing.ts",
     "audit:holds": "node --import tsx scripts/audit-hold-horizon.ts",
-    "audit:endgame": "node --import tsx scripts/audit-endgame.ts"
+    "audit:endgame": "node --import tsx scripts/audit-endgame.ts",
+    "audit:clearance": "node --import tsx scripts/audit-clearance.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.3",

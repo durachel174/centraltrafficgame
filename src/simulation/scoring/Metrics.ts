@@ -85,6 +85,7 @@ export function calculateMetrics(args: {
     tripsRequested: args.vehicles.length + args.waitingTrips.length,
     tripsCompleted: completed.length,
     activeTrips: active,
+    inNetworkQueuedTrips: activeVehicles.filter(vehicle => vehicle.edgeProgress === 1).length,
     waitingTrips: args.waitingTrips.length,
     averageTravelTime,
     medianTripTime: percentile(durations, 0.5),

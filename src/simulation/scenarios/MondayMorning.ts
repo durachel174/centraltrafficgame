@@ -65,7 +65,7 @@ const edges = [
 
 export const mondayMorningScenario: Scenario = {
   id: "monday_morning",
-  version: 2,
+  version: 3,
   terminalHoldAccounting: true,
   progression: { rushHourMinute: 45 },
   name: "Monday Morning",

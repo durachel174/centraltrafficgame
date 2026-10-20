@@ -126,8 +126,8 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
   if (componentKeys.some(key => !finite(components[key]) || (components[key] as number) < 0)) fail("Invalid objective component.");
   const sum = componentKeys.reduce((total, key) => total + (components[key] as number), 0);
   if (Math.abs(sum - (metrics.objective as number)) > 1e-6) fail("Objective components do not sum to total system cost.");
-  const counts = ["tripsRequested", "tripsCompleted", "activeTrips", "waitingTrips"];
-  if (counts.some(key => !Number.isInteger(metrics[key]) || (metrics[key] as number) < 0) || metrics.tripsRequested !== (metrics.tripsCompleted as number) + (metrics.activeTrips as number) + (metrics.waitingTrips as number)) fail("Inconsistent final trip counts.");
+  const counts = ["tripsRequested", "tripsCompleted", "activeTrips", "waitingTrips", "inNetworkQueuedTrips"];
+  if (counts.some(key => !Number.isInteger(metrics[key]) || (metrics[key] as number) < 0) || (metrics.inNetworkQueuedTrips as number) > (metrics.activeTrips as number) || metrics.tripsRequested !== (metrics.tripsCompleted as number) + (metrics.activeTrips as number) + (metrics.waitingTrips as number)) fail("Inconsistent final trip counts.");
   return JSON.parse(JSON.stringify(data)) as CompletedRun;
 }
 

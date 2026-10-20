@@ -1726,6 +1726,9 @@ describe("explicit preview and final-results interactions", () => {
     expect(metrics.waitingTrips + metrics.activeTrips).toBeGreaterThan(0);
     expect(host.textContent).toContain(`Waiting unfinished trips${metrics.waitingTrips}`);
     expect(host.textContent).toContain(`Active unfinished trips${metrics.activeTrips}`);
+    expect(host.textContent).toContain(`Of active trips: queued at road exits${metrics.inNetworkQueuedTrips}`);
+    expect(host.textContent).toContain("fixed-window comparison");
+    expect(metrics.inNetworkQueuedTrips).toBeLessThanOrEqual(metrics.activeTrips);
     expect(metrics.tripsCompleted + metrics.waitingTrips + metrics.activeTrips).toBe(metrics.tripsRequested);
     expect(host.textContent).not.toMatch(/Best decision|Worst decision|Rating|optimal/i);
     clickButton(host, "Try This Seed Again");
