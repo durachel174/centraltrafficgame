@@ -6,6 +6,10 @@ The city is a directed graph `G=(V,E)`. Edge travel time uses the configurable B
 T = T0 * (1 + alpha * (x / C)^beta)
 ```
 
+In engine 0.4.0, `x` and `C` are simultaneous vehicle occupancy, not hourly flow. `maximumCapacity` is physical edge storage. Origin dispatch and downstream entry require a free slot, counts update immediately on each admission/exit, and existing vehicles are never evicted. Incidents reduce comfortable occupancy and speed; physical storage does not shrink. A blocked vehicle stays at progress 1 on the current edge and accrues elapsed travel cost; origin waiting accrues departure delay. Results count exit queues within active trips, not as additional waiting passengers. Stable vehicle order and quarter-minute ticks make admissions reproducible. Full storage cycles can remain blocked; no forced passage is added.
+
+This is a game density slowdown shaped like BPR, not a calibrated hourly flow model. See [clearance investigation](CLEARANCE_INVESTIGATION.md) for the causal trace, alternatives, before/after paired results and controlled counterexamples.
+
 Capacity modifiers allow incidents and future adversarial disruption. Demand is generated from a time curve and weighted origin/destination probabilities, so congestion emerges from demand rather than scripted jams.
 
 ## Tick Convention
@@ -69,3 +73,7 @@ Browser projections have source-labelled presentation age and rebased remaining 
 ## Desktop beta follow-up audit
 
 Fourteen deterministic policies over seeds 428193–428202 were compared at the official 09:00 cutoff and in an independent capped continuation with no new demand or interventions. Diagnostics disable the terminal hold component and accrue actual continued waiting once, avoiding double-counting the official known obligation. Some short-hold/reactive improvements reverse at the four-hour cap, but none of the 140 runs fully clear. Those censored results show horizon sensitivity without establishing complete-journey rankings or a justified additional residual cost. Scoring/weights remain unchanged at engine 0.3.0 / Monday 2; no general fairness claim follows. Reproduce with `npm run audit:endgame -- --runs=10 --clearance-minutes=240`; see [validation](PHASE12_VALIDATION.md) for assumptions, trip counts and accrued/terminal components.
+
+## Current clearance/evaluation contract (engine 0.4.0 / Monday 3)
+
+The historical four-hour non-clearance above applies to engine 0.3.0. With maximum storage enforced, all 140 corrected paired diagnostics clear, but some rankings change between the cutoff and full clearance. Official actions, demand, projections and evaluation still stop at 09:00; results explicitly label the fixed window and show unfinished origin/active/exit-queue counts. No weights, residual penalties or terminal hold formula changed. The separate diagnostic continues existing holds/events/costs with zero new demand/actions and disables terminal estimates while accruing actual waiting once. Capped cases remain censored, including genuinely unreachable/full-cycle fixtures. Full-journey evaluation and queue calibration remain a Phase 12 follow-up; see [investigation](CLEARANCE_INVESTIGATION.md).

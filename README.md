@@ -15,6 +15,8 @@ npm run audit:policies -- --runs=10 --clearance-minutes=0
 npm run audit:holds -- --runs=10
 npm run audit:pacing -- --runs=10
 npm run audit:endgame -- --runs=10 --clearance-minutes=240
+npm run audit:clearance -- --seeds=428193,428194,428195,428196,428197,428198,428199,428200,428201,428202 --limit=1440 --out=/private/tmp/central-traffic-clearance.json
+node --import tsx scripts/probe-storage.ts --out=/private/tmp/central-traffic-storage.json
 ```
 
 ## Player Flow
@@ -88,7 +90,7 @@ Performance recording is local and development-only. Run `npm run dev`, finish/s
 
 Scoring and pacing audits write local JSON under `/private/tmp` by default; use `--out=/absolute/path.json` to choose another location. Policy and hold audits accept `--legacy-cutoff` to reproduce the old terminal-cost omission using fresh simulations. Optional `--clearance-minutes=120` is a capped diagnostic continuation with no new demand/actions, **not** the gameplay evaluation window; unfinished continuations are censored. `node --import tsx scripts/benchmark.ts` (or `scripts/simulate.ts`) avoids restricted-environment tsx CLI IPC errors.
 
-Engine **0.3.0** / Monday Morning **2** reject old incompatible exports. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.
+Engine **0.4.0** / Monday Morning **3** reject incompatible older exports; internal snapshots are version 2 with engine identity. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.
 
 
 ## Desktop keyboard beta and human playtest
@@ -99,4 +101,6 @@ Help, results and confirmation dialogs move focus inside, contain Tab/Shift+Tab 
 
 Follow [DESKTOP_PLAYTEST.md](docs/DESKTOP_PLAYTEST.md) for a neutral participant script, tasks and blank observation sheet. **Human sessions are pending**; automated and browser checks do not establish fun, comprehension or screen-reader compatibility. Phase 12 stays IN PROGRESS.
 
-The follow-up endgame audit compares fourteen policies over ten paired seeds, with a separate capped four-hour no-demand/no-intervention diagnostic. It shows remaining horizon sensitivity and some capped ranking reversals, but no runs fully clear. Scoring stays at engine **0.3.0 / Monday 2**, with compatible exports preserved; no arbitrary residual penalty is added. See the desktop follow-up in [Phase 12 validation](docs/PHASE12_VALIDATION.md) for data, performance limitations and browser checks.
+The earlier engine 0.3.0 endgame audit censored all 140 runs at a four-hour cap. The [clearance investigation](docs/CLEARANCE_INVESTIGATION.md) traces the cause to unlimited road entry combined with occupancy-dependent slowdown. Engine **0.4.0 / Monday 3** enforces existing maximum road storage: trips wait at origins for entry, and downstream-blocked vehicles queue on their current roads. Passenger counts, elapsed costs and routes remain accounted for; congestion weights and demand are unchanged. Results distinguish origin waiting from exit queues within active trips.
+
+All 140 corrected ten-seed/policy diagnostics clear after demand stops (+43.25–170.25 minutes), but some policy ranks still change after 09:00. Official play, previews and scoring retain the **07:00–09:00 fixed window**; no lifetime-fairness claim or arbitrary residual penalty is added. Full-clearance diagnostics are separate, disable terminal estimates while charging actual continued waiting, and explicitly mark capped/unreachable runs censored. Physical storage cycles can remain unresolved. See the investigation and [current validation](docs/PHASE12_VALIDATION.md) for measured outcomes and the next evaluation milestone.

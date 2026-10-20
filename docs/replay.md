@@ -1,6 +1,6 @@
 # Local runs and deterministic replay
 
-The challenge export is schema **1**, engine **0.3.0**, Monday Morning scenario **2**. Original internal `SimulationRun` objects without this schema are not imported or silently upgraded. Practice remains a separate tutorial/experiment session and is not exposed as a scored challenge export.
+The challenge export is schema **1**, engine **0.4.0**, Monday Morning scenario **3**. Original internal `SimulationRun` objects without this schema are not imported or silently upgraded. Practice remains a separate tutorial/experiment session and is not exposed as a scored challenge export.
 
 A completed run records schema and engine versions, scenario ID/version, seed, full configuration identity, export timestamp, timestamped interventions, actual affected counts, immediate tick rewards, every final metric (including weighted objective components), and a deterministic final-state checksum. No state snapshot is stored for each tick. There are no uploads, accounts, or telemetry.
 
@@ -43,3 +43,7 @@ Engine 0.3.0 introduces the six-component metric contract and excludes derived f
 ## Desktop beta follow-up
 
 Keyboard/modal focus, road selection, announcements and reduced-motion presentation do not alter engine 0.3.0 / Monday 2 compatibility. Existing compatible exports remain supported. Capped post-demand audit continuations use a separate diagnostic engine/configuration and are never imported as official challenge results, substituted for baseline scores, or used to change verified replay metrics. No additional scoring or checksum semantics changed in this follow-up.
+
+## Road storage compatibility milestone
+
+Engine 0.4.0 / Monday 3 changes deterministic admissions and queue movement. Internal snapshots are version 2 and carry engineVersion; restore rejects either an incompatible snapshot version or engine. Exact run schema-1 engine/scenario/configuration validation rejects older exports. Exit-queue counts are a subset of active trips and included in metrics/checksums. Baseline, preview and forecast workers restore the same new snapshots. Official evaluation/replay still stop at 09:00. Diagnostic no-demand clearance is a separate configuration and is never substituted for official final metrics. Historical 0.3.0 compatibility statements above describe earlier milestones, not acceptance of those files by 0.4.0.
