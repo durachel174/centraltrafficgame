@@ -360,7 +360,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       : `${get().scenario.graph.edges.find(edge => edge.id === changedEvent.edgeId)?.name ?? changedEvent.edgeId}: scheduled restriction ended. Traffic may still be congested.`
       : null;
     const done = engine.isDone();
+    const finalizationStart = recordBrowserTiming ? performance.now() : 0;
     const verificationError = done && replay ? verifyCompletedRun(engine, replay.run) : null;
+    const completedRun = done && !replay && get().scenarioMode === "monday" ? createCompletedRun(engine) : get().completedRun;
+    if (done) recordBrowserTiming?.("finalizeRun", performance.now() - finalizationStart);
     set((state) => {
       const elapsed = state.tutorial.observedFromTime === null ? 0 : get().engine.getObservation().time - state.tutorial.observedFromTime;
       const observationComplete =
@@ -376,7 +379,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         version: state.version + 1,
         incidentNotice: eventNotice ?? state.incidentNotice,
         decisionHistory: applied.type === "NO_OP" ? state.decisionHistory : engine.createRun().actions,
-        completedRun: done && !replay && state.scenarioMode === "monday" ? createCompletedRun(engine) : state.completedRun,
+        completedRun,
         replay: done && replay ? { ...replay, verification: verificationError ? "failed" : "verified", error: verificationError } : state.replay,
         speed: observationComplete ? 0 : state.speed,
         preview: state.preview.status === "idle" ? state.preview : { ...state.preview, status: "stale" },

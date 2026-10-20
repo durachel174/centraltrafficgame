@@ -14,13 +14,14 @@ npm run benchmark
 npm run audit:policies -- --runs=10 --clearance-minutes=0
 npm run audit:holds -- --runs=10
 npm run audit:pacing -- --runs=10
+npm run audit:endgame -- --runs=10 --clearance-minutes=240
 ```
 
 ## Player Flow
 
 The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage` and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, apply or cancel, resume time, and watch the observed result.
 
-Help opens as a safe in-game panel. It explains the controls without replacing the current run, and replaying the tutorial requires a separate Start Practice confirmation because it starts a fresh practice session. The tutorial recovers if the player cancels, changes roads, resets, or receives an unusable preview.
+Help opens as a safe in-game modal dialog. It explains the controls without replacing the current run, and replaying the tutorial requires a separate Start Practice confirmation because it starts a fresh practice session. The tutorial recovers if the player cancels, changes roads, resets, or receives an unusable preview.
 
 The practice scenario is a verified checkpoint warmed forward from its seed so a North Bridge reroute produces a measured selected-road change and real South Bridge spillover. It is not a separate ruleset; it uses the same deterministic engine, forecast labels, preview worker path, route changes, and replay/action logging as normal play. Post-action tutorial feedback reports observed start-to-end bridge counts and elapsed simulated time, and keeps those observations separate from projected preview effects.
 
@@ -88,3 +89,14 @@ Performance recording is local and development-only. Run `npm run dev`, finish/s
 Scoring and pacing audits write local JSON under `/private/tmp` by default; use `--out=/absolute/path.json` to choose another location. Policy and hold audits accept `--legacy-cutoff` to reproduce the old terminal-cost omission using fresh simulations. Optional `--clearance-minutes=120` is a capped diagnostic continuation with no new demand/actions, **not** the gameplay evaluation window; unfinished continuations are censored. `node --import tsx scripts/benchmark.ts` (or `scripts/simulate.ts`) avoids restricted-environment tsx CLI IPC errors.
 
 Engine **0.3.0** / Monday Morning **2** reject old incompatible exports. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.
+
+
+## Desktop keyboard beta and human playtest
+
+Use **Inspect road** to select any directed road without Canvas clicks. Tab to the labelled forecast, then explicitly activate Preview. Focus moves to inline review; Tab reaches its details, Apply and Cancel. Escape cancels a review without applying it. Playback controls, summaries, results, retry, local files and replay remain keyboard accessible. Hover/focus does not request calculations or pause time.
+
+Help, results and confirmation dialogs move focus inside, contain Tab/Shift+Tab and make background controls inert. Escape closes Help or the innermost safe confirmation; completed results remain open until a results action is chosen. Focus returns to its originating control where available. Tutorial steps guide focus without changing the action API. Status announcements describe action/error/stage transitions rather than every tick. Reduced-motion preferences hide moving vehicle markers while retaining traffic, road patterns, counts and forecasts.
+
+Follow [DESKTOP_PLAYTEST.md](docs/DESKTOP_PLAYTEST.md) for a neutral participant script, tasks and blank observation sheet. **Human sessions are pending**; automated and browser checks do not establish fun, comprehension or screen-reader compatibility. Phase 12 stays IN PROGRESS.
+
+The follow-up endgame audit compares fourteen policies over ten paired seeds, with a separate capped four-hour no-demand/no-intervention diagnostic. It shows remaining horizon sensitivity and some capped ranking reversals, but no runs fully clear. Scoring stays at engine **0.3.0 / Monday 2**, with compatible exports preserved; no arbitrary residual penalty is added. See the desktop follow-up in [Phase 12 validation](docs/PHASE12_VALIDATION.md) for data, performance limitations and browser checks.

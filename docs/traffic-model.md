@@ -64,3 +64,8 @@ Preview branches reaching scenario end include the same liability in system-cost
 Ten paired seeds demonstrated equal old costs for 5-minute and 1440-minute holds with identical through-cutoff dispatch but 83,230 additional committed passenger-minutes per seed. The correction prices that exact difference, rather than tuning penalties to make a controller win. It is intentionally a lower bound: unfinished active-trip downstream congestion and full clearance remain outside this evaluation. See [audit evidence](PHASE12_VALIDATION.md).
 
 Browser projections have source-labelled presentation age and rebased remaining horizons; synchronous headless projections retain their source-relative samples. Refresh intervals and projection physics are unchanged.
+
+
+## Desktop beta follow-up audit
+
+Fourteen deterministic policies over seeds 428193–428202 were compared at the official 09:00 cutoff and in an independent capped continuation with no new demand or interventions. Diagnostics disable the terminal hold component and accrue actual continued waiting once, avoiding double-counting the official known obligation. Some short-hold/reactive improvements reverse at the four-hour cap, but none of the 140 runs fully clear. Those censored results show horizon sensitivity without establishing complete-journey rankings or a justified additional residual cost. Scoring/weights remain unchanged at engine 0.3.0 / Monday 2; no general fairness claim follows. Reproduce with `npm run audit:endgame -- --runs=10 --clearance-minutes=240`; see [validation](PHASE12_VALIDATION.md) for assumptions, trip counts and accrued/terminal components.

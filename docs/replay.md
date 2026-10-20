@@ -38,3 +38,8 @@ History comes from actual applied engine log entries, outside rendering and outs
 ## Phase 12 compatibility change
 
 Engine 0.3.0 introduces the six-component metric contract and excludes derived forecast caches from final-state verification. Monday Morning version 2 enables `terminalHoldAccounting`: at 09:00, remaining waiting-trip `max(heldUntil - endTime, 0)` is separately charged at the existing departure-delay weight. Exports include raw `remainingHoldPassengerMinutes` and weighted `terminalHoldDelay`. Old engine 0.2.0 / Monday 1 files are rejected, not upgraded or rescored. Schema remains 1; exact engine/configuration compatibility is required. Baseline caches also use the new identity. The 07:00–09:00 action/evaluation window is unchanged; no implicit clearance simulation is added.
+
+
+## Desktop beta follow-up
+
+Keyboard/modal focus, road selection, announcements and reduced-motion presentation do not alter engine 0.3.0 / Monday 2 compatibility. Existing compatible exports remain supported. Capped post-demand audit continuations use a separate diagnostic engine/configuration and are never imported as official challenge results, substituted for baseline scores, or used to change verified replay metrics. No additional scoring or checksum semantics changed in this follow-up.

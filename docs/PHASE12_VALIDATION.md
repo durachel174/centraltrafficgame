@@ -201,3 +201,126 @@ Unverified browser checks: the available UI API has no pointer-hover action, so 
 - Forecast snapshots and structured cloning still cost main-thread time; large-load bounded copies can remain a future optimization target. No architecture rewrite without further measurements.
 - Terminal hold cost prices a known minimum obligation only; it does not claim full clearance or remove every finite-horizon policy effect. Long-tail active trips and censored clearance remain a model limitation.
 - Pacing samples are counterfactuals on no-action trajectories, with five-minute sampling and only the two UI action types/bridges. They do not replace human playtesting, accessibility/screen-reader or mobile audits.
+
+
+## Desktop beta preparation follow-up (2026-10-19)
+
+Phase 12 remains **IN PROGRESS**. This follow-up builds on `ad2577c` (engine 0.3.0 / Monday Morning 2); keyboard/playtest changes are committed in `f390a7b`. No AGENTS.md was found in the checkout or parent directories. README, implementation status, this validation and latest commits were reviewed first. There are no new scenarios, mobile features, ML, telemetry or changes to simulation/scoring semantics.
+
+### Desktop accessibility changes
+
+A shared modal stack now handles Help, nested tutorial restart confirmation, results and local-import confirmation. Opening moves focus to the labelled dialog; Tab/Shift+Tab stay inside it. Inert sibling branches remove background controls from keyboard and accessibility-tree navigation. A focus guard and captured activation guard also reject background activation. Escape dismisses Help or the innermost safe confirmation; results stay open because dismissal would strand the completed session. Closing restores the originating control when it remains present, with a persistent Help fallback after a replaced session. Existing inert/aria-hidden values are restored. Nested import confirmation inside results is isolated without creating duplicate side-panel dialogs.
+
+The compact **Inspect road** native selector covers all directed roads and calls the same selection API as Canvas/alerts. It neither pauses nor calculates. The selected forecast is a labelled keyboard stop, including its updating/error state. Preview remains an explicit activation, with focused inline review and separate Apply/Cancel. Escape also cancels inline review; completion/cancellation returns focus to its preview control, while changing roads keeps focus in the selector. Tutorial steps focus their next relevant control, and tutorial completion focuses the selector in the new session.
+
+Focus outlines cover summaries, form controls, forecast inspection and dialogs. Traffic legend labels, road dash patterns, utilization numbers and textual warnings already supplement color. Primary text contrast spot checks using sRGB luminance: #e9f2ee on #101b18 15.44:1; muted #9db0aa on #101b18 7.74:1; chip text #c7d7d0 on #0a1512 12.45:1; focus/selected #f8f2a5 on #10231f 14.22:1. These checks do not certify the whole Canvas, every platform widget or all visual states.
+
+Preview transition announcements are separate from the changing forecast/time values. Applied/canceled actions, errors, tutorial steps and incident transitions remain announced; ordinary ticks do not mutate their stable status text. CSS transitions respect reduced motion; the map additionally hides moving vehicle markers when the preference is enabled, with a visible explanation. Traffic physics, playback speed, road pressure and forecasts continue normally. Dynamic preference changes are covered in DOM tests; no OS preference was changed during browser testing.
+
+### Follow-up scoring audit
+
+Reproduce:
+
+```sh
+npm run audit:endgame -- --runs=10 --clearance-minutes=240
+# Optional quick official-score-only comparison:
+npm run audit:endgame -- --runs=10 --clearance-minutes=0
+```
+
+The script writes `/private/tmp/central-traffic-endgame-audit.json`; `--out=/absolute/file.json` selects another local path. Ten paired seeds **428193–428202**, **14 deterministic serializable policies**, one action per tick. Baseline/reactive retain the existing controller behavior and internal action interval. Holds apply to currently waiting trips across origins; repeated 25% five-minute holds run every simulated minute, extended 100%/120-minute holds every five minutes. Repeated reroutes target North Bridge every five minutes at 25% or 100%. Late one-shot reroutes use minutes **90, 105 and 115**, each at 25% and 100%. Combined policies alternate a hold and reroute on adjacent ticks each minute from minute 90 (25%/5 minutes) or 105 (100%/120 minutes). No invisible simultaneous command batches or new persistent future-demand controls are introduced.
+
+The following are ten-run means at **09:00**. Travel, accrued waiting and remaining imposed waiting are **passenger-minutes**; satisfaction is percent; congestion is integrated squared excess utilization; distance is km. Every run requests 4,125 trips. Fractional trip counts represent means. Official accrued and terminal costs are reported separately; they sum to the official objective. Full weighted components and paired seed deltas are in the [small audit summary](measurements/phase12-desktop-endgame.json); per-run reports stay local.
+
+| Policy | Completed | Active | Waiting | Travel | Accrued waiting | Remaining hold | Satisfaction | Congestion | Excess km | Accrued cost | Terminal cost | Official total |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| baseline | 1,949.40 | 2,173.60 | 2.00 | 110,057.80 | 0.00 | 0.00 | 88.94 | 5,637.25 | 7,195.18 | 729,623.25 | 0.00 | 729,623.25 |
+| reactive | 1,926.60 | 2,196.40 | 2.00 | 111,112.75 | 22.00 | 0.00 | 88.65 | 5,572.95 | 7,230.66 | 726,674.91 | 0.00 | 726,674.91 |
+| repeated-hold-25-5m | 1,954.30 | 2,167.70 | 3.00 | 109,769.07 | 295.00 | 2.00 | 88.96 | 5,632.75 | 7,084.50 | 729,353.06 | 4.40 | 729,357.46 |
+| extended-hold-100-120m | 1,921.00 | 1,998.00 | 206.00 | 101,627.20 | 10,650.00 | 23,460.00 | 88.17 | 5,076.23 | 7,161.07 | 696,723.99 | 51,612.00 | 748,335.99 |
+| repeated-reroute-25 | 1,377.80 | 2,745.20 | 2.00 | 132,597.73 | 0.00 | 0.00 | 82.08 | 6,284.66 | 13,252.73 | 867,252.77 | 0.00 | 867,252.77 |
+| repeated-reroute-100 | 505.70 | 3,617.30 | 2.00 | 177,529.42 | 0.00 | 0.00 | 69.53 | 16,042.38 | 21,762.16 | 1,934,825.92 | 0.00 | 1,934,825.92 |
+| late-reroute-25-at-90 | 1,960.40 | 2,162.60 | 2.00 | 110,024.25 | 0.00 | 0.00 | 88.93 | 5,635.49 | 7,656.13 | 729,909.20 | 0.00 | 729,909.20 |
+| late-reroute-100-at-90 | 1,960.40 | 2,162.60 | 2.00 | 110,024.25 | 0.00 | 0.00 | 88.87 | 5,635.49 | 9,227.87 | 731,746.45 | 0.00 | 731,746.45 |
+| late-reroute-25-at-105 | 1,958.30 | 2,164.70 | 2.00 | 110,053.33 | 0.00 | 0.00 | 88.91 | 5,636.88 | 8,006.89 | 730,531.58 | 0.00 | 730,531.58 |
+| late-reroute-100-at-105 | 1,958.30 | 2,164.70 | 2.00 | 110,053.33 | 0.00 | 0.00 | 88.81 | 5,636.88 | 10,527.43 | 733,482.51 | 0.00 | 733,482.51 |
+| late-reroute-25-at-115 | 1,949.40 | 2,173.60 | 2.00 | 110,057.80 | 0.00 | 0.00 | 88.90 | 5,637.25 | 8,191.96 | 730,794.53 | 0.00 | 730,794.53 |
+| late-reroute-100-at-115 | 1,949.40 | 2,173.60 | 2.00 | 110,057.80 | 0.00 | 0.00 | 88.78 | 5,637.25 | 11,200.86 | 734,329.42 | 0.00 | 734,329.42 |
+| combined-25-from-90 | 1,959.90 | 2,162.10 | 3.00 | 109,955.03 | 71.00 | 2.00 | 88.78 | 5,647.89 | 11,248.03 | 735,434.30 | 4.40 | 735,438.70 |
+| combined-100-extended-from-105 | 1,949.40 | 2,104.60 | 71.00 | 109,412.80 | 645.00 | 8,211.00 | 88.66 | 5,525.64 | 11,054.68 | 725,229.47 | 18,064.20 | 743,293.67 |
+
+The independent diagnostic restores each 09:00 snapshot into another engine, stops new demand, retains trips/holds/events/routes and accumulated costs, adds no intervention, and continues normal quarter-minute ticks. It stops when all active/waiting trips finish or after **240 extra simulated minutes (13:00)**. Official scores above are retained separately. Diagnostic terminal-hold accounting is disabled: actual post-09:00 waiting accrues once, so its official prepaid terminal liability is not charged again on top. This diagnostic configuration is never used for official scores, previews, baseline comparison or replay verification. Unused forecasts are skipped during the audit to avoid spending CPU on data no policy reads.
+
+**None of the 140 diagnostic runs cleared.** All reached the cap with active trips, so every continuation is censored. The reported diagnostic cost is accrued through that cap, not a completed-journey total. Waiting trips at the cap are zero for these policies; active unresolved counts remain substantial.
+
+| Policy | Lower official cost than paired baseline (of 10) | Capped ranking reversals | Completed at cap | Active unresolved at cap | Accrued diagnostic cost |
+| --- | --- | --- | --- | --- | --- |
+| baseline | 0 | 0 | 2,149.4 | 1,975.6 | 7,261,709.64 |
+| reactive | 8 | 1 | 2,156.2 | 1,968.8 | 7,151,108.48 |
+| repeated-hold-25-5m | 7 | 2 | 2,146.1 | 1,978.9 | 7,265,397.15 |
+| extended-hold-100-120m | 3 | 0 | 2,140.8 | 1,984.2 | 7,428,666.42 |
+| repeated-reroute-25 | 0 | 0 | 1,650.9 | 2,474.1 | 7,986,362.61 |
+| repeated-reroute-100 | 0 | 0 | 542.5 | 3,582.5 | 14,678,871.64 |
+| late-reroute-25-at-90 | 3 | 0 | 2,149.1 | 1,975.9 | 7,261,196.57 |
+| late-reroute-100-at-90 | 1 | 0 | 2,148.8 | 1,976.2 | 7,262,673.59 |
+| late-reroute-25-at-105 | 0 | 0 | 2,149.1 | 1,975.9 | 7,262,308.37 |
+| late-reroute-100-at-105 | 0 | 0 | 2,148.8 | 1,976.2 | 7,264,606.20 |
+| late-reroute-25-at-115 | 0 | 0 | 2,148.9 | 1,976.1 | 7,262,571.53 |
+| late-reroute-100-at-115 | 0 | 0 | 2,148.8 | 1,976.2 | 7,265,279.64 |
+| combined-25-from-90 | 3 | 0 | 2,148.8 | 1,976.2 | 7,282,732.72 |
+| combined-100-extended-from-105 | 0 | 0 | 2,149.4 | 1,975.6 | 7,117,895.55 |
+
+A capped reversal means lower official cost at 09:00 but higher accrued diagnostic cost than the same seed's baseline at the cap. Observed cases: reactive seed 428202 (**−10,961.54 → +63,025.32** cost delta); repeated 25% holds seed 428193 (**−875.00 → +16,772.25**) and 428199 (**−2,999.00 → +69,165.76**). Repeated short holds improve official cost in 7/10 seeds, yet their mean capped cost is slightly above baseline. Conversely, combined extended holds score worse officially but have lower mean capped accrued cost. Therefore the audit does **not** equate a low official score, or reactive beating baseline, with lifetime transportation improvement.
+
+These results establish remaining horizon sensitivity and suspicious deferral cases, but do not provide another controlled proof of an unpriced known obligation comparable to the previous 5-minute/1440-minute hold witness. Long BPR tails leave roughly 1,969–3,583 active trips per policy mean even four hours later. Neither full-clearance rankings nor a justified residual active-trip penalty can be inferred from this cap. Congestion reduction can be legitimate; costs can also be deferred. A larger arbitrary unfinished-trip penalty would confound those explanations. **Scoring is preserved**, with no claim that it is universally fair. Full-clearance/residual-value evaluation remains unresolved.
+
+Compatibility remains **engine 0.3.0 / Monday Morning 2 / schema 1**. No deterministic inputs, outputs, weights, action semantics or checksum representation changed. Existing compatible exports remain valid; old incompatible files continue to be rejected. The six-component accounting and double-counting regressions remain intact.
+
+### Residual performance investigation
+
+Actual Chromium 155, visible development tab, **1280×800**, reported 11 threads/16 GB, seed 428193, ~20-second captures without concurrent audits/tests/benchmark. A development-only `finalizeRun` timer now separates completed-run export/checksum creation or replay verification from tick calculation. It records only during explicit bounded capture and changes no authoritative state.
+
+Before/after here means before/after desktop accessibility work, **not** a performance optimization. Cells are **n / median / p95 / max milliseconds**:
+
+| Workload | Before frame interval | After frame interval | Before long tasks | After long tasks |
+| --- | --- | --- | --- | --- |
+| Rush through completion | 2326 / 8.30 / 9.30 / 41.70 | 2284 / 8.30 / 10.10 / 66.70 | 0 | 1 / 69 / 69 / 69 |
+| 5,000-vehicle 4× stress | 2230 / 8.30 / 9.20 / 51.00 | 2239 / 8.30 / 10.30 / 43.30 | 3 / 52 / 56 / 56 | 2 / 52.5 / 53 / 53 |
+
+Stress captures cover the identical 07:00:15–08:10:15 simulation interval, growing from 5,000 to 7,078 active vehicles, with 280 ticks and 70 Canvas draws each. The rush captures differ in start time (08:10 before; 08:00 after), both finish at 09:00 and include an idle results tail. This limits direct distribution comparison. Median rAF cadence remains ~120.5 callbacks/sec; it is **not unique Canvas redraw FPS or simulation throughput**.
+
+Main-thread final-run creation measured **19.7 ms before / 31.1 ms after**, one sample each. A separate isolated Node check on the same final seed (20 repetitions) measured canonical serialization median 13.97 ms, final-state checksum 18.25 ms, completed-run creation 18.17 ms. Those overlapping operations are not additive, and Node timings cannot attribute browser long tasks. Main-thread snapshot/structured-clone posting and batch/render/garbage-collection work also remain possible contributors; no browser profiler trace established a single dominant cause of every residual spike. This milestone makes **no performance speedup claim** and preserves the architecture rather than changing checksum or deterministic semantics on weak attribution. Repeated traces, especially at end-of-round and high-load batches, remain a targeted follow-up. [Full bounded before/after summaries](measurements/phase12-desktop-performance.json).
+
+### Validation and human playtest readiness
+
+- `npm test`: **121 passed**, all previous 108 retained. New DOM interactions cover modal focus/Tab/Shift+Tab/Escape/restoration, nested confirmation, inert background rejection, native selector change events, focus/hover safety, keyboard Preview/Apply/Cancel, tutorial recovery/completion, stable status text across ticks, reduced motion and actual App results/retry. JSDOM Canvas warnings are expected; those tests are not browser rendering evidence.
+- `npm run build`: passed, with separate forecast/preview/baseline bundles.
+- Ten baseline and ten reactive simulations: completed, mean objectives **729,623 / 726,675**, average completed travel 19.2 / 19.6 minutes. No scoring tuning.
+- `npm run benchmark`: tsx IPC EPERM; allowed `node --import tsx scripts/benchmark.ts` completed in isolation: 6,012 active vehicles, 200 ticks, mean tick **3.795 ms (263.5 ticks/sec)**, 20 previews **128.727 ms** mean, synchronous forecast refresh **72.100 ms**. These are headless measurements, not FPS.
+- New `audit:endgame` command: completed 140 paired policy/seed runs and capped diagnostics in ~170 seconds. Local raw report retained; curated summaries committed.
+
+[DESKTOP_PLAYTEST.md](DESKTOP_PLAYTEST.md) is the reproducible participant protocol and blank observation sheet. It covers practice, Monday completion, explaining an intervention and same-seed retry, with neutral moderation, assistance counts, informed-intervention timing, consequence explanation, confusing/inactive stretches and voluntary retry intent. **No participants have been tested in this milestone; all human outcomes remain pending.** No management system, external service or telemetry was added.
+
+Browser verification and final limitations are recorded below.
+
+#### Browser checks in this desktop follow-up
+
+Actual in-app Chromium keyboard automation used development `localhost:5173` and production `127.0.0.1:4173`, with 1280×800 and 1440×900 desktop layouts. Keyboard activation and native Tab/Shift+Tab/arrow/Escape navigation were used; no Canvas clicks or browser evaluation changed game state. File controls were activated with Enter and actual local chooser/download tools were used to provide/read files.
+
+| Check | Observed evidence |
+| --- | --- |
+| Keyboard tutorial, both builds | Help → nested Start Practice, Continue, native selector arrows to North Bridge, forecast keyboard stop, Preview → Cancel/Escape → recover → Preview → Tab to Apply → Resume → observation → Start Monday. Six affected trips executed in each guided practice action. |
+| Help / nested confirmation | Initial focus inside dialog; Tab to first, Shift+Tab to last; background absent from accessibility tree; inner Escape restores Replay Tutorial, outer Escape restores Help origin. |
+| Forecast / playback | Real module-worker source age/rebased horizons seen in practice/playback and measured rush/stress captures. Focus alone during 4× left time advancing. No hover/focus handlers request calculations. |
+| Stale Retry / reset | Both builds resumed playback until the actual stale message, retried via real worker, returned focus to review, canceled with Escape and reset to a fresh checkpoint/source with zero decision history. The Retry focus-loss bug found in this pass was fixed and rechecked on the final production/development builds. Synthetic delayed cross-session messages remain test coverage rather than browser fault injection. |
+| Results focus and retry | Real Monday completion focused the results dialog; production Shift+Tab reached the last file input, Tab wrapped to the first summary. Try This Seed Again reset to seed 428193 with empty history and restored the previously focused playback control. Actual practice completion exposed Start Monday Morning / Practice Again, with no competitive score. |
+| Import confirmation | Development actual completed stress export, Enter-activated file input, local chooser import, nested dialog focus, Shift+Tab containment, Escape returned to the same file control, re-import and explicit Start Imported Replay. One native Enter reopening attempt timed out in the tooling; locator-based Enter reopened the picker, and a subsequent native Space reopening from the restored file control succeeded. Native OS file-picker navigation itself is not covered. |
+| Export / verified replay, both builds | Development exported a real 9,125-trip debug stress run, imported it and reached verified 09:00 replay. Production exported its real no-action Monday result, then imported the development stress export and verified that same recorded run across builds. Both stress replays ended with 0 completed / 9,123 active / 2 waiting, and matching log, metrics and checksum. No mock worker or Canvas-free test was used for this evidence. |
+| Production / layouts | Real Canvas/map and workers rendered at desktop sizes; production has no Dev/capture panel. Stress playback and results at 1440×900 remained usable, with inspector/results scrolling. Production console inspection returned no warnings/errors. |
+
+Screenshots: [keyboard Apply focus and shared review](screenshots/phase12-desktop-keyboard-review.jpg), [Help modal focus](screenshots/phase12-desktop-help.jpg), [verified stress replay](screenshots/phase12-desktop-verified.jpg).
+
+The full browser flow was followed by focused rechecks after the final async-focus recovery fix. Simulation/worker/replay code was unchanged by that fix. Performance captures precede that final focus-only fix; they are representative milestone measurements, not a causal benchmark of each final DOM effect.
+
+**Unverified:** no screen reader was run, no participant was observed, no other desktop browser was tested, and no formal WCAG certification is claimed. An axe-style audit package was not installed/available; no new network dependency was added solely to produce an accessibility score. DOM focus/activation regressions and numeric contrast spot checks complement real browser keyboard checks, but do not establish spoken announcement quality. Pointer hover could not be independently driven by this tool API and is covered by UI event regressions. Reduced-motion preference changes were tested through DOM preference simulation; an actual OS preference/screen-reader session remains pending. Forced worker failures and late-message delivery were not induced in-browser; actual stale Retry, resets and real worker responses were checked. Mobile is outside this milestone.
+
+Next unresolved desktop milestone: run the neutral participant protocol, perform screen-reader/cross-browser checks, and collect repeated profiler traces for the residual frame spikes. Continue residual active-trip/clearance investigation before introducing another scoring penalty or declaring the finite-window objective fair.

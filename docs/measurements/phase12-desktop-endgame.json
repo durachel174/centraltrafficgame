@@ -1,0 +1,1869 @@
+{
+  "conditions": {
+    "engine": "0.3.0",
+    "scenarioVersion": 2,
+    "identity": "0.3.0:monday_morning:2:d9d91ae008cf5eb1",
+    "seeds": [
+      428193,
+      428202
+    ],
+    "decisionMinutes": 120,
+    "clearanceCapMinutes": 240,
+    "noFurtherDemandOrActions": true,
+    "diagnosticTerminalHoldAccounting": false,
+    "note": "Diagnostic accrued costs exclude official terminal liability to avoid double-counting actual continued waiting. Capped reversals are not full-clearance evidence.",
+    "elapsedSeconds": 170.28064945900002
+  },
+  "aggregate": [
+    {
+      "policy": "baseline",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.94096581080451,
+        "congestionUtilizationSquaredMinutes": 5637.245390975871,
+        "excessDistanceKm": 7195.180000000022,
+        "accruedCost": 729623.2485731445,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 77551.4772517335,
+          "excessDistance": 6475.662000000021,
+          "terminalHoldDelay": 0
+        },
+        "objective": 729623.2485731445
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2149.4,
+        "active": 1975.6,
+        "waiting": 0,
+        "travelPassengerMinutes": 592431.233277607,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.49088374052654,
+        "congestionUtilizationSquaredMinutes": 66258.73261866199,
+        "excessDistanceKm": 7198.480000000045,
+        "accruedCost": 7261709.641820054,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592431.233277607,
+          "congestion": 6294579.598772891,
+          "departureDelay": 0,
+          "dissatisfaction": 368220.1777695576,
+          "excessDistance": 6478.632000000041,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7261709.641820054
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "reactive",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1926.6,
+        "active": 2196.4,
+        "waiting": 2,
+        "travelPassengerMinutes": 111112.75461682952,
+        "accruedWaitingPassengerMinutes": 22,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.65223719914094,
+        "congestionUtilizationSquaredMinutes": 5572.9470510397205,
+        "excessDistanceKm": 7230.6600000000235,
+        "accruedCost": 726674.905106627,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 111112.75461682952,
+          "congestion": 529429.9698487733,
+          "departureDelay": 48.4,
+          "dissatisfaction": 79576.1866410241,
+          "excessDistance": 6507.594000000022,
+          "terminalHoldDelay": 0
+        },
+        "objective": 726674.905106627
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2156.2,
+        "active": 1968.8,
+        "waiting": 0,
+        "travelPassengerMinutes": 598674.3797825545,
+        "accruedWaitingPassengerMinutes": 22,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 46.42864956644741,
+        "congestionUtilizationSquaredMinutes": 64949.54837504157,
+        "excessDistanceKm": 7232.79000000002,
+        "accruedCost": 7151108.481326791,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 598674.3797825545,
+          "congestion": 6170207.09562895,
+          "departureDelay": 48.4,
+          "dissatisfaction": 375669.0949152872,
+          "excessDistance": 6509.511000000019,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7151108.481326791
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 8,
+      "cappedReversals": 1
+    },
+    {
+      "policy": "repeated-hold-25-5m",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1954.3,
+        "active": 2167.7,
+        "waiting": 3,
+        "travelPassengerMinutes": 109769.06966108915,
+        "accruedWaitingPassengerMinutes": 295,
+        "remainingImposedWaitingPassengerMinutes": 2,
+        "satisfactionPercent": 88.9557797794893,
+        "congestionUtilizationSquaredMinutes": 5632.7510473183465,
+        "excessDistanceKm": 7084.500000000024,
+        "accruedCost": 729353.0634526632,
+        "terminalCost": 4.3999999999999995,
+        "components": {
+          "travelTime": 109769.06966108915,
+          "congestion": 535111.3494952429,
+          "departureDelay": 649,
+          "dissatisfaction": 77447.59429633115,
+          "excessDistance": 6376.05000000002,
+          "terminalHoldDelay": 4.3999999999999995
+        },
+        "objective": 729357.4634526632
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2146.1,
+        "active": 1978.9,
+        "waiting": 0,
+        "travelPassengerMinutes": 592625.7826734418,
+        "accruedWaitingPassengerMinutes": 297,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.4604305576794,
+        "congestionUtilizationSquaredMinutes": 66287.41997254074,
+        "excessDistanceKm": 7088.150000000026,
+        "accruedCost": 7265397.145779085,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592625.7826734418,
+          "congestion": 6297304.897391371,
+          "departureDelay": 653.4,
+          "dissatisfaction": 368433.7307142732,
+          "excessDistance": 6379.335000000023,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7265397.145779085
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 7,
+      "cappedReversals": 2
+    },
+    {
+      "policy": "extended-hold-100-120m",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1921,
+        "active": 1998,
+        "waiting": 206,
+        "travelPassengerMinutes": 101627.19806998209,
+        "accruedWaitingPassengerMinutes": 10650,
+        "remainingImposedWaitingPassengerMinutes": 23460,
+        "satisfactionPercent": 88.16687187962262,
+        "congestionUtilizationSquaredMinutes": 5076.231733863276,
+        "excessDistanceKm": 7161.070000000031,
+        "accruedCost": 696723.9867311394,
+        "terminalCost": 51612.00000000001,
+        "components": {
+          "travelTime": 101627.19806998209,
+          "congestion": 482242.01471701113,
+          "departureDelay": 23430.000000000004,
+          "dissatisfaction": 82979.81094414626,
+          "excessDistance": 6444.963000000028,
+          "terminalHoldDelay": 51612.00000000001
+        },
+        "objective": 748335.9867311394
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2140.8,
+        "active": 1984.2,
+        "waiting": 0,
+        "travelPassengerMinutes": 565933.7429025207,
+        "accruedWaitingPassengerMinutes": 34110,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 46.546056167787484,
+        "congestionUtilizationSquaredMinutes": 67435.4937951327,
+        "excessDistanceKm": 7192.21000000005,
+        "accruedCost": 7428666.4235635195,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 565933.7429025207,
+          "congestion": 6406371.910537609,
+          "departureDelay": 75042,
+          "dissatisfaction": 374845.7811233902,
+          "excessDistance": 6472.989000000046,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7428666.4235635195
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 3,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "repeated-reroute-25",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1377.8,
+        "active": 2745.2,
+        "waiting": 2,
+        "travelPassengerMinutes": 132597.73299103096,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 82.07697983568313,
+        "congestionUtilizationSquaredMinutes": 6284.65687691389,
+        "excessDistanceKm": 13252.72999999981,
+        "accruedCost": 867252.7722001232,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 132597.73299103096,
+          "congestion": 597042.4033068194,
+          "departureDelay": 0,
+          "dissatisfaction": 125685.17890227298,
+          "excessDistance": 11927.456999999826,
+          "terminalHoldDelay": 0
+        },
+        "objective": 867252.7722001232
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 1650.9,
+        "active": 2474.1,
+        "waiting": 0,
+        "travelPassengerMinutes": 749479.8124961752,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 33.71500598107973,
+        "congestionUtilizationSquaredMinutes": 71159.24118093024,
+        "excessDistanceKm": 13257.069999999774,
+        "accruedCost": 7986362.608242224,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 749479.8124961752,
+          "congestion": 6760127.912188371,
+          "departureDelay": 0,
+          "dissatisfaction": 464823.5205576783,
+          "excessDistance": 11931.362999999797,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7986362.608242224
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "repeated-reroute-100",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 505.7,
+        "active": 3617.3,
+        "waiting": 2,
+        "travelPassengerMinutes": 177529.42419115102,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 69.5280396862649,
+        "congestionUtilizationSquaredMinutes": 16042.378173193176,
+        "excessDistanceKm": 21762.159999999363,
+        "accruedCost": 1934825.916344578,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 177529.42419115102,
+          "congestion": 1524025.9264533515,
+          "departureDelay": 0,
+          "dissatisfaction": 213684.62170007633,
+          "excessDistance": 19585.94399999943,
+          "terminalHoldDelay": 0
+        },
+        "objective": 1934825.916344578
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 542.5,
+        "active": 3582.5,
+        "waiting": 0,
+        "travelPassengerMinutes": 1041484.2739636588,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 11.684750668806334,
+        "congestionUtilizationSquaredMinutes": 136826.17694185968,
+        "excessDistanceKm": 21766.519999999382,
+        "accruedCost": 14678871.637375321,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 1041484.2739636588,
+          "congestion": 12998486.80947667,
+          "departureDelay": 0,
+          "dissatisfaction": 619310.6859349955,
+          "excessDistance": 19589.867999999446,
+          "terminalHoldDelay": 0
+        },
+        "objective": 14678871.637375321
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-25-at-90",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1960.4,
+        "active": 2162.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110024.25036622409,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.93079331611845,
+        "congestionUtilizationSquaredMinutes": 5635.490754235601,
+        "excessDistanceKm": 7656.130000000022,
+        "accruedCost": 729909.2008893255,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110024.25036622409,
+          "congestion": 535371.6216523822,
+          "departureDelay": 0,
+          "dissatisfaction": 77622.81187071934,
+          "excessDistance": 6890.51700000002,
+          "terminalHoldDelay": 0
+        },
+        "objective": 729909.2008893255
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2149.1,
+        "active": 1975.9,
+        "waiting": 0,
+        "travelPassengerMinutes": 592334.7736531289,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.52635449474541,
+        "congestionUtilizationSquaredMinutes": 66252.59998698553,
+        "excessDistanceKm": 7659.290000000035,
+        "accruedCost": 7261196.5725223515,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592334.7736531289,
+          "congestion": 6293996.998763625,
+          "departureDelay": 0,
+          "dissatisfaction": 367971.43910559785,
+          "excessDistance": 6893.3610000000335,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7261196.5725223515
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 3,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-100-at-90",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1960.4,
+        "active": 2162.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110024.25036622409,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.87051695248209,
+        "congestionUtilizationSquaredMinutes": 5635.490754235601,
+        "excessDistanceKm": 9227.870000000043,
+        "accruedCost": 731746.4548893255,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110024.25036622409,
+          "congestion": 535371.6216523822,
+          "departureDelay": 0,
+          "dissatisfaction": 78045.49987071936,
+          "excessDistance": 8305.083000000039,
+          "terminalHoldDelay": 0
+        },
+        "objective": 731746.4548893255
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2148.8,
+        "active": 1976.2,
+        "waiting": 0,
+        "travelPassengerMinutes": 592397.2274179342,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.52635449474541,
+        "congestionUtilizationSquaredMinutes": 66252.59998698553,
+        "excessDistanceKm": 9231.030000000055,
+        "accruedCost": 7262673.592287158,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592397.2274179342,
+          "congestion": 6293996.998763625,
+          "departureDelay": 0,
+          "dissatisfaction": 367971.43910559785,
+          "excessDistance": 8307.92700000005,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7262673.592287158
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 1,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-25-at-105",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1958.3,
+        "active": 2164.7,
+        "waiting": 2,
+        "travelPassengerMinutes": 110053.33472206062,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.90999246485809,
+        "congestionUtilizationSquaredMinutes": 5636.877536227348,
+        "excessDistanceKm": 8006.890000000026,
+        "accruedCost": 730531.5795038415,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110053.33472206062,
+          "congestion": 535503.3659415981,
+          "departureDelay": 0,
+          "dissatisfaction": 77768.67784018257,
+          "excessDistance": 7206.201000000023,
+          "terminalHoldDelay": 0
+        },
+        "objective": 730531.5795038415
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2149.1,
+        "active": 1975.9,
+        "waiting": 0,
+        "travelPassengerMinutes": 592497.079488045,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.49026077369859,
+        "congestionUtilizationSquaredMinutes": 66256.60736750816,
+        "excessDistanceKm": 8010.050000000041,
+        "accruedCost": 7262308.3707257565,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592497.079488045,
+          "congestion": 6294377.6999132745,
+          "departureDelay": 0,
+          "dissatisfaction": 368224.54632443865,
+          "excessDistance": 7209.045000000036,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7262308.3707257565
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-100-at-105",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1958.3,
+        "active": 2164.7,
+        "waiting": 2,
+        "travelPassengerMinutes": 110053.33472206062,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.81267367697956,
+        "congestionUtilizationSquaredMinutes": 5636.877536227348,
+        "excessDistanceKm": 10527.430000000008,
+        "accruedCost": 733482.5135038412,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110053.33472206062,
+          "congestion": 535503.3659415981,
+          "departureDelay": 0,
+          "dissatisfaction": 78451.12584018246,
+          "excessDistance": 9474.687000000005,
+          "terminalHoldDelay": 0
+        },
+        "objective": 733482.5135038412
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2148.8,
+        "active": 1976.2,
+        "waiting": 0,
+        "travelPassengerMinutes": 592526.4242000545,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.49026077369859,
+        "congestionUtilizationSquaredMinutes": 66256.60736750816,
+        "excessDistanceKm": 10530.590000000022,
+        "accruedCost": 7264606.201437767,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592526.4242000545,
+          "congestion": 6294377.6999132745,
+          "departureDelay": 0,
+          "dissatisfaction": 368224.54632443865,
+          "excessDistance": 9477.531000000017,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7264606.201437767
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-25-at-115",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.90186762898631,
+        "congestionUtilizationSquaredMinutes": 5637.245390975871,
+        "excessDistanceKm": 8191.960000000038,
+        "accruedCost": 730794.5265731445,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 77825.65325173349,
+          "excessDistance": 7372.764000000035,
+          "terminalHoldDelay": 0
+        },
+        "objective": 730794.5265731445
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2148.9,
+        "active": 1976.1,
+        "waiting": 0,
+        "travelPassengerMinutes": 592536.2034875681,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.48757664131698,
+        "congestionUtilizationSquaredMinutes": 66257.0128815466,
+        "excessDistanceKm": 8195.260000000053,
+        "accruedCost": 7262571.530037262,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592536.2034875681,
+          "congestion": 6294416.223746928,
+          "departureDelay": 0,
+          "dissatisfaction": 368243.3688027647,
+          "excessDistance": 7375.734000000048,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7262571.530037262
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "late-reroute-100-at-115",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2173.6,
+        "waiting": 2,
+        "travelPassengerMinutes": 110057.79717870321,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 88.7839524774718,
+        "congestionUtilizationSquaredMinutes": 5637.245390975871,
+        "excessDistanceKm": 11200.85999999996,
+        "accruedCost": 734329.416573144,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 110057.79717870321,
+          "congestion": 535538.3121427076,
+          "departureDelay": 0,
+          "dissatisfaction": 78652.5332517332,
+          "excessDistance": 10080.773999999963,
+          "terminalHoldDelay": 0
+        },
+        "objective": 734329.416573144
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2148.8,
+        "active": 1976.2,
+        "waiting": 0,
+        "travelPassengerMinutes": 592536.3021504448,
+        "accruedWaitingPassengerMinutes": 0,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.48757664131698,
+        "congestionUtilizationSquaredMinutes": 66257.0128815466,
+        "excessDistanceKm": 11204.15999999997,
+        "accruedCost": 7265279.638700137,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592536.3021504448,
+          "congestion": 6294416.223746928,
+          "departureDelay": 0,
+          "dissatisfaction": 368243.3688027647,
+          "excessDistance": 10083.743999999973,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7265279.638700137
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "combined-25-from-90",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1959.9,
+        "active": 2162.1,
+        "waiting": 3,
+        "travelPassengerMinutes": 109955.0261387709,
+        "accruedWaitingPassengerMinutes": 71,
+        "remainingImposedWaitingPassengerMinutes": 2,
+        "satisfactionPercent": 88.78430942274815,
+        "congestionUtilizationSquaredMinutes": 5647.892859075166,
+        "excessDistanceKm": 11248.029999999952,
+        "accruedCost": 735434.3049238946,
+        "terminalCost": 4.3999999999999995,
+        "components": {
+          "travelTime": 109955.0261387709,
+          "congestion": 536549.8216121409,
+          "departureDelay": 156.20000000000002,
+          "dissatisfaction": 78650.03017298295,
+          "excessDistance": 10123.226999999957,
+          "terminalHoldDelay": 4.3999999999999995
+        },
+        "objective": 735438.7049238946
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2148.8,
+        "active": 1976.2,
+        "waiting": 0,
+        "travelPassengerMinutes": 592336.917288018,
+        "accruedWaitingPassengerMinutes": 73,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.52453232411129,
+        "congestionUtilizationSquaredMinutes": 66443.41038741086,
+        "excessDistanceKm": 11252.219999999958,
+        "accruedCost": 7282732.719169217,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 592336.917288018,
+          "congestion": 6312123.986804031,
+          "departureDelay": 160.6,
+          "dissatisfaction": 367984.21707716945,
+          "excessDistance": 10126.997999999961,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7282732.719169217
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 3,
+      "cappedReversals": 0
+    },
+    {
+      "policy": "combined-100-extended-from-105",
+      "decisionEnd": {
+        "requested": 4125,
+        "completed": 1949.4,
+        "active": 2104.6,
+        "waiting": 71,
+        "travelPassengerMinutes": 109412.79717870321,
+        "accruedWaitingPassengerMinutes": 645,
+        "remainingImposedWaitingPassengerMinutes": 8211,
+        "satisfactionPercent": 88.66133185344138,
+        "congestionUtilizationSquaredMinutes": 5525.6426021436555,
+        "excessDistanceKm": 11054.679999999958,
+        "accruedCost": 725229.4667600968,
+        "terminalCost": 18064.200000000004,
+        "components": {
+          "travelTime": 109412.79717870321,
+          "congestion": 524936.0472036472,
+          "departureDelay": 1419.0000000000002,
+          "dissatisfaction": 79512.41037774633,
+          "excessDistance": 9949.211999999961,
+          "terminalHoldDelay": 18064.200000000004
+        },
+        "objective": 743293.6667600968
+      },
+      "diagnostic": {
+        "requested": 4125,
+        "completed": 2149.4,
+        "active": 1975.6,
+        "waiting": 0,
+        "travelPassengerMinutes": 583941.5773819136,
+        "accruedWaitingPassengerMinutes": 8856,
+        "remainingImposedWaitingPassengerMinutes": 0,
+        "satisfactionPercent": 47.39935361408574,
+        "congestionUtilizationSquaredMinutes": 64585.85850791135,
+        "excessDistanceKm": 11057.979999999956,
+        "accruedCost": 7117895.550414713,
+        "terminalCost": 0,
+        "components": {
+          "travelTime": 583941.5773819136,
+          "congestion": 6135656.558251577,
+          "departureDelay": 19483.200000000004,
+          "dissatisfaction": 368862.03278122377,
+          "excessDistance": 9952.181999999959,
+          "terminalHoldDelay": 0
+        },
+        "objective": 7117895.550414713
+      },
+      "clearedRuns": 0,
+      "apparentImprovements": 0,
+      "cappedReversals": 0
+    }
+  ],
+  "pairedDeltas": [
+    {
+      "seed": 428193,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "reactive",
+      "officialCostDelta": 74204.77764991822,
+      "cappedAccruedCostDelta": 352713.0032902118,
+      "unresolvedAtCap": 1635,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -875.0022825418273,
+      "cappedAccruedCostDelta": 16772.246099927463,
+      "unresolvedAtCap": 1647,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": -49898.15357548511,
+      "cappedAccruedCostDelta": -700179.5132485991,
+      "unresolvedAtCap": 1619,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 162175.70259574777,
+      "cappedAccruedCostDelta": 1156528.9936509226,
+      "unresolvedAtCap": 2426,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1596398.0216031605,
+      "cappedAccruedCostDelta": 11059388.628214281,
+      "unresolvedAtCap": 3607,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": -410.7040923249442,
+      "cappedAccruedCostDelta": -5500.646602504887,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 526.3259076750837,
+      "cappedAccruedCostDelta": -4789.376602504402,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 281.21000000007916,
+      "cappedAccruedCostDelta": 213.20999999996275,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 1163.780000000028,
+      "cappedAccruedCostDelta": 883.6199999991804,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 281.21000000007916,
+      "cappedAccruedCostDelta": 213.20999999996275,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 1163.780000000028,
+      "cappedAccruedCostDelta": 883.6199999991804,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": -310.71672764688265,
+      "cappedAccruedCostDelta": -5926.615471336059,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428193,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 8589.474082930712,
+      "cappedAccruedCostDelta": -195616.72169206198,
+      "unresolvedAtCap": 1644,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "reactive",
+      "officialCostDelta": -19920.72816051438,
+      "cappedAccruedCostDelta": -120558.51848185621,
+      "unresolvedAtCap": 2217,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": 8597.861807363108,
+      "cappedAccruedCostDelta": 91702.08376017027,
+      "unresolvedAtCap": 2241,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 9846.511750966893,
+      "cappedAccruedCostDelta": -1176503.6751614343,
+      "unresolvedAtCap": 2148,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 143696.1430795309,
+      "cappedAccruedCostDelta": 647457.6306127738,
+      "unresolvedAtCap": 2658,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1028089.5075377268,
+      "cappedAccruedCostDelta": 5196690.578748144,
+      "unresolvedAtCap": 3560,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 388.5600000000559,
+      "cappedAccruedCostDelta": 298.80000000074506,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 1549.0200000000186,
+      "cappedAccruedCostDelta": 1189.980000000447,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 1050.4799999999814,
+      "cappedAccruedCostDelta": 805.679999999702,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 4229.139999999781,
+      "cappedAccruedCostDelta": 3244.5,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 1417.1300000000047,
+      "cappedAccruedCostDelta": 1088.0099999997765,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 5575.859999999404,
+      "cappedAccruedCostDelta": 4253.9399999994785,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 21983.192286568694,
+      "cappedAccruedCostDelta": 140489.5273643881,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428194,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 20022.252053760574,
+      "cappedAccruedCostDelta": -142448.05548423156,
+      "unresolvedAtCap": 2227,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "reactive",
+      "officialCostDelta": -22489.022623071796,
+      "cappedAccruedCostDelta": -207360.86596370582,
+      "unresolvedAtCap": 1740,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -2104.050509371562,
+      "cappedAccruedCostDelta": -2793.438650489785,
+      "unresolvedAtCap": 1763,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": -133550.43647377566,
+      "cappedAccruedCostDelta": -1431185.5854579266,
+      "unresolvedAtCap": 1654,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 92401.64801351936,
+      "cappedAccruedCostDelta": 594953.9420924522,
+      "unresolvedAtCap": 2298,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1523377.233148797,
+      "cappedAccruedCostDelta": 11005694.816535516,
+      "unresolvedAtCap": 3564,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 71.94000000006054,
+      "cappedAccruedCostDelta": -1947.0499335825443,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 283.1700000000419,
+      "cappedAccruedCostDelta": -1784.7799335829914,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 71.94000000006054,
+      "cappedAccruedCostDelta": -1947.0499335825443,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 283.1700000000419,
+      "cappedAccruedCostDelta": -1784.7799335829914,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 71.94000000006054,
+      "cappedAccruedCostDelta": -1947.0499335825443,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 283.1700000000419,
+      "cappedAccruedCostDelta": -1784.7799335829914,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": -912.359176101163,
+      "cappedAccruedCostDelta": -3308.962891011499,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428195,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 7451.291024879087,
+      "cappedAccruedCostDelta": -203646.12684876285,
+      "unresolvedAtCap": 1760,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "reactive",
+      "officialCostDelta": -4473.64445885655,
+      "cappedAccruedCostDelta": -61200.67343970109,
+      "unresolvedAtCap": 1614,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": 4672.795385104255,
+      "cappedAccruedCostDelta": 22720.195265653543,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 100616.4667189793,
+      "cappedAccruedCostDelta": 1932941.1948536746,
+      "unresolvedAtCap": 2113,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 128460.36086065357,
+      "cappedAccruedCostDelta": 404692.6067212429,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1579018.3074647407,
+      "cappedAccruedCostDelta": 11234430.432526518,
+      "unresolvedAtCap": 3636,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 248.7699999999022,
+      "cappedAccruedCostDelta": 249.3055712180212,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 1050.4299999999348,
+      "cappedAccruedCostDelta": 863.2855712175369,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 248.7699999999022,
+      "cappedAccruedCostDelta": 249.3055712180212,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 1050.4299999999348,
+      "cappedAccruedCostDelta": 863.2855712175369,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 248.7699999999022,
+      "cappedAccruedCostDelta": 249.3055712180212,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 1050.4299999999348,
+      "cappedAccruedCostDelta": 863.2855712175369,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 564.8859872501343,
+      "cappedAccruedCostDelta": 311.19499616511166,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428196,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 8554.710677101975,
+      "cappedAccruedCostDelta": -189653.87102629896,
+      "unresolvedAtCap": 1621,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "reactive",
+      "officialCostDelta": -3585.3458854357013,
+      "cappedAccruedCostDelta": -50980.563992534764,
+      "unresolvedAtCap": 2103,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -1425.2955181347206,
+      "cappedAccruedCostDelta": -74483.79670665972,
+      "unresolvedAtCap": 2100,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 14178.182789842482,
+      "cappedAccruedCostDelta": -78844.39655219577,
+      "unresolvedAtCap": 2069,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 200410.1101711283,
+      "cappedAccruedCostDelta": 743609.0056224521,
+      "unresolvedAtCap": 2431,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 915511.4193822868,
+      "cappedAccruedCostDelta": 4548391.234044479,
+      "unresolvedAtCap": 3552,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 2030.199999999837,
+      "cappedAccruedCostDelta": 1599.04079142306,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 8420.469999999972,
+      "cappedAccruedCostDelta": 6520.510791423731,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 2991.759999999893,
+      "cappedAccruedCostDelta": 2340.2807914232835,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 12141.839999999502,
+      "cappedAccruedCostDelta": 9366.04079142306,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 3363.229999999865,
+      "cappedAccruedCostDelta": 2632.8707914231345,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 13486.979999999166,
+      "cappedAccruedCostDelta": 10392.940791423433,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 14312.77788164944,
+      "cappedAccruedCostDelta": 11089.37567573879,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428197,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 22123.524072395754,
+      "cappedAccruedCostDelta": -86103.01547381282,
+      "unresolvedAtCap": 2114,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2136,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "reactive",
+      "officialCostDelta": 10902.162499100436,
+      "cappedAccruedCostDelta": 11438.432589298114,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": 2002.2154032535618,
+      "cappedAccruedCostDelta": 4559.2611248176545,
+      "unresolvedAtCap": 2131,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 147485.6021780694,
+      "cappedAccruedCostDelta": 1958116.068576524,
+      "unresolvedAtCap": 2217,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 167604.2814405089,
+      "cappedAccruedCostDelta": 894228.9503725264,
+      "unresolvedAtCap": 2798,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 983860.8901007702,
+      "cappedAccruedCostDelta": 5004023.499165131,
+      "unresolvedAtCap": 3604,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 1768.8969771486009,
+      "cappedAccruedCostDelta": 1724.5828177230433,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 6867.706977148657,
+      "cappedAccruedCostDelta": 5667.3928177226335,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 2482.7399999999907,
+      "cappedAccruedCostDelta": 2212.66584057454,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 10176.359999999753,
+      "cappedAccruedCostDelta": 8135.565840573981,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 2827.369999999879,
+      "cappedAccruedCostDelta": 2481.1358405742794,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 11445.579999999376,
+      "cappedAccruedCostDelta": 9105.585840574466,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 10513.722033638507,
+      "cappedAccruedCostDelta": 7923.468161835335,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428198,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 19859.024535964592,
+      "cappedAccruedCostDelta": -195341.723559089,
+      "unresolvedAtCap": 2136,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2135,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "reactive",
+      "officialCostDelta": -22146.832074501086,
+      "cappedAccruedCostDelta": -61972.384749553166,
+      "unresolvedAtCap": 2122,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -2999.000925611239,
+      "cappedAccruedCostDelta": 69165.75637971237,
+      "unresolvedAtCap": 2173,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 25531.489091667696,
+      "cappedAccruedCostDelta": 488098.1322282627,
+      "unresolvedAtCap": 2116,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 131074.09405610268,
+      "cappedAccruedCostDelta": 708934.8811333738,
+      "unresolvedAtCap": 2723,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 998270.6705112953,
+      "cappedAccruedCostDelta": 5587709.758272509,
+      "unresolvedAtCap": 3571,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": -1849.4312269797083,
+      "cappedAccruedCostDelta": -1841.5668317293748,
+      "unresolvedAtCap": 2135,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": -994.2112269797362,
+      "cappedAccruedCostDelta": -604.4506682893261,
+      "unresolvedAtCap": 2138,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 74.21930696908385,
+      "cappedAccruedCostDelta": 272.2010508775711,
+      "unresolvedAtCap": 2135,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 1793.1893069689395,
+      "cappedAccruedCostDelta": 1884.7781709721312,
+      "unresolvedAtCap": 2138,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 894.7199999999721,
+      "cappedAccruedCostDelta": 1494.740364663303,
+      "unresolvedAtCap": 2137,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 3610.939999999362,
+      "cappedAccruedCostDelta": 3572.746993429959,
+      "unresolvedAtCap": 2138,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 882.3605994624086,
+      "cappedAccruedCostDelta": 611.2901715002954,
+      "unresolvedAtCap": 2138,
+      "cleared": false
+    },
+    {
+      "seed": 428199,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 11584.841279928689,
+      "cappedAccruedCostDelta": -210682.99932871293,
+      "unresolvedAtCap": 2133,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "reactive",
+      "officialCostDelta": -7303.566989988671,
+      "cappedAccruedCostDelta": -58868.47453618515,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -1752.2267645465909,
+      "cappedAccruedCostDelta": -41182.337530021556,
+      "unresolvedAtCap": 1750,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": -156505.79138465505,
+      "cappedAccruedCostDelta": -1545187.8354089065,
+      "unresolvedAtCap": 1595,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 75441.00095705385,
+      "cappedAccruedCostDelta": 684894.8112439848,
+      "unresolvedAtCap": 2365,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1510326.557626374,
+      "cappedAccruedCostDelta": 10611602.780014206,
+      "unresolvedAtCap": 3609,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 148.86999999987893,
+      "cappedAccruedCostDelta": 110.79000000003725,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 664.2799999999115,
+      "cappedAccruedCostDelta": 506.5200000004843,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 148.86999999987893,
+      "cappedAccruedCostDelta": 110.79000000003725,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 664.2799999999115,
+      "cappedAccruedCostDelta": 506.5200000004843,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 148.86999999987893,
+      "cappedAccruedCostDelta": 110.79000000003725,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 664.2799999999115,
+      "cappedAccruedCostDelta": 506.5200000004843,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": -170.8207850321196,
+      "cappedAccruedCostDelta": -502.01694230455905,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428200,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 8155.412114710198,
+      "cappedAccruedCostDelta": -194773.22442674357,
+      "unresolvedAtCap": 1757,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "reactive",
+      "officialCostDelta": -23709.69109021884,
+      "cappedAccruedCostDelta": -972246.8760597054,
+      "unresolvedAtCap": 2162,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -1177.6844510388328,
+      "cappedAccruedCostDelta": -2541.169896855019,
+      "unresolvedAtCap": 2185,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 172374.33976553765,
+      "cappedAccruedCostDelta": 1241377.2475293986,
+      "unresolvedAtCap": 2141,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 151120.07348613266,
+      "cappedAccruedCostDelta": 765357.5314578079,
+      "unresolvedAtCap": 2760,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 1000069.9793025914,
+      "cappedAccruedCostDelta": 5045400.126248766,
+      "unresolvedAtCap": 3508,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": 498.92669306485914,
+      "cappedAccruedCostDelta": 498.4056063834578,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 2030.3566930650268,
+      "cappedAccruedCostDelta": 1676.2356063835323,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 1354.2100000000792,
+      "cappedAccruedCostDelta": 1144.2489133179188,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 5466.449999999837,
+      "cappedAccruedCostDelta": 4307.2089133178815,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 1741.3100000001723,
+      "cappedAccruedCostDelta": 1444.3089133184403,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 6936.749999999534,
+      "cappedAccruedCostDelta": 5426.628913317807,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 9757.075203133281,
+      "cappedAccruedCostDelta": 59088.162576915696,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428201,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 19290.113186227856,
+      "cappedAccruedCostDelta": 188368.9227110613,
+      "unresolvedAtCap": 2183,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "baseline",
+      "officialCostDelta": 0.0,
+      "cappedAccruedCostDelta": 0.0,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "reactive",
+      "officialCostDelta": -10961.54353160644,
+      "cappedAccruedCostDelta": 63025.316411112435,
+      "unresolvedAtCap": 2201,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "repeated-hold-25-5m",
+      "officialCostDelta": -7597.463349288795,
+      "cappedAccruedCostDelta": -47043.76025593281,
+      "unresolvedAtCap": 2178,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "extended-hold-100-120m",
+      "officialCostDelta": 57049.17071880249,
+      "cappedAccruedCostDelta": 980936.1800758447,
+      "unresolvedAtCap": 2170,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "repeated-reroute-25",
+      "officialCostDelta": 123911.82160940894,
+      "cappedAccruedCostDelta": 645871.3113141712,
+      "unresolvedAtCap": 2661,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "repeated-reroute-100",
+      "officialCostDelta": 917104.0910365953,
+      "cappedAccruedCostDelta": 4878288.101783142,
+      "unresolvedAtCap": 3614,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-25-at-90",
+      "officialCostDelta": -36.50518909771927,
+      "cappedAccruedCostDelta": -322.35439596232027,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-100-at-90",
+      "officialCostDelta": 834.514810902183,
+      "cappedAccruedCostDelta": 394.1870886515826,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-25-at-105",
+      "officialCostDelta": 379.10999999998603,
+      "cappedAccruedCostDelta": 585.9568232055753,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-100-at-105",
+      "officialCostDelta": 1624.0100000000093,
+      "cappedAccruedCostDelta": 1558.8568232050166,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-25-at-115",
+      "officialCostDelta": 718.2299999999814,
+      "cappedAccruedCostDelta": 851.5606244513765,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "late-reroute-100-at-115",
+      "officialCostDelta": 2843.909999999567,
+      "cappedAccruedCostDelta": 2479.480624451302,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "combined-25-from-90",
+      "officialCostDelta": 1534.4462045783876,
+      "cappedAccruedCostDelta": 455.34984974656254,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    },
+    {
+      "seed": 428202,
+      "policy": "combined-100-extended-from-105",
+      "officialCostDelta": 11073.53884162393,
+      "cappedAccruedCostDelta": -208244.09892474208,
+      "unresolvedAtCap": 2181,
+      "cleared": false
+    }
+  ]
+}
