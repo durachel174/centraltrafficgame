@@ -3,7 +3,8 @@ import { TrafficGraph } from "../network/TrafficGraph";
 import { Router, type RoutingContext } from "../network/Router";
 import { travelTime, utilization } from "../traffic/CongestionModel";
 import { DemandGenerator } from "../traffic/DemandGenerator";
-import { calculateMetrics } from "../scoring/Metrics";
+import { ENGINE_VERSION } from "../logging/Identity";
+import { calculateMetrics, cloneMetrics } from "../scoring/Metrics";
 import { createAlerts } from "../forecasting/TrafficPredictor";
 import type {
   ActionPreview,
@@ -110,7 +111,8 @@ export class SimulationEngine {
         simulationTime: this.time,
         stateSnapshotId: `t_${this.time.toFixed(2)}`,
         action: this.cloneAction(actionToApply),
-        immediateReward: reward
+        immediateReward: reward,
+        affectedCount: this.latestActionAffected
       });
     }
     this.previousObjective = this.metrics.objective;
@@ -123,7 +125,7 @@ export class SimulationEngine {
       graph: this.graph.clone(),
       waiting: this.waiting.map((trip) => ({ ...trip })),
       vehicles: this.vehicles.map((vehicle) => ({ ...vehicle, route: [...vehicle.route] })),
-      metrics: { ...this.metrics },
+      metrics: cloneMetrics(this.metrics),
       forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast)),
       alerts: this.alerts.map((alert) => ({ ...alert }))
     };
@@ -155,12 +157,13 @@ export class SimulationEngine {
       }),
       activeTrips: this.vehicles.filter((vehicle) => vehicle.status === "traveling").length,
       waitingTrips: this.waiting.length,
-      metrics: { ...this.metrics }
+      metrics: cloneMetrics(this.metrics)
     };
   }
 
   getInfo() {
     return {
+      activeEventIds: [...this.activeEventIds],
       alerts: this.alerts.map((alert) => ({ ...alert })),
       forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast))
     };
@@ -238,13 +241,13 @@ export class SimulationEngine {
     return {
       scenarioId: this.scenario.id,
       seed: this.seed,
-      engineVersion: "0.1.0",
+      engineVersion: ENGINE_VERSION,
       startedAt: new Date(0).toISOString(),
       actions: this.actionLog.map((entry) => ({
         ...entry,
         action: this.cloneAction(entry.action)
       })),
-      finalMetrics: { ...this.metrics }
+      finalMetrics: cloneMetrics(this.metrics)
     };
   }
 
@@ -516,7 +519,7 @@ export class SimulationEngine {
       actionLog: this.actionLog.map((entry) => ({ ...entry, action: this.cloneAction(entry.action) })),
       activeEventIds: [...this.activeEventIds],
       temporaryReductions: [...this.temporaryReductions.entries()].map(([edgeId, value]) => [edgeId, { ...value }] as const),
-      metrics: { ...this.metrics },
+      metrics: cloneMetrics(this.metrics),
       forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast)),
       alerts: this.alerts.map((alert) => ({ ...alert })),
       lastForecastTime: this.lastForecastTime,
@@ -545,7 +548,7 @@ export class SimulationEngine {
     this.actionLog = snapshot.actionLog.map((entry) => ({ ...entry, action: this.cloneAction(entry.action) }));
     this.activeEventIds = new Set(snapshot.activeEventIds);
     this.temporaryReductions = new Map(snapshot.temporaryReductions.map(([edgeId, value]) => [edgeId, { ...value }]));
-    this.metrics = { ...snapshot.metrics };
+    this.metrics = cloneMetrics(snapshot.metrics);
     this.forecasts = snapshot.forecasts.map((forecast) => this.cloneForecast(forecast));
     this.alerts = snapshot.alerts.map((alert) => ({ ...alert }));
     this.lastForecastTime = snapshot.lastForecastTime;
@@ -579,7 +582,7 @@ export class SimulationEngine {
       samples.push({
         horizonMinutes: horizon,
         actualHorizonMinutes: elapsed,
-        metrics: { ...this.metrics },
+        metrics: cloneMetrics(this.metrics),
         utilizationByEdge,
         passengerDelayMinutes: this.passengerDelayMinutes(),
         passengerCount: this.vehicles.length + this.waiting.length,
@@ -756,6 +759,7 @@ export class SimulationEngine {
 
   private emptyMetrics(): SimulationMetrics {
     return {
+      objectiveBreakdown: { travelTime: 0, congestion: 0, departureDelay: 0, dissatisfaction: 0, excessDistance: 0 },
       tripsRequested: 0,
       tripsCompleted: 0,
       activeTrips: 0,

@@ -65,6 +65,8 @@ const edges = [
 
 export const mondayMorningScenario: Scenario = {
   id: "monday_morning",
+  version: 1,
+  progression: { rushHourMinute: 45 },
   name: "Monday Morning",
   seed: 428193,
   startTime: 7 * 60,

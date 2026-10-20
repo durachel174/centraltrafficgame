@@ -38,7 +38,16 @@ export interface ObjectiveWeights {
   excessDistance: number;
 }
 
+export interface ObjectiveBreakdown {
+  travelTime: number;
+  congestion: number;
+  departureDelay: number;
+  dissatisfaction: number;
+  excessDistance: number;
+}
+
 export interface SimulationMetrics {
+  objectiveBreakdown?: ObjectiveBreakdown;
   tripsRequested: number;
   tripsCompleted: number;
   activeTrips: number;
@@ -180,6 +189,8 @@ export interface ScenarioEvent {
 }
 
 export interface Scenario {
+  version?: number;
+  progression?: { rushHourMinute: number };
   id: string;
   name: string;
   seed?: number;
@@ -234,6 +245,7 @@ export interface LoggedAction {
   stateSnapshotId: string;
   action: SimulationAction;
   immediateReward: number;
+  affectedCount?: number;
 }
 
 export interface SimulationRun {

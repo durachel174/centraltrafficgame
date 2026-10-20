@@ -66,14 +66,17 @@ export function calculateMetrics(args: {
     }
   }
   const dissatisfaction = allSatisfaction.reduce((sum, value) => sum + (100 - value), 0);
-  const objective =
-    args.weights.travelTime * travelTime +
-    args.weights.congestion * args.congestionCost +
-    args.weights.departureDelay * args.departureDelay +
-    args.weights.dissatisfaction * dissatisfaction +
-    args.weights.excessDistance * excessDistance;
+  const objectiveBreakdown = {
+    travelTime: args.weights.travelTime * travelTime,
+    congestion: args.weights.congestion * args.congestionCost,
+    departureDelay: args.weights.departureDelay * args.departureDelay,
+    dissatisfaction: args.weights.dissatisfaction * dissatisfaction,
+    excessDistance: args.weights.excessDistance * excessDistance
+  };
+  const objective = Object.values(objectiveBreakdown).reduce((sum, value) => sum + value, 0);
 
   return {
+    objectiveBreakdown,
     tripsRequested: args.vehicles.length + args.waitingTrips.length,
     tripsCompleted: completed.length,
     activeTrips: active,
@@ -92,3 +95,9 @@ export function calculateMetrics(args: {
     worstBottleneck
   };
 }
+
+
+export const cloneMetrics = (metrics: SimulationMetrics): SimulationMetrics => ({
+  ...metrics,
+  ...(metrics.objectiveBreakdown ? { objectiveBreakdown: { ...metrics.objectiveBreakdown } } : {})
+});
