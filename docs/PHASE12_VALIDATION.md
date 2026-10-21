@@ -1,6 +1,6 @@
 # Phase 12 performance and balancing milestone
 
-Current engine/scenario: **0.4.0 / Monday Morning 3**. Earlier sections describe historical milestones. See [clearance investigation](CLEARANCE_INVESTIGATION.md) and the final section below for current semantics and evidence.
+Current engine/scenario: **0.5.0 / Monday Morning 4**. See [post-demand evaluation](POST_DEMAND_EVALUATION.md) for the current contract, commands and validation. Sections below retain historical measurements and commands for their stated versions; `--clearance-minutes=0` is no longer a valid official clearance configuration.
 
 Status: **IN PROGRESS**, 2026-10-19. This milestone measures and removes confirmed browser forecast blocking, audits finite-window scoring and pacing, and preserves the completed challenge/replay flow. It does not complete mobile, accessibility, visual polish or human playtesting. No AGENTS.md or standalone original specification was found in the checkout; existing README, phased implementation status, Phase 9 validation and implementation were reviewed before changes.
 
@@ -353,3 +353,7 @@ Codex's actual in-app browser, development server (initial localhost:5173, final
 During iteration, the earlier development server stopped responding (a reload confirmed connection refused) and an already-open production page encountered worker loading failure while its assets were replaced by a build. These are recorded setup failures, not successful validation. Checks resumed on a fresh development server and a reloaded final production build with working real workers. Preview stale-result Retry was exercised; deliberately injected browser worker crashes and screen-reader testing were **not performed**. Hover behavior remains covered by interaction tests/code review; the available browser API lacked a hover action, so a new real-pointer hover check is **unverified**. Cross-device frame performance and independent human playtests remain unverified.
 
 No new official evaluation phase was introduced. Full journey scoring still needs a defined player-visible clearance/censored contract, broader seed/policy coverage and storage/density calibration. Controlled reachable storage cycles can remain blocked. **Phase 12 stays IN PROGRESS.**
+
+## Authoritative post-demand evaluation — 2026-10-20
+
+Engine 0.5.0 / Monday 4 replaces the fixed-window result with decision → clearance → finished. [Current validation and paired evidence](POST_DEMAND_EVALUATION.md) records 153 passing tests, production build, 150 policy/seed evaluations, the existing benchmark, and real development/production worker, transition, cancellation, complete/incomplete results and replay checks. Earlier finite-window and cloned diagnostic results remain historical, not the current scoring contract. Phase 12 remains IN PROGRESS.

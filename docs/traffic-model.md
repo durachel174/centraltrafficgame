@@ -27,13 +27,13 @@ This convention prevents newly generated trips from moving before departure and 
 
 ## Objective Units
 
-Travel-time cost is measured in passenger-minutes. Completed vehicles contribute full trip duration, and active vehicles contribute elapsed travel time so elapsed costs do not disappear when a trip is unfinished. This is a finite-window evaluation, not full journey clearance.
+Travel-time cost is measured in passenger-minutes. Completed vehicles contribute full trip duration, and active vehicles contribute elapsed travel time so elapsed costs do not disappear when a trip is unfinished. Monday Morning now continues through full post-demand clearance where feasible. An incomplete safety-limit run reports elapsed costs only and is not full-journey cost. Practice remains a fixed-window lesson.
 
 Departure delay is passenger-minutes spent waiting before dispatch. The engine adds this once per fixed tick for every trip already waiting at the start of that tick, including held trips and trips whose route is unavailable.
 
 Dissatisfaction is scored for completed, active, and waiting passengers. Waiting passengers lose satisfaction from departure delay. Active passengers keep their current satisfaction and receive an estimated late-delay penalty once elapsed travel time exceeds their tolerance. Empty networks report average satisfaction as 100.
 
-Excess distance is kilometers, not minutes. Each vehicle records a baseline distance in kilometers from the free-flow fastest route, where edge weight is base travel time. The metric compares completed distance, or active distance plus remaining planned route distance, against that baseline.
+Excess distance is kilometers, not minutes. Each vehicle records a baseline distance in kilometers from the free-flow fastest route, where edge weight is base travel time. With official clearance enabled, the metric compares distance actually travelled against the baseline; untravelled planned detours are not accrued costs. Complete trips have the same distance cost as before. Legacy fixed-window fixtures retain their historical planned-route convention.
 
 ## Forecasts And Previews
 
@@ -45,7 +45,7 @@ Forecast and preview samples record both requested horizon and actual elapsed ho
 
 Configured forecast and preview horizons must align to the fixed 0.25-minute simulation tick. Non-aligned horizons are rejected with a configuration error rather than rounded silently.
 
-Passenger delay is reported as both total passenger-minutes and minutes per passenger over the same action/no-action cohort; it combines departure delay plus travel delay beyond free-flow baseline travel time, including unfinished trips at the preview horizon. The selected road is included in preview utilization results even if it is not marked as a major road.
+Passenger delay is reported as both total passenger-minutes and minutes per passenger over the same action/no-action cohort; it combines departure delay plus travel delay beyond free-flow baseline travel time, including unfinished trips at the preview horizon; a projection can cross the decision cutoff into clearance without generating new demand. The selected road is included in preview utilization results even if it is not marked as a major road.
 
 The road hold action is serializable as `DELAY_DEPARTURES` with an optional `targetEdge`. When `targetEdge` is present, the engine selects currently waiting trips whose current fastest route would traverse that road, then applies the configured percentage and duration to that eligible set. Origin and destination filters still narrow the eligible set when supplied. The action does not affect future demand; adding a persistent future hold would require an explicit expiring control.
 
@@ -59,7 +59,7 @@ Completed travel statistics measure dispatch-to-arrival travel and exclude pre-d
 The no-intervention comparison uses identical engine/scenario versions, complete configuration, weights, seed, and full scenario end. Percentage improvement is `(baseline - player) / baseline * 100`: positive means lower player cost; negative means higher player cost. The baseline executes in a worker and cannot install an obsolete or mismatched response.
 
 
-## Terminal imposed-hold accounting (Monday Morning version 2)
+## Historical terminal imposed-hold accounting (Monday Morning version 2)
 
 The decision and evaluation window remains 07:00–09:00. At the final tick only, sum `max(heldUntil - currentTime, 0)` for still-waiting trips. This is `remainingHoldPassengerMinutes`. Add a separate `terminalHoldDelay = departureDelayWeight * remainingHoldPassengerMinutes` (Monday weight 2.2). It charges the known minimum waiting obligation imposed by an applied hold beyond the cutoff. It does not guess post-09:00 travel, congestion, dissatisfaction or complete clearance. Accrued pre-cutoff departure delay remains separate and is not counted again. Expired/unheld trips incur zero terminal hold liability, and stepping a finished engine is a no-op.
 
@@ -74,6 +74,16 @@ Browser projections have source-labelled presentation age and rebased remaining 
 
 Fourteen deterministic policies over seeds 428193–428202 were compared at the official 09:00 cutoff and in an independent capped continuation with no new demand or interventions. Diagnostics disable the terminal hold component and accrue actual continued waiting once, avoiding double-counting the official known obligation. Some short-hold/reactive improvements reverse at the four-hour cap, but none of the 140 runs fully clear. Those censored results show horizon sensitivity without establishing complete-journey rankings or a justified additional residual cost. Scoring/weights remain unchanged at engine 0.3.0 / Monday 2; no general fairness claim follows. Reproduce with `npm run audit:endgame -- --runs=10 --clearance-minutes=240`; see [validation](PHASE12_VALIDATION.md) for assumptions, trip counts and accrued/terminal components.
 
-## Current clearance/evaluation contract (engine 0.4.0 / Monday 3)
+## Historical clearance/evaluation contract (engine 0.4.0 / Monday 3)
 
 The historical four-hour non-clearance above applies to engine 0.3.0. With maximum storage enforced, all 140 corrected paired diagnostics clear, but some rankings change between the cutoff and full clearance. Official actions, demand, projections and evaluation still stop at 09:00; results explicitly label the fixed window and show unfinished origin/active/exit-queue counts. No weights, residual penalties or terminal hold formula changed. The separate diagnostic continues existing holds/events/costs with zero new demand/actions and disables terminal estimates while accruing actual waiting once. Capped cases remain censored, including genuinely unreachable/full-cycle fixtures. Full-journey evaluation and queue calibration remain a Phase 12 follow-up; see [investigation](CLEARANCE_INVESTIGATION.md).
+
+## Current official evaluation (engine 0.5.0 / Monday 4)
+
+The fixed-window and diagnostic-only decisions in the historical sections above are superseded. Decisions and demand end at 09:00; the final demand cohort is appended at that boundary. Existing trips/holds/events/queues continue with NO_OP evaluation until all arrive or the configured 240-minute clearance limit (13:00). `isDone()` is evaluation completion. Non-NO_OP clearance calls return a reason without advancing time or altering state/logs. This is configuration-driven; practice omits clearance.
+
+Final cost realizes actual waiting, active/completed travel, dissatisfaction, integrated congestion and travelled excess kilometres, with unchanged weights. Waiting at origins is charged once; exit queues count as active travel. No terminal remaining-hold estimate is added during clearance or at its limit. At the decision boundary a separate immutable checkpoint can retain the old minimum-hold estimate, labeled historical and excluded from final cost. A capped run retains all unfinished passengers and reports accrued cost, not full-journey cost or proven deadlock. Complete player/baseline comparisons require matching evaluation settings and both all-arrived statuses.
+
+Decision previews use the same engine/phase boundaries. They label actual sampled horizons and whether clearance is included, and distinguish earlier branch completion if horizons differ. A finished branch remains at its final state for comparison with the later branch; no additional travel/waiting accrues after all arrivals. Short previews are not general final-cost predictions. During clearance action previews lock, but source-labeled forecasts remain available while watching. Bounded fast-forward clears/suspends forecast presentation until watching resumes.
+
+The 240-minute maximum covers the investigation's 140 complete runs (+43.25–170.25 minutes) with margin, without promising clearance for arbitrary policies. A 1,440-minute late hold reaches the limit incomplete; storage cycles and unreachable trips remain genuine unresolved cases. See [contract, paired results and browser validation](POST_DEMAND_EVALUATION.md).

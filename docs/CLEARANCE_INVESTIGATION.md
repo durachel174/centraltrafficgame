@@ -1,5 +1,7 @@
 # Clearance investigation — engine 0.4.0 / Monday Morning 3
 
+**Current follow-up:** engine 0.5.0 / Monday 4 now implements official player-visible post-demand evaluation. The causal investigation below is historical; its provisional fixed-window decision is superseded by the [current contract and measured validation](POST_DEMAND_EVALUATION.md).
+
 Implementation milestone: `d270ee1`. Phase 12 remains **IN PROGRESS**. Road admission was missing, not passenger accounting. Enforcing existing road storage removes the measured near-gridlock on the audited Monday runs. This does not validate the density model against real traffic or establish scoring fairness.
 
 ## Reproduce
@@ -103,3 +105,9 @@ The cache optimization was checked against the uncached corrected audit: all 140
 See the current section of [Phase 12 validation](PHASE12_VALIDATION.md) for commands, final test/build outcomes, benchmark and actual browser checks. Existing tests are retained. New tests cover exact units/multiple-edge movement, finite overload and admission, conservation/unique IDs/counts/distance, origin vs exit queues, closed roads/reopening, unreachable trips, a full storage cycle, holds/restoration during continuation, source immutability/no new demand or logged interventions, terminal estimates vs realized waiting, preview/forecast parity, route-cache invalidation and new-version export/replay/old-version rejection. Existing determinism, playback grouping, UI/tutorial and delayed-worker tests run unchanged.
 
 Remaining limitations: density slowdown and storage sizes are game parameters, not calibrated engineering flow capacities; deterministic admission order is not a lane model; closed roads stop existing occupants; full cycles can deadlock; origin-equals-destination requests have no empty-route completion rule (official demand has none); overlapping debug restrictions retain old restoration semantics; the controller does not anticipate spillback; fixed-window rankings differ from lifetime rankings; wider policy/seed and independent human accessibility/performance validation are still needed. Phase 12 stays **IN PROGRESS**.
+
+## Official clearance follow-up (2026-10-20)
+
+The investigation's finite-storage correction and movement rules are preserved. Monday now closes decisions/demand at 09:00, retains that final cohort and continues the authoritative run until all trips arrive or a configured +240-minute limit. This limit exceeds all 140 previously measured complete continuations (maximum +170.25), but does not promise universal clearance. Capped cases are labeled incomplete, with accrued costs/unresolved passengers and no final ranking or improvement percentage against a completed baseline.
+
+Watch and bounded/cancellable fast-forward run identical live ticks; neither uses the old reconfigured diagnostic continuation. Cutoff metrics (including a historical hold estimate) are stored separately from actual subsequent waiting. Official realized distance also excludes untravelled planned kilometres. Final cost is comparable only when both evaluations finish all-arrived under matching identities/settings. The former diagnostic is retained solely for legacy fixed-window fixtures and rejects substitution for an official evaluated run. See [full contract, 150 paired outcomes, replay compatibility and actual browser evidence](POST_DEMAND_EVALUATION.md).

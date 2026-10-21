@@ -11,11 +11,11 @@ npm test
 npm run build
 npm run simulate -- --runs=10 --controller=reactive
 npm run benchmark
-npm run audit:policies -- --runs=10 --clearance-minutes=0
+npm run audit:policies -- --runs=10 --clearance-minutes=240
 npm run audit:holds -- --runs=10
 npm run audit:pacing -- --runs=10
 npm run audit:endgame -- --runs=10 --clearance-minutes=240
-npm run audit:clearance -- --seeds=428193,428194,428195,428196,428197,428198,428199,428200,428201,428202 --limit=1440 --out=/private/tmp/central-traffic-clearance.json
+npm run audit:clearance -- --seeds=428193,428194,428195,428196,428197,428198,428199,428200,428201,428202 --limit=240 --out=/private/tmp/central-traffic-clearance.json
 node --import tsx scripts/probe-storage.ts --out=/private/tmp/central-traffic-storage.json
 ```
 
@@ -37,13 +37,17 @@ Development-only spawn and incident controls are available only in Vite developm
 - `scripts/simulate.ts`: headless runs for baseline/reactive controllers.
 - `scripts/benchmark.ts`: 5,000 vehicle tick, forecast, and preview benchmark.
 
-## Scoring
+## Evaluation and scoring
 
-The objective includes completed travel time plus elapsed travel time for active vehicles, so unfinished trips remain costly. Waiting trips accrue departure delay once per simulated minute while waiting, including held trips and trips with no available route. Passenger dissatisfaction is estimated for waiting and active passengers and finalized on arrival.
+Monday Morning accepts decisions from 07:00 until 09:00. The final decision interval generates its demand cohort at 09:00; those waiting passengers remain part of the run. At 09:00 the game pauses and explains that no new demand is generated, while existing waiting trips can still enter roads. Choose **Watch Clearance** with pause/speed controls, or **Fast-forward to Results**. Interventions, including pending previews, lock at the cutoff.
 
-Excess distance is measured in kilometers. The baseline is the free-flow fastest route, using each edge's base travel time, and the score compares the current or completed route distance against that baseline distance. At scenario end, unfinished trips still contribute elapsed travel time, accumulated departure delay, dissatisfaction, and planned excess distance. Monday Morning also charges the remaining player-imposed hold beyond 09:00, separately, at the existing departure-delay weight (2.2 cost units per passenger-minute). This is a known minimum obligation, not a prediction of complete clearance or future congestion. Observed waiting is never charged twice. Practice keeps its existing unscored checkpoint behavior.
+Clearance advances the same authoritative quarter-minute ticks until all trips arrive or the scenario's **240-minute** safety limit (13:00). Fast-forward uses bounded batches on the live run; canceling it returns to watching with progress preserved. Holds, routes, queues, incidents/restoration and every passenger remain accounted for. A safety-limit finish is **Evaluation incomplete**, with accrued costs and unresolved counts, never a successful clearance or full-journey score.
 
-Forecasts and action previews are deterministic no-further-intervention rollouts from the current state. A preview compares two identical-future simulations: no action versus the proposed action. Positive `networkCostDelta` and passenger delay deltas are worse; positive `satisfactionDelta` is better. The UI shows baseline improvement only after a scenario finishes so it does not compare an unfinished player run against a completed baseline.
+Complete runs compare final realized system cost only against a matching complete no-intervention baseline. Results separately show accrued cost at 09:00, clearance duration, completed-trip travel statistics, final satisfaction and the objective breakdown. If either evaluation is incomplete, statuses and accrued costs are displayed separately, with no final improvement percentage. Lower system cost is better; higher improvement is better. A baseline is a reference policy, not an optimality claim.
+
+Travel and origin waiting use actual passenger-minutes through evaluation. Exit queues accrue active travel time, not an additional origin waiting charge. Full-clearance scoring counts travelled excess kilometres, not untravelled planned detours. Weights are unchanged. The old remaining-hold estimate survives only in the clearly labeled historical 09:00 checkpoint; it is never added on top of actual subsequent waiting. Practice remains an unscored fixed-window lesson.
+
+Decision-phase previews use the same boundaries and report when their actual horizon includes clearance; short previews are not complete final-cost predictions. Source-labeled forecast workers remain separate from authoritative traffic. See [the current evaluation contract and validation](docs/POST_DEMAND_EVALUATION.md).
 
 ## Tick Convention
 
@@ -69,13 +73,13 @@ The regression suite includes UI clicks for explicit preview, review, Apply, Can
 
 ## Monday Morning challenge
 
-Start Monday Morning at 07:00, anticipate the configured rush-hour pressure, handle the scheduled **08:12 North Bridge incident** (40% capacity reduction for 15 minutes), observe the **08:27 capacity restoration**, and finish at 09:00. A compact stage/status strip shows commute building, rush hour, incident, recovery, and completion. Restoration means capacity is available again; it does not claim the traffic has cleared. Incident facts and remaining scheduled duration come from configuration and actual event state, under any playback speed.
+Start Monday Morning at 07:00, anticipate the configured rush-hour pressure, handle the scheduled **08:12 North Bridge incident** (40% capacity reduction for 15 minutes), observe the **08:27 capacity restoration**, and finish decisions at 09:00 before post-demand evaluation. A compact stage/status strip shows commute building, rush hour, incident, recovery, and completion. Restoration means capacity is available again; it does not claim the traffic has cleared. Incident facts and remaining scheduled duration come from configuration and actual event state, under any playback speed.
 
 **Decision history** records actual applied interventions once, with simulation time, target, parameters, affected count, and immediate tick system-cost change. That change includes traffic evolution during the interval; it is not a long-term causal rating. Canceled previews are excluded. The explicit Preview → Review → Apply/Cancel controls remain available during live play.
 
 At results, inspect the objective components and baseline conditions. **Try This Seed Again** creates a clean identical challenge; **New Seed** uses a new nonzero 32-bit seed consistently for demand, baseline, logging, export, and replay. The current seed is available in the header and results.
 
-**Watch Replay** starts a paused replay from the original 07:00 state. Resume with 1x/2x/4x; pause whenever needed. Live interventions are disabled. **Restart Replay** restarts the recorded stream. At 09:00 the app verifies every final metric and a checksum of all deterministic simulation state, displaying success or a specific failure.
+**Watch Replay** starts a paused replay from the original 07:00 state. Resume with 1x/2x/4x; pause whenever needed. Live interventions are disabled. **Restart Replay** restarts the recorded stream. At 09:00 replay pauses at the same clearance transition. Watch or fast-forward through evaluation; at its actual finish the app verifies cutoff/final metrics, finish metadata and the deterministic state checksum, displaying success or a specific failure.
 
 **Export Completed Run JSON** downloads a local versioned file. Import through **Run files** during free play or the results screen. Invalid/unsupported/incompatible files report an error without replacing the session. A valid import shows its seed/decision count and requires **Start Imported Replay** before replacing the active run. No file is uploaded. The importer supports this version of Monday Morning, not older internal run formats or practice exports. Files may contain at most one intervention per tick; duplicate same-tick entries are rejected explicitly rather than discarded.
 
@@ -88,9 +92,9 @@ Browser scheduled forecasts now run in a separate worker. One request is active 
 
 Performance recording is local and development-only. Run `npm run dev`, finish/skip the tutorial, expand **Local performance capture**, choose a workload, click **Prepare measurement workload** (resets the run), then **Capture 20 seconds**. For `preview-map`, request a preview immediately after capture starts. Keep the tab visible at the same viewport and avoid concurrent CPU work. Save the report textarea for comparison. The bounded reports distinguish rAF cadence, Canvas draw cost, simulation ticks, snapshot/structured-clone posting, and worker calculation/round-trip time. Production renders no capture panel and has no active timing callback. No telemetry is sent.
 
-Scoring and pacing audits write local JSON under `/private/tmp` by default; use `--out=/absolute/path.json` to choose another location. Policy and hold audits accept `--legacy-cutoff` to reproduce the old terminal-cost omission using fresh simulations. Optional `--clearance-minutes=120` is a capped diagnostic continuation with no new demand/actions, **not** the gameplay evaluation window; unfinished continuations are censored. `node --import tsx scripts/benchmark.ts` (or `scripts/simulate.ts`) avoids restricted-environment tsx CLI IPC errors.
+Scoring and pacing audits write local JSON under `/private/tmp` by default; use `--out=/absolute/path.json` to choose another location. Policy/endgame audits accept a positive tick-aligned `--clearance-minutes` evaluation limit; `audit:clearance` uses `--limit`. Changing that limit changes configuration identity. Incomplete evaluations are excluded from final rankings. Legacy terminal-policy switches only affect historical checkpoint estimates under the current full-clearance contract. `node --import tsx scripts/benchmark.ts` (or `scripts/simulate.ts`) avoids restricted-environment tsx CLI IPC errors.
 
-Engine **0.4.0** / Monday Morning **3** reject incompatible older exports; internal snapshots are version 2 with engine identity. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.
+Engine **0.5.0** / Monday Morning **4**, run schema **2**, snapshot **3** reject incompatible older exports explicitly. Forecast cache scheduling is excluded from authoritative replay checksums; traffic, RNG, demand, actions, metrics and restrictions remain verified. See [Phase 12 evidence](docs/PHASE12_VALIDATION.md) for before/after browser measurements, ten-seed scoring/pacing results, and remaining limitations. Phase 12 remains in progress.
 
 
 ## Desktop keyboard beta and human playtest
@@ -101,6 +105,4 @@ Help, results and confirmation dialogs move focus inside, contain Tab/Shift+Tab 
 
 Follow [DESKTOP_PLAYTEST.md](docs/DESKTOP_PLAYTEST.md) for a neutral participant script, tasks and blank observation sheet. **Human sessions are pending**; automated and browser checks do not establish fun, comprehension or screen-reader compatibility. Phase 12 stays IN PROGRESS.
 
-The earlier engine 0.3.0 endgame audit censored all 140 runs at a four-hour cap. The [clearance investigation](docs/CLEARANCE_INVESTIGATION.md) traces the cause to unlimited road entry combined with occupancy-dependent slowdown. Engine **0.4.0 / Monday 3** enforces existing maximum road storage: trips wait at origins for entry, and downstream-blocked vehicles queue on their current roads. Passenger counts, elapsed costs and routes remain accounted for; congestion weights and demand are unchanged. Results distinguish origin waiting from exit queues within active trips.
-
-All 140 corrected ten-seed/policy diagnostics clear after demand stops (+43.25–170.25 minutes), but some policy ranks still change after 09:00. Official play, previews and scoring retain the **07:00–09:00 fixed window**; no lifetime-fairness claim or arbitrary residual penalty is added. Full-clearance diagnostics are separate, disable terminal estimates while charging actual continued waiting, and explicitly mark capped/unreachable runs censored. Physical storage cycles can remain unresolved. See the investigation and [current validation](docs/PHASE12_VALIDATION.md) for measured outcomes and the next evaluation milestone.
+The [clearance investigation](docs/CLEARANCE_INVESTIGATION.md) explains the earlier admission defect and preserves its evidence. Engine 0.5.0 now makes post-demand evaluation official: fourteen measured policies clear across all ten paired seeds; a day-long late hold remains incomplete at the four-hour limit and receives no final ranking. Baseline and reactive both clear 4,125 trips per seed, with mean final costs 314,226.58 and 319,707.63 respectively. Some cutoff rankings still differ from completed-journey rankings. See [current evidence](docs/POST_DEMAND_EVALUATION.md). Phase 12 remains in progress for calibration, wider coverage and independent human validation.
