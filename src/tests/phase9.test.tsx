@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
 import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
 import { practiceScenario } from "../simulation/scenarios/PracticeScenario";
-import { createCompletedRun, parseRunFile, verifyCompletedRun, type CompletedRun } from "../simulation/logging/RunFile";
+import { createCompletedRun, finalStateChecksum, parseRunFile, verifyCompletedRun, type CompletedRun } from "../simulation/logging/RunFile";
 import { actionForReplayTick, replayRun } from "../simulation/logging/Replay";
 import { baselineIdentity, configurationIdentity } from "../simulation/logging/Identity";
 import { scenarioProgress } from "../game/ScenarioProgress";
@@ -41,7 +41,9 @@ const fixture: Scenario = {
   forecast: { ...mondayMorningScenario.forecast!, horizonsMinutes: [0.25, 0.5, 0.75], previewHorizonMinutes: 0.5, refreshIntervalMinutes: 0.25 }
 };
 
-function engineFor(scenario = fixture, seed = 7) { const engine = new SimulationEngine(scenario); engine.reset(seed); return engine; }
+// These replay/format/UI assertions do not consume forecasts; dedicated worker and
+// forecast suites retain synchronous/worker rollout correctness coverage.
+function engineFor(scenario = fixture, seed = 7) { const engine = new SimulationEngine(scenario, undefined, true); engine.reset(seed); return engine; }
 let fullMondayRun: CompletedRun | null = null;
 function fixtureRun() { const engine = engineFor(); while (!engine.isDone()) engine.step(); return createCompletedRun(engine); }
 function mount(ui: React.ReactNode) {
@@ -185,6 +187,8 @@ describe("run format validation and deterministic replay", () => {
     expect(() => parseRunFile(JSON.stringify(run), { ...fixture, objectiveWeights: { ...fixture.objectiveWeights, congestion: 1 } })).toThrow("configuration");
   });
 
+  // Two full challenge rollouts through clearance plus file/checksum and React/store
+  // verification warrant a local integration allowance on slower machines. No retries.
   it("full Monday Morning integration replays interventions exactly, guards live actions, and propagates seeds", () => {
     const source = engineFor(mondayMorningScenario, 741);
     for (let tick = 0; !source.isDone(); tick++) {
@@ -214,7 +218,13 @@ describe("run format validation and deterministic replay", () => {
     });
     expect(useGameStore.getState().replay?.verification).toBe("verified");
     expect(useGameStore.getState().engine.createRun().actions).toEqual(run.actions);
-    expect(useGameStore.getState().engine.getState().metrics).toEqual(source.getState().metrics);
+    const replayed = useGameStore.getState().engine;
+    expect(replayed.getDecisionCutoffMetrics()).toEqual(run.decisionCutoffMetrics);
+    expect(replayed.getState().metrics).toEqual(run.finalMetrics);
+    expect(replayed.getEvaluation()).toEqual(run.evaluation);
+    expect(run.evaluation.finishReason).toBe("all-arrived");
+    expect(run.evaluation.finishedAt).toBeGreaterThan(mondayMorningScenario.endTime);
+    expect(finalStateChecksum(replayed.exportSnapshot())).toBe(run.finalStateChecksum);
     act(() => useGameStore.getState().reset());
     expect(useGameStore.getState().replay?.verification).toBe("pending");
     expect(useGameStore.getState().decisionHistory).toHaveLength(0);

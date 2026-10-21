@@ -1,0 +1,36 @@
+{
+  "candidateBaseCommit": "f452a85",
+  "engine": "0.5.0",
+  "mondayScenario": 4,
+  "schema": 2,
+  "snapshot": 3,
+  "normalTestRuns": [
+    {
+      "passed": 153,
+      "files": 9,
+      "durationSeconds": 3.72
+    },
+    {
+      "passed": 153,
+      "files": 9,
+      "durationSeconds": 3.78
+    },
+    {
+      "passed": 153,
+      "files": 9,
+      "durationSeconds": 3.85
+    }
+  ],
+  "isolatedFullMondayReplay": {
+    "testSeconds": 1.64,
+    "overallSeconds": 2.15,
+    "passed": true
+  },
+  "productionBuildPassed": true,
+  "viteBundlingSeconds": 1.33,
+  "productionBundle": "index-CaxDfMC2.js",
+  "actualBrowserExportChecksum": "b18607c503405c7e",
+  "humanSessionsConducted": 0,
+  "browserConsoleErrors": [],
+  "browserConsoleWarnings": []
+}

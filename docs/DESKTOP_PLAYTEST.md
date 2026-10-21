@@ -1,76 +1,68 @@
 # Desktop playtest: Central Traffic
 
-Status: **participant sessions pending**. This is a moderator-led local test, not a telemetry system. Automated checks do not establish fun or comprehension. Use the production build (`npm run build`, then `npm exec vite preview -- --host 127.0.0.1 --port 4173`). Record the build commit, engine/scenario version, browser, viewport and seed before each session. Current compatibility: engine 0.3.0 / Monday Morning 2.
+**Human participant sessions pending.** This is a 15–20 minute moderator-led session, with anonymous notes and no telemetry. Automated/browser checks do not establish comprehension or enjoyment. Current compatibility: engine **0.5.0**, Monday Morning **4**, run schema **2**, snapshot **3**.
+
+## Prepare the first session
+
+1. Record `git rev-parse HEAD`. Run `npm install` if needed, `npm run build`, then `npm exec vite -- preview --host 127.0.0.1 --port 4173 --strictPort`.
+2. Open the printed local URL in a fresh browser profile/private window so first-time practice appears. If the tutorial was already completed, use Help → Replay Tutorial → Start Practice; record that preparation. Confirm comfortable zoom, viewport and input/reduced-motion preferences. Obtain separate consent for any recording; handwritten anonymous notes suffice.
+3. Copy the blank sheet below. Start timing at the first actionable practice screen and at Monday start. Separate running, paused/reading and assistance time. Do not impose a target score or prescribe a road/action. Ask “What would you try?” before assisting; if blocked, give the smallest help and quote it in the sheet. Stop a frustrating task if requested.
 
 ## Read to the participant
 
 “Thank you for trying Central Traffic. We are testing the game, not you. Please say what you notice and what you expect as you play. You can use the keyboard, mouse, pause and Help. Some choices may make traffic worse. There is no required score. You may stop at any time. I will mostly watch so we can learn which parts explain themselves.”
 
-## Tasks, in order
+## Tasks to give one at a time
 
-1. Complete practice. Use Help → Replay Tutorial → Start Practice if the browser has already completed the tutorial. Let the participant choose whether to skip; record it.
-2. Start Monday Morning and finish the round. Do not suggest a particular road, action or speed. Ask the participant to say when they believe an intervention would be useful.
-3. Ask: “Pick one intervention you considered. Explain what you expected on that road, what could happen on other roads, and why you applied or canceled it.” If none was considered, record that and ask what they thought the controls would do.
-4. At results ask: “What does this result tell you? What is still unfinished?” Then: “If you wanted another attempt with the same traffic, what would you do?” Record whether they find and use Try This Seed Again. Separately record whether they **want** to retry without being asked to perform the task.
+1. “Try the first-time practice. Follow or skip the guidance as you choose, then spend a moment experimenting in free practice.” Record completion/skipping and whether Continue Practice is found.
+2. “Find an intervention you might use. Read its preview and decide whether to apply or cancel. Tell me what you expect on this road and elsewhere.” Let the participant choose. If possible, observe both Apply and Cancel over two previews; record anything not encountered. Hovering or a zero-affected preview alone is not an informed decision.
+3. “Start Monday Morning and manage the commute as you think best. Say when something needs attention.” Observe the 08:12 bridge incident and 08:27 restoration without pointing them out. If unnoticed, ask afterward what changed. Do not equate restoration with traffic clearance.
+4. At the 09:00 pause: “What has changed? Continue toward results in a way that makes sense to you.” First observe discovery unaided; then, if necessary, ask them to try Watch Clearance, pause/speed, Fast-forward and cancellation back to watching. Record assistance. Waiting trips can still enter roads; no new requests or interventions occur. Do not read that explanation aloud before they interpret it.
+5. At results: “What does this result tell you? What, if anything, is unfinished?” Ask what the baseline and cost direction mean. Observe desire to retry **before** asking: “If you wanted another attempt with the same traffic, what would you do?” Have them use Try This Seed Again and check the seed matches. No need to finish a second round.
 
-Allow roughly 15–20 minutes, including discussion. Do not hurry someone who pauses to read. A 1× Monday simulation takes roughly two minutes of running wall time, plus pauses, processing delays and discussion; 4× is faster. Record actual times instead of assuming this duration.
+Let them pause to read. Record actual durations: wall time includes pauses, worker calculations, clearance and discussion. A second run is optional. Incomplete results need not arise naturally; record whether seen. A moderator may separately demonstrate the documented incomplete replay fixture after the tasks, explicitly labeling it a prepared example rather than participant performance.
 
-## Moderator checklist
+## Moderator observation sheet
 
-- Use a fresh local test session/profile if possible; record prior familiarity and input preference. No participant names or contact details are needed. Obtain separate consent before any recording; handwritten anonymous notes are sufficient.
-- Check the build is production, sound/zoom/preferences are comfortable, and the full desktop viewport is visible. Ask about keyboard or reduced-motion preferences; record configuration rather than assuming accessibility coverage.
-- Start a stopwatch at the first actionable practice screen and again when Monday begins. Note pauses and interruption time separately.
-- Read the tasks neutrally. Avoid “the right choice,” naming the best road, interpreting the forecast, or pointing to Apply/Cancel.
-- When asked for help, first say: “What would you try?” If blocked, give the smallest assistance, quote it in the notes, and mark the task assisted. Stop a frustrating task if requested.
-- Observe preview/review/apply/cancel separately. Do not count hovering, selecting a road, or a zero-affected action as an informed intervention.
-- Note the seed at Monday start/results/retry, actual trip counts, and unexpected behavior. Save a completed local run only with the participant's agreement; files remain on this machine.
-- Distinguish participant statements from moderator interpretations. Do not infer understanding solely from a successful click or a high score.
-
-## Measures and observation sheet
-
-Copy this block for each anonymous session. Write “not observed” instead of estimating missing data.
+Copy per anonymous session; write “not observed” rather than estimating. Quote participant statements separately from interpretation. Do not collect names/contact details.
 
 | Context | Record |
 | --- | --- |
-| Session code / date | |
-| Build commit / engine / scenario | |
+| Session code / date / moderator | |
+| Commit / engine / scenario / schema | |
 | Browser / OS / viewport / zoom | |
-| Keyboard / mouse / reduced motion preference | |
-| Prior game familiarity | |
+| Input / reduced motion / prior familiarity | |
 | Practice seed / Monday seed / retry seed | |
-| Session interruptions | |
+| Interruptions / recording consent if applicable | |
 
-| Observable measure | Time, count or evidence |
+| Task / observation | Time, evidence, assistance or problem |
 | --- | --- |
-| Practice start / completion / skipped | |
-| Monday start / finish; running time versus paused/discussion time | |
-| First warning noticed | |
-| First informed intervention considered / applied / canceled | |
-| Time to first informed intervention from Monday start | |
-| Participant's stated rationale, including alternative-road consequences | |
-| Preview requested / ready review read / Apply executed / Cancel recovered | |
-| Assistance count, exact assistance, task affected | |
-| Confusing stretches (start/end, what participant said/did) | |
-| Inactive stretches (start/end, whether intentional waiting/observation) | |
-| Can explain observed outcomes versus projections? Quote evidence | |
-| Can explain completed versus unfinished trips and cost direction? | |
-| Same-seed retry found / task completed / seed matches | |
-| Spontaneous wish to retry before moderator retry task? Exact quote | |
-| Errors, keyboard traps, unreadable text or blocked controls | |
+| Practice start / complete or skip / free practice reached | |
+| First informed preview: goal, affected trips, other-road effect, cost | |
+| Preview ready / Apply executed / Cancel recovered / time resumed | |
+| Monday start / incident noticed / restoration interpreted | |
+| 09:00 pause: spontaneous interpretation / locked actions understood | |
+| Watch / pause / speed / fast-forward / cancel progress retained | |
+| Results time / running vs paused or discussion time | |
+| Complete or incomplete / counts / cost direction / baseline interpreted | |
+| Spontaneous desire to retry (quote before retry task) | |
+| Same-seed retry found / seed matches / fresh run | |
+| Assistance: count, exact words, task, assisted or unassisted outcome | |
+| Problems: clock, seed, input steps, expected vs actual, severity | |
+| Confusing/inactive stretches: start/end, intentional waiting or blocked? | |
+| Keyboard traps / unreadable text / errors / screenshot if consented | |
 
-An **informed intervention** means the participant considers a concrete action after reading its ready preview and can state a road-level goal plus at least one possible cost or other-road effect. Application is not required; a reasoned Cancel counts. If explanation is requested only afterward, label it retrospective and do not backdate an inferred understanding time. A successful Apply requires observed execution/feedback; a successful Cancel requires no action recorded and a usable route back to play.
-
-For problems, record: task, simulation clock, wall time, seed, expected behavior, actual behavior, input steps, severity (blocked / assistance needed / recoverable confusion), and screenshot or run filename if consented. Do not include personal information.
+An **informed decision** is a concrete action considered after reading a ready preview, with a stated road-level goal and at least one cost or alternative-road consequence. A reasoned Cancel counts. Mark explanations requested afterward as retrospective; do not backdate comprehension. Apply requires observed execution/feedback. Cancel requires unchanged decision history and a usable return to play. For problems use severity: blocked / assistance needed / recoverable confusion. Save local runs only with participant agreement.
 
 ## Questions after play
 
-- What were you trying to achieve? How did you know whether you were doing well?
-- What did a preview tell you? What information, if any, was missing before you applied or canceled?
-- What could happen on another road after rerouting? How would you check?
-- When did you feel you had time to observe a result? When did decisions arrive too quickly or too slowly?
-- Which feedback felt clear or confusing? Did the result reflect what you expected?
-- Would you choose another attempt? Why or why not? What would you change next time?
+- What were you trying to achieve, and how did you judge progress?
+- What did the preview help you decide? Which tradeoff or other-road effect was unclear? How did projections differ from what you later observed?
+- What ended at 09:00? What continued? What did Watch and Fast-forward do? Was canceling understandable?
+- What do final cost, baseline improvement and unfinished trips mean? If shown an incomplete result, how does it differ from a completed one?
+- When did play feel rushed, slow or unresponsive? Was there time to observe an intervention?
+- Would you choose another attempt? Why, and what would you try differently?
 
-## Synthesis after real sessions
+## After real sessions
 
-Report participant count, input preferences, build/seeds and assisted/unassisted outcomes. Summarize observed obstacles with evidence and contradictory cases. Separate usability findings, performance bugs and scoring/model questions. Do not turn this small qualitative sample into claims about all players, optimal strategy, or universal accessibility. Keep Phase 12 IN PROGRESS until its remaining acceptance conditions are actually verified.
+Summarize build/seeds, participant count, assisted/unassisted outcomes, obstacles with quotes, and contradictory cases. Separate usability, performance and scoring/model questions. Do not invent feedback, infer understanding from clicks/scores, or generalize a small sample to all players. Human testing, independent screen-reader/cross-browser checks, broader calibration and cross-device performance remain pending; Phase 12 stays IN PROGRESS.

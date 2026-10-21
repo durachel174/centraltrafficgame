@@ -1,0 +1,44 @@
+[
+  {
+    "externalForecasts": false,
+    "ticks": 681,
+    "sourceMs": 2595.7605000000003,
+    "exportMs": 25.324957999999697,
+    "replayMs": 715.3105,
+    "timing": {
+      "forecastMain": {
+        "calls": 36,
+        "ms": 1883.7797939999996
+      },
+      "tick": {
+        "calls": 681,
+        "ms": 2585.989585
+      },
+      "snapshot": {
+        "calls": 1,
+        "ms": 0.17279099999996106
+      }
+    },
+    "checksum": "9f2769f25f1ed83a",
+    "metricsMatch": true
+  },
+  {
+    "externalForecasts": true,
+    "ticks": 681,
+    "sourceMs": 640.68975,
+    "exportMs": 18.625707999999577,
+    "replayMs": 733.7750829999995,
+    "timing": {
+      "tick": {
+        "calls": 681,
+        "ms": 638.8649959999943
+      },
+      "snapshot": {
+        "calls": 1,
+        "ms": 0.21370900000010806
+      }
+    },
+    "checksum": "9f2769f25f1ed83a",
+    "metricsMatch": true
+  }
+]

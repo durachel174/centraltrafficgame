@@ -1062,13 +1062,22 @@ describe("forecast, replay, speed independence", () => {
   });
 
   it("replaying action log produces the same final objective", () => {
-    const engine = new SimulationEngine(mondayMorningScenario);
+    // Replay equality does not require a second full Monday integration or forecasts.
+    // phase9.test.tsx keeps the full challenge/export/checksum/UI replay coverage.
+    const scenario = fixtureScenario({ endTime: 2, evaluation: { maxClearanceMinutes: 20 } });
+    const engine = new SimulationEngine(scenario, undefined, true);
     engine.reset(6);
-    for (let i = 0; i < 60; i++) engine.step(i === 20 ? { type: "DEBUG_SPAWN", count: 100 } : { type: "NO_OP" });
-    while (!engine.isDone()) engine.step({ type: "NO_OP" });
-    const replay = replayRun(mondayMorningScenario, engine.createRun());
-    expect(replay.finalMetrics?.objective).toBe(engine.createRun().finalMetrics?.objective);
-    expect(replay.finalMetrics).toEqual(engine.createRun().finalMetrics);
+    engine.step({ type: "DEBUG_SPAWN", count: 5 });
+    while (!engine.isDone()) engine.step();
+    const run = engine.createRun();
+    const replay = replayRun(scenario, run);
+    expect(run.actions).toHaveLength(1);
+    expect(run.evaluation?.finishReason).toBe("all-arrived");
+    expect(replay.actions).toEqual(run.actions);
+    expect(replay.decisionCutoffMetrics).toEqual(run.decisionCutoffMetrics);
+    expect(replay.evaluation).toEqual(run.evaluation);
+    expect(replay.finalMetrics?.objective).toBe(run.finalMetrics?.objective);
+    expect(replay.finalMetrics).toEqual(run.finalMetrics);
   });
 
   it("UI speed grouping does not change simulation results", () => {
