@@ -21,6 +21,10 @@ export class TrafficEnvironment {
     return this.engine.step(action);
   }
 
+  getEvaluation() { return this.engine.getEvaluation(); }
+
+  getDecisionCutoffMetrics() { return this.engine.getDecisionCutoffMetrics(); }
+
   getEngine() {
     return this.engine;
   }

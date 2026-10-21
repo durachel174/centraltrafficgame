@@ -18,6 +18,7 @@ export function calculateMetrics(args: {
   utilizationThreshold: number;
   currentTime: number;
   chargeTerminalHolds?: boolean;
+  realizedDistanceOnly?: boolean;
   satisfaction: { departureDelay: number; lateDelay: number; reroute: number };
 }): SimulationMetrics {
   const completed = args.vehicles.filter((vehicle) => vehicle.status === "arrived");
@@ -44,7 +45,7 @@ export function calculateMetrics(args: {
     ? allSatisfaction.reduce((sum, value) => sum + value, 0) / allSatisfaction.length
     : 100;
   const routeDistance = (vehicle: Vehicle) => {
-    if (vehicle.status === "arrived") return vehicle.distanceKm;
+    if (vehicle.status === "arrived" || args.realizedDistanceOnly) return vehicle.distanceKm;
     return vehicle.route.reduce((sum, edgeId, index) => {
       if (vehicle.status === "traveling" && index < vehicle.currentEdgeIndex) return sum;
       if (vehicle.status === "traveling" && index === vehicle.currentEdgeIndex) {

@@ -53,6 +53,7 @@ const practiceEdgeIds = new Set([
 
 export const practiceScenario: Scenario = {
   ...mondayMorningScenario,
+  evaluation: undefined,
   id: "practice_reroute",
   terminalHoldAccounting: false,
   name: "Practice: North Bridge Pressure",

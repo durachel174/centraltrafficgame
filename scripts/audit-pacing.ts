@@ -12,7 +12,7 @@ for (let index = 0; index < runs; index++) {
   const firstWarning: Record<string, number> = {}, firstOverload: Record<string, number> = {};
   const opportunities: any[] = [];
   let zeroAffected = 0, comparisons = 0;
-  while (!engine.isDone()) {
+  while (engine.decisionsOpen()) {
     const observation = engine.getObservation(); const minute = observation.time - mondayMorningScenario.startTime;
     for (const alert of engine.getInfo().alerts) firstWarning[alert.edgeId] ??= minute;
     for (const edge of observation.edges) if (edge.utilization >= 1) firstOverload[edge.id] ??= minute;

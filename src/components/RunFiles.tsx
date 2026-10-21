@@ -38,7 +38,7 @@ export function RunFiles() {
     {(readError || importError) && <p role="alert">{readError ?? importError}</p>}
     {pendingImport && <Modal title="Start imported replay?" onDismiss={cancelImport}>
       <strong>Compatible run · seed {pendingImport.seed} · {pendingImport.actions.length} decisions</strong>
-      <p>Start this replay from 7:00? This replaces the current session. Final metrics and state will be verified at 9:00.</p>
+      <p>Start this replay from 7:00? This replaces the current session. Cutoff metrics, final evaluation and state will be verified when clearance finishes.</p>
       <div className="previewActions"><button onClick={() => startReplay(pendingImport)}>Start Imported Replay</button><button onClick={cancelImport}>Keep Current Run</button></div>
     </Modal>}
     <p className="muted">Files stay on this device. Imports never start automatically.</p>

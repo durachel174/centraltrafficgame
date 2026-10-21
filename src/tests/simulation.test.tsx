@@ -1719,15 +1719,18 @@ describe("explicit preview and final-results interactions", () => {
     // Advance a real scenario to completion; verify the displayed unfinished counts.
     act(() => {
       const engine = useGameStore.getState().engine;
+      // Exercise a real incomplete evaluation, not the now-removed 09:00 finish.
+      const snapshot = engine.exportSnapshot(); snapshot.scenario.evaluation = { maxClearanceMinutes: .25 };
+      engine.restoreFromSnapshot(snapshot);
       while (!engine.isDone()) engine.step();
-      useGameStore.setState(state => ({ version: state.version + 1 }));
+      useGameStore.setState(state => ({ scenario: snapshot.scenario, version: state.version + 1 }));
     });
     const metrics = useGameStore.getState().engine.getState().metrics;
     expect(metrics.waitingTrips + metrics.activeTrips).toBeGreaterThan(0);
     expect(host.textContent).toContain(`Waiting unfinished trips${metrics.waitingTrips}`);
     expect(host.textContent).toContain(`Active unfinished trips${metrics.activeTrips}`);
     expect(host.textContent).toContain(`Of active trips: queued at road exits${metrics.inNetworkQueuedTrips}`);
-    expect(host.textContent).toContain("fixed-window comparison");
+    expect(host.textContent).toContain("not full-journey costs");
     expect(metrics.inNetworkQueuedTrips).toBeLessThanOrEqual(metrics.activeTrips);
     expect(metrics.tripsCompleted + metrics.waitingTrips + metrics.activeTrips).toBe(metrics.tripsRequested);
     expect(host.textContent).not.toMatch(/Best decision|Worst decision|Rating|optimal/i);

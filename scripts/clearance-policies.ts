@@ -5,6 +5,7 @@ const none: SimulationAction = { type: "NO_OP" };
 const reroute = (percentage: number): SimulationAction => ({ type: "REROUTE", targetEdge: "north_bridge", avoidEdge: "north_bridge", percentage });
 const hold = (percentage: number, durationMinutes: number): SimulationAction => ({ type: "DELAY_DEPARTURES", percentage, durationMinutes });
 export const policies: Policy[] = [
+  { name: "late-day-hold-at-119.75", decide: tick => tick === 479 ? hold(1, 1440) : none },
   { name: "baseline", decide: () => none },
   { name: "reactive", decide: () => none },
   { name: "repeated-hold-25-5m", decide: tick => tick % 4 === 0 ? hold(0.25, 5) : none },

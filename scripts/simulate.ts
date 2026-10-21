@@ -22,7 +22,8 @@ const makeController = (): TrafficController =>
 const objectives: number[] = [];
 const travel: number[] = [];
 const trips: number[] = [];
-const completed: number[] = [], active: number[] = [], waiting: number[] = [];
+const completed: number[] = [], active: number[] = [], waiting: number[] = [], cutoffCosts: number[] = [], clearance: number[] = [];
+let completeRuns = 0;
 
 for (let i = 0; i < runs; i++) {
   const env = new TrafficEnvironment(mondayMorningScenario);
@@ -30,11 +31,15 @@ for (let i = 0; i < runs; i++) {
   const controller = makeController();
   let done = false;
   while (!done) {
-    const action = controller.decide(observation) ?? { type: "NO_OP" as const };
+    const action = (observation.evaluation.phase === "decision" ? controller.decide(observation) : null) ?? { type: "NO_OP" as const };
     const result = env.step(action);
     observation = result.observation;
     done = result.done;
   }
+  const evaluation = env.getEngine().getEvaluation();
+  if (evaluation.finishReason === "all-arrived") completeRuns++;
+  const checkpoint = env.getEngine().getDecisionCutoffMetrics()!;
+  cutoffCosts.push(checkpoint.objective - (checkpoint.objectiveBreakdown?.terminalHoldDelay ?? 0)); clearance.push(evaluation.elapsedClearanceMinutes);
   objectives.push(observation.metrics.objective);
   travel.push(observation.metrics.averageTravelTime);
   trips.push(observation.metrics.tripsRequested);
@@ -44,7 +49,7 @@ for (let i = 0; i < runs; i++) {
 const avg = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
 
 console.log(`Scenario: ${mondayMorningScenario.name}`);
-console.log(`Engine: ${ENGINE_VERSION}; scenario version: ${mondayMorningScenario.version}; evaluation: fixed 07:00–09:00 window`);
+console.log(`Engine: ${ENGINE_VERSION}; scenario version: ${mondayMorningScenario.version}; evaluation: post-demand clearance`);
 console.log(`Seed: ${seed}`);
 console.log(`Controller: ${controllerName}`);
 console.log(`Runs: ${runs}`);
@@ -52,3 +57,5 @@ console.log(`Trips: ${Math.round(avg(trips))}`);
 console.log(`Mean trips completed: ${avg(completed).toFixed(1)}; active unfinished: ${avg(active).toFixed(1)}; origin waiting unfinished: ${avg(waiting).toFixed(1)}`);
 console.log(`Average completed travel: ${avg(travel).toFixed(1)} min`);
 console.log(`Objective: ${avg(objectives).toFixed(0)}`);
+
+console.log(`Cutoff accrued cost: ${avg(cutoffCosts).toFixed(2)}; final accrued cost: ${avg(objectives).toFixed(2)}; completed evaluations: ${completeRuns}/${runs}; mean clearance: ${avg(clearance).toFixed(2)} min`);

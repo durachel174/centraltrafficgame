@@ -5,6 +5,7 @@ export class ReactiveController implements TrafficController {
   private lastActionTime = -999;
 
   decide(observation: SimulationObservation): SimulationAction | null {
+    if (observation.evaluation?.phase !== "decision") return null;
     if (observation.time - this.lastActionTime < 8) return null;
     const north = observation.edges.find((edge) => edge.id === "north_bridge");
     const south = observation.edges.find((edge) => edge.id === "south_bridge");

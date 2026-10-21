@@ -6,7 +6,7 @@ import { createCompletedRun, parseRunFile, verifyCompletedRun } from "../simulat
 import type { Scenario } from "../simulation/types";
 
 const fixture = (overrides: Partial<Scenario> = {}): Scenario => ({
-  ...mondayMorningScenario, id: "storage_fixture", startTime: 0, endTime: 20, events: [],
+  ...mondayMorningScenario, evaluation: undefined, id: "storage_fixture", startTime: 0, endTime: 20, events: [],
   congestion: { alpha: 0, beta: 4, utilizationThreshold: .82 },
   graph: { nodes: ["a", "b", "c"].map((id, x) => ({ id, x, y: 0, type: "intersection" as const })),
     edges: [ ["ab", "a", "b"], ["bc", "b", "c"] ].map(([id, from, to]) => ({ id, from, to, lengthKm: .25, speedLimitKph: 60, comfortableCapacity: 1, maximumCapacity: 1, major: true })) },

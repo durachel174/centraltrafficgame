@@ -7,7 +7,7 @@ import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
 import { finalStateChecksum, createCompletedRun, verifyCompletedRun, parseRunFile } from "../simulation/logging/RunFile";
 import type { Scenario } from "../simulation/types";
 
-const scenario: Scenario = { ...mondayMorningScenario, id: "worker_fixture", endTime: 450,
+const scenario: Scenario = { ...mondayMorningScenario, evaluation: undefined, id: "worker_fixture", endTime: 450,
   demand: { ...mondayMorningScenario.demand, curve: [{ minute: 0, tripsPerMinute: 0 }, { minute: 30, tripsPerMinute: 0 }] },
   forecast: { ...mondayMorningScenario.forecast!, refreshIntervalMinutes: 1, horizonsMinutes: [1, 2, 3], previewHorizonMinutes: 3 }, events: [] };
 class WorkerDouble {

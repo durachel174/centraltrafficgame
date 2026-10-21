@@ -18,7 +18,7 @@ describe("separate terminal liability for player-imposed holds", () => {
     expect(calculateMetrics({ ...args, currentTime: 20, chargeTerminalHolds: true }).objectiveBreakdown!.terminalHoldDelay).toBe(0);
   });
   it("near-end previews expose committed future hold separately and match exact execution", () => {
-    const scenario = { ...mondayMorningScenario, endTime: 421, demand: { ...mondayMorningScenario.demand, curve: [{ minute: 0, tripsPerMinute: 0 }, { minute: 1, tripsPerMinute: 0 }] } };
+    const scenario = { ...mondayMorningScenario, evaluation: undefined, endTime: 421, demand: { ...mondayMorningScenario.demand, curve: [{ minute: 0, tripsPerMinute: 0 }, { minute: 1, tripsPerMinute: 0 }] } };
     const engine = new SimulationEngine(scenario); engine.reset(4);
     const snapshot = engine.exportSnapshot(); snapshot.time = 0.75; snapshot.departureDelay = 0.75;
     snapshot.waiting = [{ id: "t", origin: "north_res", destination: "downtown", requestedDepartureTime: 0, passengerTolerance: 10, heldUntil: 2 }];

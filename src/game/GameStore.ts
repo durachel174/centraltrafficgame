@@ -1,3 +1,4 @@
+import { runTickBatches } from "./TickBatchRunner";
 import { ForecastScheduler, emptyForecast, forecastMaxAge, type ForecastView } from "./ForecastScheduler";
 import { recordBrowserTiming } from "../performance/Recorder";
 import { create } from "zustand";
@@ -7,9 +8,9 @@ import { practiceCheckpointTicks, practiceScenario } from "../simulation/scenari
 import { formatClock } from "./ScenarioProgress";
 import { actionForReplayTick } from "../simulation/logging/Replay";
 import { baselineIdentity } from "../simulation/logging/Identity";
-import { createCompletedRun, parseRunFile, verifyCompletedRun, type CompletedRun } from "../simulation/logging/RunFile";
+import { createCompletedRun, validateEvaluation, parseRunFile, verifyCompletedRun, type CompletedRun } from "../simulation/logging/RunFile";
 import type { BaselineResponse } from "../workers/baselineWorker";
-import type { ActionPreview, LoggedAction, Scenario, SimulationAction, SimulationMetrics } from "../simulation/types";
+import type { ActionPreview, EvaluationState, LoggedAction, Scenario, SimulationAction, SimulationMetrics } from "../simulation/types";
 import type { PreviewWorkerRequest, PreviewWorkerResponse } from "../workers/previewWorker";
 
 export type Speed = 0 | 1 | 2 | 4;
@@ -40,12 +41,15 @@ interface GameStore {
   scenarioMode: ScenarioMode;
   version: number;
   speed: Speed;
+  fastForwarding: boolean;
+  fastForwardToResults: () => void;
+  watchClearance: () => void;
   selectedEdgeId: string | null;
   seed: number;
   forecastView: ForecastView;
   refreshForecasts: (invalidate?: boolean) => void;
   baselineObjective: number | null;
-  baseline: { status: "idle" | "loading" | "ready" | "error"; identity: string | null; metrics: SimulationMetrics | null; error: string | null; calculationMs: number | null };
+  baseline: { status: "idle" | "loading" | "ready" | "error"; identity: string | null; metrics: SimulationMetrics | null; error: string | null; calculationMs: number | null; evaluation?: EvaluationState; decisionCutoffMetrics?: SimulationMetrics | null };
   decisionHistory: LoggedAction[];
   incidentNotice: string | null;
   dismissIncidentNotice: () => void;
@@ -155,6 +159,8 @@ const maxPreviewCacheEntries = 20;
 const previewCache = new Map<string, ActionPreview>();
 let sessionCounter = 1;
 let requestCounter = 0;
+let cancelTickBatches: (() => void) | null = null;
+const stopFastForward = () => { cancelTickBatches?.(); cancelTickBatches = null; };
 let activePreviewWorker: Worker | null = null;
 let forecastScheduler: ForecastScheduler | null = null;
 let activeBaselineWorker: Worker | null = null;
@@ -212,9 +218,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   speed: hasCompletedTutorial() ? 1 : 0,
   selectedEdgeId: null,
   seed: (hasCompletedTutorial() ? mondayMorningScenario : practiceScenario).seed ?? 1,
+  fastForwarding: false,
+  fastForwardToResults: () => {
+    const current = get();
+    if (current.engine.getEvaluation().phase !== "clearance" || current.help.open) return;
+    stopFastForward(); forecastScheduler?.reset(); stopActiveWorker(); previewCache.clear(); requestCounter++;
+    const session = sessionCounter;
+    set({ fastForwarding: true, speed: 0, preview: idlePreview(), forecastView: emptyForecast(sessionCounter) });
+    cancelTickBatches = runTickBatches(() => get().step(),
+      () => session === sessionCounter && get().fastForwarding && !get().engine.isDone(),
+      () => { cancelTickBatches = null; if (session === sessionCounter) { set({ fastForwarding: false, speed: 0 }); get().refreshForecasts(true); } });
+  },
+  watchClearance: () => { stopFastForward(); set({ fastForwarding: false, speed: 1 }); get().refreshForecasts(true); },
   forecastView: emptyForecast(sessionCounter),
   refreshForecasts: (invalidate = false) => {
-    if (!get().engine.externalForecasts) return;
+    if (!get().engine.externalForecasts || get().fastForwarding) return;
     forecastScheduler ??= new ForecastScheduler(() => {
       const state = get(); const config = state.scenario.forecast;
       return { session: sessionCounter, revision: state.version, time: state.engine.getObservation().time - state.scenario.startTime,
@@ -260,18 +278,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tutorial: initialTutorial(!hasCompletedTutorial(), hasCompletedTutorial()),
   help: { open: false, confirmingReplay: false, previousSpeed: null },
   preview: idlePreview(),
-  setSpeed: (speed) =>
+  setSpeed: (speed) => {
+    const wasFastForwarding = get().fastForwarding;
+    stopFastForward();
     set((state) => {
       if (state.tutorial.active && state.tutorial.step === "review" && speed > 0) {
         return { speed: 0, tutorial: { ...state.tutorial, message: "Apply or cancel the preview before resuming time." } };
       }
-      return { speed };
-    }),
+      return { speed, fastForwarding: false };
+    });
+    if (wasFastForwarding) get().refreshForecasts(true);
+  },
   openHelp: () => {
+    stopFastForward();
     stopActiveWorker();
     requestCounter += 1;
     set((state) => ({
       speed: 0,
+      fastForwarding: false,
       help: { open: true, confirmingReplay: false, previousSpeed: state.help.open ? state.help.previousSpeed : state.speed },
       preview: state.preview.status === "loading" ? idlePreview(Math.max(requestCounter, state.preview.requestId + 1), sessionCounter) : state.preview
     }));
@@ -297,6 +321,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   toggleDevTools: () => set((state) => ({ devToolsOpen: !state.devToolsOpen })),
   setScenarioMode: (scenarioMode, selectedSeed) => {
+    stopFastForward();
     forecastScheduler?.reset();
     stopBaselineWorker();
     stopActiveWorker();
@@ -308,6 +333,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       scenario,
       scenarioMode,
+      fastForwarding: false,
       seed: scenario.seed,
       forecastView: emptyForecast(sessionCounter),
       baseline: emptyBaseline(),
@@ -351,8 +377,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (engine.isDone()) return;
     // Replay owns the action stream. Even debug/store calls cannot insert live actions.
     const applied = replay ? actionForReplayTick(replay.run, engine.getState().time + engine.dtMinutes) : action;
+    const beforePhase = engine.getEvaluation().phase;
     const beforeEvents = engine.getInfo().activeEventIds;
-    engine.step(applied);
+    const result = engine.step(applied);
+    if (result.info.actionRejected) return;
+    const phaseChanged = beforePhase !== engine.getEvaluation().phase;
+    if (phaseChanged) { stopActiveWorker(); requestCounter++; previewCache.clear(); forecastScheduler?.reset(); }
     const afterEvents = engine.getInfo().activeEventIds;
     const changedEvent = get().scenario.events.find(event => beforeEvents.includes(event.id) !== afterEvents.includes(event.id));
     const eventNotice = changedEvent ? afterEvents.includes(changedEvent.id)
@@ -371,8 +401,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         state.tutorial.step === "observe" &&
         state.tutorial.observedFromTime !== null &&
         elapsed >= observationMinutes;
-      const northVehicles = get().engine.getState().graph.edge("north_bridge").currentVehicleCount;
-      const southVehicles = get().engine.getState().graph.edge("south_bridge").currentVehicleCount;
+      const northVehicles = get().engine.graph.edge("north_bridge").currentVehicleCount;
+      const southVehicles = get().engine.graph.edge("south_bridge").currentVehicleCount;
       const startNorth = state.tutorial.observationStart?.northBridgeVehicles ?? 0;
       const startSouth = state.tutorial.observationStart?.southBridgeVehicles ?? 0;
       return {
@@ -381,8 +411,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         decisionHistory: applied.type === "NO_OP" ? state.decisionHistory : engine.createRun().actions,
         completedRun,
         replay: done && replay ? { ...replay, verification: verificationError ? "failed" : "verified", error: verificationError } : state.replay,
-        speed: observationComplete ? 0 : state.speed,
-        preview: state.preview.status === "idle" ? state.preview : { ...state.preview, status: "stale" },
+        fastForwarding: done ? false : state.fastForwarding,
+        speed: done || phaseChanged || observationComplete ? 0 : state.speed,
+        preview: phaseChanged ? idlePreview() : state.preview.status === "idle" ? state.preview : { ...state.preview, status: "stale" },
+        previewCanceled: phaseChanged ? false : state.previewCanceled,
         tutorial: observationComplete
           ? {
               ...state.tutorial,
@@ -392,9 +424,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           : state.tutorial
       };
     });
-    get().refreshForecasts(applied.type !== "NO_OP" || !!changedEvent);
+    get().refreshForecasts(phaseChanged || applied.type !== "NO_OP" || !!changedEvent);
   },
   reset: () => {
+    stopFastForward();
     if (get().replay) { get().startReplay(get().replay!.run); return; }
     forecastScheduler?.reset();
     stopBaselineWorker();
@@ -405,6 +438,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { scenario, scenarioMode, tutorial } = get();
     set({
       engine: createEngine(scenario),
+      fastForwarding: false,
       forecastView: emptyForecast(sessionCounter),
       baseline: emptyBaseline(),
       baselineObjective: null,
@@ -433,7 +467,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     stopBaselineWorker();
     const cached = baselineCache.get(identity);
     if (cached?.metrics) {
-      set({ baseline: { status: "ready", identity, metrics: cached.metrics, error: null, calculationMs: cached.calculationMs }, baselineObjective: cached.metrics.objective });
+      set({ baseline: { status: "ready", identity, metrics: cached.metrics, error: null, calculationMs: cached.calculationMs, evaluation: cached.evaluation, decisionCutoffMetrics: cached.decisionCutoffMetrics }, baselineObjective: cached.metrics.objective });
       return;
     }
     set({ baseline: { status: "loading", identity, metrics: null, error: null, calculationMs: null }, baselineObjective: null });
@@ -450,9 +484,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const result = event.data;
       if (get().baseline.identity !== identity) return;
       if (result.identity !== identity || !result.metrics || result.error) { failed(result.error ?? "Baseline identity mismatch or missing metrics."); return; }
+      if (scenario.evaluation) {
+        try {
+          validateEvaluation(result.evaluation, result.metrics, scenario);
+          if (!result.decisionCutoffMetrics) throw Error("Missing baseline cutoff checkpoint.");
+        } catch (error) { failed(error instanceof Error ? error.message : String(error)); return; }
+      }
       baselineCache.set(identity, result);
       if (baselineCache.size > 8) baselineCache.delete(baselineCache.keys().next().value!);
-      set({ baseline: { status: "ready", identity, metrics: result.metrics, error: null, calculationMs: result.calculationMs }, baselineObjective: result.metrics.objective });
+      set({ baseline: { status: "ready", identity, metrics: result.metrics, error: null, calculationMs: result.calculationMs, evaluation: result.evaluation, decisionCutoffMetrics: result.decisionCutoffMetrics }, baselineObjective: result.metrics.objective });
     };
     worker.onerror = event => {
       if (activeBaselineWorker !== worker) return;
@@ -461,7 +501,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     worker.postMessage({ kind: "baseline", scenario, seed });
   },
   requestPreview: (action) => {
-    if (get().replay || get().engine.isDone()) return;
+    if (get().replay || !get().engine.decisionsOpen()) return;
     stopActiveWorker();
     const { engine, version } = get();
     const copiedAction = cloneAction(action);
@@ -592,7 +632,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
   confirmPreview: () => {
-    if (get().replay || get().engine.isDone()) return;
+    if (get().replay || !get().engine.decisionsOpen()) return;
     const { preview, version, step, engine, tutorial } = get();
     if (preview.status === "idle") return;
     if (preview.status !== "ready" || !preview.action || !preview.result || preview.baseVersion !== version || preview.baseSessionId !== sessionCounter) {

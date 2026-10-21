@@ -1,3 +1,4 @@
+import { ClearanceControls } from "./ClearanceControls";
 import { useGameStore } from "../game/GameStore";
 import { scenarioProgress } from "../game/ScenarioProgress";
 
@@ -5,7 +6,7 @@ export function ScenarioStatus() {
   const { engine, scenario, scenarioMode, replay, incidentNotice, dismissIncidentNotice, retrySameSeed } = useGameStore();
   if (scenarioMode !== "monday") return null;
   const progress = scenarioProgress(scenario, engine.getObservation(), engine.getInfo().activeEventIds);
-  return <section className="roundStatus" aria-label="Round progression">
+  return <><ClearanceControls /><section className="roundStatus" aria-label="Round progression">
     <div><strong aria-live="polite">{replay ? "Replay · " : ""}{progress.stage}</strong>
       {replay && <><span>Recorded actions only. Pause and speed controls remain available.</span><button onClick={retrySameSeed}>Exit Replay · Try This Seed Again</button></>}
     </div>
@@ -18,5 +19,5 @@ export function ScenarioStatus() {
       {" "}{event.currentModifier === 1 ? "Capacity restored. Traffic may still be congested; inspect the map and forecasts." : "Another restriction remains; traffic may still be congested."}
     </p>)}
     {incidentNotice && <div className="incidentNotice"><span role="status">{incidentNotice}</span><button onClick={dismissIncidentNotice}>Dismiss incident notice</button></div>}
-  </section>;
+  </section></>;
 }

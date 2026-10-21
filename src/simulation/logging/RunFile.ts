@@ -1,9 +1,11 @@
 import { SimulationEngine } from "../core/SimulationEngine";
-import type { LoggedAction, Scenario, SimulationAction, SimulationMetrics, SimulationRun, SimulationSnapshot } from "../types";
+import type { EvaluationState, LoggedAction, Scenario, SimulationAction, SimulationMetrics, SimulationRun, SimulationSnapshot } from "../types";
 import { canonicalJSON, checksum, configurationIdentity, DT_MINUTES, ENGINE_VERSION, RUN_SCHEMA_VERSION } from "./Identity";
 
 export interface CompletedRun extends SimulationRun {
-  schemaVersion: 1;
+  schemaVersion: 2;
+  evaluation: EvaluationState;
+  decisionCutoffMetrics: SimulationMetrics;
   scenarioVersion: number;
   configurationIdentity: string;
   exportedAt: string;
@@ -74,8 +76,11 @@ export function createCompletedRun(engine: SimulationEngine): CompletedRun {
   const run = engine.createRun();
   validateActionTiming(run.actions, snapshot.scenario);
   if (run.actions.some(entry => !Number.isInteger(entry.affectedCount))) fail("Recorded affected counts are unavailable. Older snapshots cannot be exported as this run format.");
+  if (!snapshot.decisionCutoffMetrics) fail("Missing decision-cutoff checkpoint.");
   return {
     ...run,
+    evaluation: engine.getEvaluation(),
+    decisionCutoffMetrics: snapshot.decisionCutoffMetrics!,
     schemaVersion: RUN_SCHEMA_VERSION,
     scenarioVersion: snapshot.scenario.version ?? 1,
     configurationIdentity: configurationIdentity(snapshot.scenario),
@@ -92,7 +97,7 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
   try { input = JSON.parse(text); } catch { fail("Invalid JSON. Choose a Central Traffic run file."); }
   if (!record(input)) fail("Run file must be a JSON object.");
   const data = input as Record<string, unknown>;
-  keys(data, ["schemaVersion", "scenarioId", "scenarioVersion", "engineVersion", "configurationIdentity", "seed", "startedAt", "exportedAt", "actions", "finalMetrics", "finalStateChecksum"], "run");
+  keys(data, ["schemaVersion", "scenarioId", "scenarioVersion", "engineVersion", "configurationIdentity", "seed", "startedAt", "exportedAt", "actions", "finalMetrics", "finalStateChecksum", "evaluation", "decisionCutoffMetrics"], "run");
   if (data.schemaVersion !== RUN_SCHEMA_VERSION) fail("Unsupported run schema version. Older formats are not converted automatically.");
   if (data.engineVersion !== ENGINE_VERSION) fail("Incompatible engine version.");
   if (data.scenarioId !== scenario.id || data.scenarioVersion !== (scenario.version ?? 1)) fail("Incompatible scenario ID or version. Only this Monday Morning challenge is supported.");
@@ -110,9 +115,19 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
     if (!finite(entry.simulationTime) || entry.stateSnapshotId !== `t_${(entry.simulationTime as number).toFixed(2)}`) fail("Action timestamp and snapshot ID disagree.");
   }
   validateActionTiming(data.actions as LoggedAction[], scenario);
+  validateMetrics(data.finalMetrics, scenario);
+  validateMetrics(data.decisionCutoffMetrics, scenario);
+  validateEvaluation(data.evaluation, data.finalMetrics as SimulationMetrics, scenario);
+  const checkpoint = data.decisionCutoffMetrics as SimulationMetrics, final = data.finalMetrics as SimulationMetrics;
+  if (checkpoint.tripsRequested !== final.tripsRequested || checkpoint.tripsCompleted > final.tripsCompleted) fail("Cutoff and final trip counts disagree.");
+  if (scenario.evaluation && (final.objectiveBreakdown!.terminalHoldDelay !== 0 || final.remainingHoldPassengerMinutes !== 0)) fail("Realized evaluation cannot include a terminal hold estimate.");
+  return JSON.parse(JSON.stringify(data)) as CompletedRun;
+}
+
+function validateMetrics(raw: unknown, scenario: Scenario) {
   const reference = new SimulationEngine(scenario).getState().metrics;
-  if (!record(data.finalMetrics)) fail("Missing final metrics.");
-  const metrics = data.finalMetrics as Record<string, unknown>;
+  if (!record(raw)) fail("Missing final metrics.");
+  const metrics = raw as Record<string, unknown>;
   keys(metrics, [...Object.keys(reference), "worstBottleneck"], "metrics");
   for (const key of Object.keys(reference).filter(key => key !== "objectiveBreakdown")) {
     if (!finite(metrics[key]) || (metrics[key] as number) < 0) fail(`Invalid final metric: ${key}.`);
@@ -128,11 +143,24 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
   if (Math.abs(sum - (metrics.objective as number)) > 1e-6) fail("Objective components do not sum to total system cost.");
   const counts = ["tripsRequested", "tripsCompleted", "activeTrips", "waitingTrips", "inNetworkQueuedTrips"];
   if (counts.some(key => !Number.isInteger(metrics[key]) || (metrics[key] as number) < 0) || (metrics.inNetworkQueuedTrips as number) > (metrics.activeTrips as number) || metrics.tripsRequested !== (metrics.tripsCompleted as number) + (metrics.activeTrips as number) + (metrics.waitingTrips as number)) fail("Inconsistent final trip counts.");
-  return JSON.parse(JSON.stringify(data)) as CompletedRun;
+}
+
+export function validateEvaluation(raw: unknown, metrics: SimulationMetrics, scenario: Scenario) {
+  if (!record(raw)) fail("Missing evaluation metadata.");
+  const value = raw as Record<string, unknown>;
+  keys(value, ["phase", "decisionCutoff", "elapsedClearanceMinutes", "maxClearanceMinutes", "evaluationLimit", "finishReason", "finishedAt"], "evaluation");
+  const cap = scenario.evaluation?.maxClearanceMinutes ?? 0;
+  const end = value.finishedAt;
+  if (value.phase !== "finished" || value.decisionCutoff !== scenario.endTime || value.maxClearanceMinutes !== cap || value.evaluationLimit !== scenario.endTime + cap
+      || !finite(end) || end < scenario.endTime || end > scenario.endTime + cap || end % DT_MINUTES || value.elapsedClearanceMinutes !== end - scenario.endTime) fail("Invalid evaluation boundaries or finish time.");
+  const unresolved = metrics.activeTrips + metrics.waitingTrips;
+  const expected = !scenario.evaluation ? "decision-window-ended" : unresolved ? "safety-limit" : "all-arrived";
+  if (value.finishReason !== expected || (expected === "safety-limit" && end !== scenario.endTime + cap)) fail("Evaluation finish reason disagrees with final trip counts or safety limit.");
 }
 
 export function verifyCompletedRun(engine: SimulationEngine, run: CompletedRun): string | null {
   if (!engine.isDone()) return "Replay has not reached scenario end.";
+  if (canonicalJSON(engine.getEvaluation()) !== canonicalJSON(run.evaluation) || canonicalJSON(engine.getDecisionCutoffMetrics()) !== canonicalJSON(run.decisionCutoffMetrics)) return "Replay verification failed: evaluation metadata or cutoff checkpoint differs.";
   if (canonicalJSON(engine.createRun().actions) !== canonicalJSON(run.actions)) return "Replay verification failed: recorded action log differs from executed actions, affected counts, or tick rewards.";
   if (canonicalJSON(engine.getState().metrics) !== canonicalJSON(run.finalMetrics)) return "Replay verification failed: final metrics differ from the recorded run.";
   if (finalStateChecksum(engine.exportSnapshot()) !== run.finalStateChecksum) return "Replay verification failed: deterministic final simulation state differs.";

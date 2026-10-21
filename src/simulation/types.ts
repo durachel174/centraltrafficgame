@@ -1,6 +1,16 @@
 import type { GraphConfig } from "./network/types";
 import type { RoadEdge, TrafficNode } from "./network/types";
 
+export interface EvaluationState {
+  phase: "decision" | "clearance" | "finished";
+  decisionCutoff: number;
+  elapsedClearanceMinutes: number;
+  maxClearanceMinutes: number;
+  evaluationLimit: number;
+  finishReason: "all-arrived" | "safety-limit" | "decision-window-ended" | null;
+  finishedAt: number | null;
+}
+
 export interface Vehicle {
   id: string;
   origin: string;
@@ -124,6 +134,9 @@ export interface ForecastSample {
 }
 
 export interface ActionPreview {
+  includesClearance?: boolean;
+  baselineHorizonMinutes?: number;
+  actionHorizonMinutes?: number;
   terminalHoldDeltaPassengerMinutes?: number;
   affectedVehicles: number;
   networkCostDelta: number;
@@ -142,7 +155,8 @@ export interface GraphSnapshot {
 }
 
 export interface SimulationSnapshot {
-  version: 2;
+  version: 3;
+  decisionCutoffMetrics: SimulationMetrics | null;
   engineVersion: string;
   scenario: Scenario;
   seed: number;
@@ -195,6 +209,8 @@ export interface ScenarioEvent {
 }
 
 export interface Scenario {
+  /** endTime remains the decision/demand cutoff. Omit for fixed-window practice/fixtures. */
+  evaluation?: { maxClearanceMinutes: number };
   version?: number;
   progression?: { rushHourMinute: number };
   terminalHoldAccounting?: boolean;
@@ -234,6 +250,7 @@ export interface DemandObservation {
 }
 
 export interface SimulationObservation {
+  evaluation: EvaluationState;
   time: number;
   edges: EdgeObservation[];
   demand: DemandObservation[];
@@ -243,6 +260,8 @@ export interface SimulationObservation {
 }
 
 export interface SimulationInfo {
+  evaluation: EvaluationState;
+  actionRejected?: string;
   alerts: TrafficAlert[];
   forecasts: TrafficForecast[];
 }
@@ -256,6 +275,8 @@ export interface LoggedAction {
 }
 
 export interface SimulationRun {
+  evaluation?: EvaluationState;
+  decisionCutoffMetrics?: SimulationMetrics | null;
   scenarioId: string;
   seed: number;
   engineVersion: string;

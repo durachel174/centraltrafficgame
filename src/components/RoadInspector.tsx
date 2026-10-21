@@ -5,8 +5,9 @@ import { useGameStore } from "../game/GameStore";
 import type { SimulationAction } from "../simulation/types";
 
 export function RoadInspector() {
-  const { engine, selectedEdgeId, preview, requestPreview, previewCanceled, speed, selectEdge, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
+  const { engine, scenario, selectedEdgeId, preview, requestPreview, previewCanceled, speed, selectEdge, setSpeed, lastActionNotice, clearActionNotice, tutorial, replay } = useGameStore();
   const state = engine.getState();
+  const locked = !engine.decisionsOpen();
   const edge = selectedEdgeId ? state.graph.edge(selectedEdgeId) : state.graph.edge("north_bridge");
   const display = useForecastDisplay();
   const forecast = display.forecasts.find((item) => item.edgeId === edge.id);
@@ -22,7 +23,7 @@ export function RoadInspector() {
           { requestedHorizonMinutes: 15, actualHorizonMinutes: 15, truncated: false, utilization: forecast.utilization15m }
         ]
       : [];
-  const horizonLabel = (actual: number, truncated: boolean) => `+${Number(actual.toFixed(2))}m${truncated ? " scenario end" : ""}`;
+  const horizonLabel = (actual: number, truncated: boolean) => `+${Number(actual.toFixed(2))}m${truncated ? (scenario.evaluation ? " evaluation end" : " scenario end") : ""}`;
   const showHold = !tutorial.active || tutorial.step === "hold" || tutorial.step === "complete";
   const highlightForecast = tutorial.active && tutorial.step === "forecast";
   const highlightPreview = tutorial.active && tutorial.step === "preview";
@@ -61,13 +62,14 @@ export function RoadInspector() {
         </div>
       )}
       </div>
+      {locked && <p>Decisions complete. Interventions are locked while existing trips finish.</p>}
       {replay && <p>Replay is read-only. Recorded interventions execute at their original ticks.</p>}
       <div className={`actionGrid ${preview.status !== "idle" ? "hasPreview" : ""}`} aria-label="Action choices">
         <div className="actionChoice">
           <button
             id="preview-reroute"
             className={highlightPreview ? "tutorialTarget" : ""}
-            disabled={preview.status === "loading" || !!replay}
+            disabled={preview.status === "loading" || !!replay || locked}
             onClick={() => requestPreview(rerouteAction)}
             aria-describedby="reroute-help"
           >
@@ -83,7 +85,7 @@ export function RoadInspector() {
           <div className="actionChoice">
             <button
               id="preview-hold"
-              disabled={preview.status === "loading" || !!replay}
+              disabled={preview.status === "loading" || !!replay || locked}
               onClick={() => requestPreview(holdAction)}
               aria-describedby="hold-help"
             >

@@ -14,7 +14,7 @@ export function rankRoadChanges(changes: ForecastDelta[], selectedEdgeId: string
 }
 
 export function PreviewReview() {
-  const { engine, preview, tutorial, requestPreview, confirmPreview, cancelPreview } = useGameStore();
+  const { engine, scenario, preview, tutorial, requestPreview, confirmPreview, cancelPreview } = useGameStore();
   const review = useRef<HTMLDivElement>(null), previousActive = useRef(false), origin = useRef<string | null>(null);
   const active = preview.status !== "idle";
   useLayoutEffect(() => {
@@ -40,7 +40,8 @@ export function PreviewReview() {
     ?? result?.forecastChanges.find(change => change.edgeId === preview.targetEdgeId && change.requestedHorizonMinutes === result.requestedHorizonMinutes);
   const others = rankRoadChanges(result?.forecastChanges ?? [], preview.targetEdgeId).slice(0, 3);
   const utilization = (change: ForecastDelta) => `${(change.before * 100).toFixed(0)}% -> ${(change.after * 100).toFixed(0)}%`;
-  const horizon = (change: ForecastDelta) => `+${change.actualHorizonMinutes} min${change.truncated ? " (scenario end)" : ""}`;
+  const finishLabel = scenario.evaluation ? "evaluation end" : "scenario end";
+  const horizon = (change: ForecastDelta) => `+${change.actualHorizonMinutes} min${change.truncated ? ` (${finishLabel})` : ""}`;
   return (
     <div ref={review} tabIndex={-1} role="region" onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); cancelPreview(); } }} className={`previewDialog ${tutorial.active && tutorial.step === "review" ? "tutorialTarget" : ""}`} aria-label="Action review">
       <p className="srOnly" role="status">{preview.status === "ready" ? `Preview ready. ${result?.affectedVehicles ?? 0} affected trips. Review projected effects, then Apply or Cancel.` : preview.status === "loading" ? "Calculating preview." : preview.status === "stale" ? "Preview is stale. Retry before applying." : `Preview failed: ${preview.error ?? "Unknown error"}. Retry or Cancel.`}</p>
@@ -57,9 +58,11 @@ export function PreviewReview() {
           {!!result.terminalHoldDeltaPassengerMinutes && <><span>Committed hold beyond finish delta</span><strong>{result.terminalHoldDeltaPassengerMinutes.toFixed(1)} passenger-minutes (included in system cost, separate from observed delay)</strong></>}
           <span>Satisfaction delta</span><strong>{result.satisfactionDelta.toFixed(1)} percentage points</strong>
           <span>System-cost delta (lower cost is better)</span><strong>{result.networkCostDelta.toFixed(0)}</strong>
-          <span>Projection horizon</span><strong>{result.horizonMinutes} min{result.truncated ? " (scenario end)" : ""}</strong>
+          <span>Projection horizon</span><strong>{result.horizonMinutes} min{result.truncated ? ` (${finishLabel})` : ""}</strong>
         </div>
-        <p>More passenger delay is worse; more satisfaction is better.{result.truncated ? ` Requested ${result.requestedHorizonMinutes} min; projection stops at scenario end.` : ""}</p>
+        <p>{result.includesClearance ? "This horizon includes clearance: demand ends at the decision cutoff, and existing trips continue. " : ""}This is a short-horizon projection, not a complete final-cost prediction.
+          {result.baselineHorizonMinutes !== undefined && result.actionHorizonMinutes !== undefined && result.baselineHorizonMinutes !== result.actionHorizonMinutes ? ` No-action branch: ${result.baselineHorizonMinutes} min; action branch: ${result.actionHorizonMinutes} min (earlier finish is held at its final state).` : ""}</p>
+        <p>More passenger delay is worse; more satisfaction is better.{result.truncated ? ` Requested ${result.requestedHorizonMinutes} min; projection stops at ${finishLabel}.` : ""}</p>
         <div className="preview" aria-label="Other affected roads">
           <strong>Other affected roads</strong>
           {others.length ? others.map(change => <div key={change.edgeId}>{roadName(change.edgeId)} {horizon(change)}: {utilization(change)}</div>) : <p>No other road changes above 1 percentage point.</p>}

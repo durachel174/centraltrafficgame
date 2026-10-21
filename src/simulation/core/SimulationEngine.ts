@@ -16,6 +16,7 @@ import type {
   Scenario,
   SimulationAction,
   SimulationMetrics,
+  SimulationInfo,
   SimulationObservation,
   SimulationRun,
   SimulationSnapshot,
@@ -33,6 +34,7 @@ export class SimulationEngine {
   private demand: DemandGenerator;
   private seed = 1;
   private time = 0;
+  private decisionCutoffMetrics: SimulationMetrics | null = null;
   private waiting: TripRequest[] = [];
   private vehicles: Vehicle[] = [];
   private congestionCost = 0;
@@ -50,6 +52,9 @@ export class SimulationEngine {
   alerts: TrafficAlert[] = [];
 
   constructor(private scenario: Scenario, private readonly timing?: (name: string, milliseconds: number) => void, readonly externalForecasts = false) {
+    const duration = scenario.endTime - scenario.startTime;
+    const cap = scenario.evaluation?.maxClearanceMinutes;
+    if (!Number.isFinite(duration) || duration <= 0 || duration % this.dtMinutes || (cap !== undefined && (!Number.isFinite(cap) || cap <= 0 || cap % this.dtMinutes))) throw Error("Decision duration and clearance limit must be positive and tick-aligned.");
     this.graph = new TrafficGraph(scenario.graph);
     this.rng = new SeededRandom(scenario.seed ?? 1);
     this.router = new Router(this.graph, scenario.congestion);
@@ -60,6 +65,7 @@ export class SimulationEngine {
   reset(seed = this.scenario.seed ?? 1): SimulationObservation {
     this.seed = seed;
     this.time = 0;
+    this.decisionCutoffMetrics = null;
     this.waiting = [];
     this.vehicles = [];
     this.congestionCost = 0;
@@ -85,6 +91,9 @@ export class SimulationEngine {
 
   step(action: SimulationAction = { type: "NO_OP" }) {
     const measuredStart = this.timing ? performance.now() : 0;
+    if (action.type !== "NO_OP" && !this.decisionsOpen()) {
+      return { observation: this.getObservation(), reward: 0, done: this.isDone(), info: { ...this.getInfo(), actionRejected: "Decisions are closed. Only NO_OP evaluation ticks are accepted." } };
+    }
     if (this.isDone()) {
       return { observation: this.getObservation(), reward: 0, done: true, info: this.getInfo() };
     }
@@ -102,9 +111,13 @@ export class SimulationEngine {
     this.updateTravelTimes();
     this.moveVehicles(intervalStart);
     this.time = intervalEnd;
-    this.waiting.push(...this.demand.generate(this.time, this.dtMinutes));
+    // The final decision interval still generates its cohort at the cutoff.
+    if (intervalStart < this.scenario.endTime - this.scenario.startTime) this.waiting.push(...this.demand.generate(this.time, this.dtMinutes));
     this.updateEdgeCounts();
     this.updateDerived();
+    if (this.time === this.scenario.endTime - this.scenario.startTime && !this.decisionCutoffMetrics) {
+      this.decisionCutoffMetrics = this.currentMetrics(!!this.scenario.terminalHoldAccounting);
+    }
     const reward = before - this.metrics.objective;
     this.latestReward = reward;
     if (actionToApply.type !== "NO_OP") {
@@ -125,6 +138,8 @@ export class SimulationEngine {
   getState() {
     return {
       time: this.time,
+      evaluation: this.getEvaluation(),
+      decisionCutoffMetrics: this.getDecisionCutoffMetrics(),
       graph: this.graph.clone(),
       waiting: this.waiting.map((trip) => ({ ...trip })),
       vehicles: this.vehicles.map((vehicle) => ({ ...vehicle, route: [...vehicle.route] })),
@@ -146,6 +161,7 @@ export class SimulationEngine {
     }
     return {
       time: this.scenario.startTime + this.time,
+      evaluation: this.getEvaluation(),
       edges: Array.from(this.graph.edges.values()).map<EdgeObservation>((edge) => ({
         id: edge.id,
         utilization: utilization(edge),
@@ -164,19 +180,40 @@ export class SimulationEngine {
     };
   }
 
-  getInfo() {
+  getInfo(): SimulationInfo & { activeEventIds: string[] } {
     return {
+      evaluation: this.getEvaluation(),
       activeEventIds: [...this.activeEventIds],
       alerts: this.alerts.map((alert) => ({ ...alert })),
       forecasts: this.forecasts.map((forecast) => this.cloneForecast(forecast))
     };
   }
 
+  decisionsOpen() { return this.time < this.scenario.endTime - this.scenario.startTime; }
+
   isDone() {
-    return this.time >= this.scenario.endTime - this.scenario.startTime;
+    if (this.decisionsOpen()) return false;
+    if (!this.scenario.evaluation) return true;
+    return this.time >= this.scenario.endTime - this.scenario.startTime + this.scenario.evaluation.maxClearanceMinutes
+      || (this.waiting.length === 0 && !this.vehicles.some(vehicle => vehicle.status === "traveling"));
   }
 
+  getEvaluation(): import("../types").EvaluationState {
+    const maxClearanceMinutes = this.scenario.evaluation?.maxClearanceMinutes ?? 0;
+    const elapsedClearanceMinutes = Math.max(0, this.scenario.startTime + this.time - this.scenario.endTime);
+    const finished = this.isDone();
+    const unresolved = this.waiting.length > 0 || this.vehicles.some(vehicle => vehicle.status === "traveling");
+    return { phase: this.decisionsOpen() ? "decision" : finished ? "finished" : "clearance",
+      decisionCutoff: this.scenario.endTime, elapsedClearanceMinutes, maxClearanceMinutes,
+      evaluationLimit: this.scenario.endTime + maxClearanceMinutes,
+      finishReason: !finished ? null : !this.scenario.evaluation ? "decision-window-ended" : unresolved ? "safety-limit" : "all-arrived",
+      finishedAt: finished ? this.scenario.startTime + this.time : null };
+  }
+
+  getDecisionCutoffMetrics() { return this.decisionCutoffMetrics ? cloneMetrics(this.decisionCutoffMetrics) : null; }
+
   previewAction(action: SimulationAction): ActionPreview {
+    if (!this.decisionsOpen()) throw Error("Decisions are closed; action previews are unavailable during clearance.");
     this.validateForecastConfig();
     const requestedHorizon = this.scenario.forecast?.previewHorizonMinutes ?? 15;
     const forecastHorizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
@@ -202,17 +239,18 @@ export class SimulationEngine {
       for (let index = 0; index < noActionSamples.length; index++) {
         const beforeSample = noActionSamples[index];
         const actionSample = actionSamples[index];
-        if (seenActualHorizons.has(beforeSample.actualHorizonMinutes)) continue;
-        seenActualHorizons.add(beforeSample.actualHorizonMinutes);
+        const actualHorizon = Math.max(beforeSample.actualHorizonMinutes, actionSample.actualHorizonMinutes);
+        if (seenActualHorizons.has(actualHorizon)) continue;
+        seenActualHorizons.add(actualHorizon);
         const beforeUtilization = beforeSample.utilizationByEdge.get(edgeId) ?? 0;
         const afterUtilization = actionSample.utilizationByEdge.get(edgeId) ?? 0;
         if (Math.abs(beforeUtilization - afterUtilization) > 0.000001 || edgeId === (action as { targetEdge?: string }).targetEdge) {
           forecastChanges.push({
             edgeId,
-            horizonMinutes: beforeSample.actualHorizonMinutes,
+            horizonMinutes: actualHorizon,
             requestedHorizonMinutes: beforeSample.horizonMinutes,
-            actualHorizonMinutes: beforeSample.actualHorizonMinutes,
-            truncated: beforeSample.actualHorizonMinutes + 0.000001 < beforeSample.horizonMinutes,
+            actualHorizonMinutes: actualHorizon,
+            truncated: actualHorizon + 0.000001 < beforeSample.horizonMinutes,
             before: beforeUtilization,
             after: afterUtilization
           });
@@ -220,6 +258,9 @@ export class SimulationEngine {
       }
     }
     return {
+      includesClearance: this.scenario.startTime + this.time + Math.max(beforeSample.actualHorizonMinutes, afterSample.actualHorizonMinutes) > this.scenario.endTime,
+      baselineHorizonMinutes: beforeSample.actualHorizonMinutes,
+      actionHorizonMinutes: afterSample.actualHorizonMinutes,
       terminalHoldDeltaPassengerMinutes: (after.remainingHoldPassengerMinutes ?? 0) - (before.remainingHoldPassengerMinutes ?? 0),
       affectedVehicles: actionSamples[0]?.affectedTrips ?? 0,
       networkCostDelta: after.objective - before.objective,
@@ -227,9 +268,9 @@ export class SimulationEngine {
       passengerDelayDeltaMinutes: afterDelay - beforeDelay,
       passengerDelayDeltaPerPassenger: (afterDelay - beforeDelay) / passengers,
       satisfactionDelta: after.averageSatisfaction - before.averageSatisfaction,
-      horizonMinutes: afterSample.actualHorizonMinutes,
+      horizonMinutes: Math.max(beforeSample.actualHorizonMinutes, afterSample.actualHorizonMinutes),
       requestedHorizonMinutes: requestedHorizon,
-      truncated: afterSample.actualHorizonMinutes + 0.000001 < requestedHorizon
+      truncated: Math.max(beforeSample.actualHorizonMinutes, afterSample.actualHorizonMinutes) + 0.000001 < requestedHorizon
     };
   }
 
@@ -246,6 +287,8 @@ export class SimulationEngine {
 
   createRun(): SimulationRun {
     return {
+      evaluation: this.getEvaluation(),
+      decisionCutoffMetrics: this.getDecisionCutoffMetrics(),
       scenarioId: this.scenario.id,
       seed: this.seed,
       engineVersion: ENGINE_VERSION,
@@ -479,18 +522,7 @@ export class SimulationEngine {
       const over = Math.max(0, utilization(edge) - this.scenario.congestion.utilizationThreshold);
       if (Number.isFinite(over)) this.congestionCost += over * over * this.dtMinutes;
     }
-    this.metrics = calculateMetrics({
-      vehicles: this.vehicles,
-      waitingTrips: this.waiting,
-      graph: this.graph,
-      congestionCost: this.congestionCost,
-      departureDelay: this.departureDelay,
-      weights: this.scenario.objectiveWeights,
-      utilizationThreshold: this.scenario.congestion.utilizationThreshold,
-      currentTime: this.time,
-      chargeTerminalHolds: !!this.scenario.terminalHoldAccounting && this.isDone(),
-      satisfaction: this.scenario.satisfaction
-    });
+    this.metrics = this.currentMetrics(!this.scenario.evaluation && !!this.scenario.terminalHoldAccounting && this.isDone());
     if (this.forecastingEnabled && !this.externalForecasts && this.time - this.lastForecastTime >= (this.scenario.forecast?.refreshIntervalMinutes ?? 1)) {
       const started = this.timing ? performance.now() : 0;
       this.forecasts = this.calculateForecasts();
@@ -501,6 +533,22 @@ export class SimulationEngine {
       });
       this.lastForecastTime = this.time;
     }
+  }
+
+  private currentMetrics(chargeTerminalHolds = false) {
+    return calculateMetrics({
+      vehicles: this.vehicles,
+      waitingTrips: this.waiting,
+      graph: this.graph,
+      congestionCost: this.congestionCost,
+      departureDelay: this.departureDelay,
+      weights: this.scenario.objectiveWeights,
+      utilizationThreshold: this.scenario.congestion.utilizationThreshold,
+      currentTime: this.time,
+      chargeTerminalHolds,
+      realizedDistanceOnly: !!this.scenario.evaluation,
+      satisfaction: this.scenario.satisfaction
+    });
   }
 
   private spawnDebug(count: number) {
@@ -544,7 +592,8 @@ export class SimulationEngine {
 
   private createSnapshot(): SimulationSnapshot {
     return {
-      version: 2,
+      version: 3,
+      decisionCutoffMetrics: this.getDecisionCutoffMetrics(),
       engineVersion: ENGINE_VERSION,
       scenario: this.cloneScenario(this.scenario),
       seed: this.seed,
@@ -571,10 +620,11 @@ export class SimulationEngine {
   }
 
   private restoreSnapshot(snapshot: SimulationSnapshot) {
-    if (snapshot.version !== 2 || snapshot.engineVersion !== ENGINE_VERSION) throw new Error(`Incompatible simulation snapshot: version ${snapshot.version}, engine ${snapshot.engineVersion}; expected snapshot 2 / engine ${ENGINE_VERSION}`);
+    if (snapshot.version !== 3 || snapshot.engineVersion !== ENGINE_VERSION) throw new Error(`Incompatible simulation snapshot: version ${snapshot.version}, engine ${snapshot.engineVersion}; expected snapshot 3 / engine ${ENGINE_VERSION}`);
     this.scenario = this.cloneScenario(snapshot.scenario);
     this.seed = snapshot.seed;
     this.time = snapshot.time;
+    this.decisionCutoffMetrics = snapshot.decisionCutoffMetrics ? cloneMetrics(snapshot.decisionCutoffMetrics) : null;
     this.graph = this.graphFromSnapshot(snapshot.graph);
     this.router = new Router(this.graph, this.scenario.congestion);
     this.rng = new SeededRandom(snapshot.seed);

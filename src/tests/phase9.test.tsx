@@ -30,7 +30,7 @@ class ControlledWorker {
 }
 
 const fixture: Scenario = {
-  ...mondayMorningScenario, id: "timing_fixture", seed: 7, startTime: 420, endTime: 423,
+  ...mondayMorningScenario, evaluation: undefined, id: "timing_fixture", seed: 7, startTime: 420, endTime: 423,
   graph: {
     nodes: [{ id: "o", x: 0, y: 0, type: "origin" }, { id: "d", x: 1, y: 0, type: "destination" }],
     edges: ["north_bridge", "south_bridge"].map(id => ({ id, name: id === "north_bridge" ? "North Bridge" : "South Bridge", from: "o", to: "d", lengthKm: 20, speedLimitKph: 60, comfortableCapacity: 1, maximumCapacity: 20, major: true }))

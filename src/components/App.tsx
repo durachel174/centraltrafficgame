@@ -33,7 +33,11 @@ export function App() {
   useEffect(() => {
     if (!speed || done) return;
     const interval = window.setInterval(() => {
-      for (let i = 0; i < speed; i++) step();
+      for (let i = 0; i < speed; i++) {
+        // A phase transition or tutorial observation may pause inside this group.
+        if (useGameStore.getState().speed === 0) break;
+        step();
+      }
     }, 250);
     return () => window.clearInterval(interval);
   }, [speed, step, done, version]);

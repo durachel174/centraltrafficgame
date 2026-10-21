@@ -1,16 +1,16 @@
 import { SimulationEngine } from "../simulation/core/SimulationEngine";
 import { baselineIdentity } from "../simulation/logging/Identity";
-import type { Scenario, SimulationMetrics } from "../simulation/types";
+import type { EvaluationState, Scenario, SimulationMetrics } from "../simulation/types";
 
 export interface BaselineRequest { kind: "baseline"; scenario: Scenario; seed: number; }
-export interface BaselineResponse { identity: string; metrics?: SimulationMetrics; error?: string; calculationMs: number; }
+export interface BaselineResponse { identity: string; metrics?: SimulationMetrics; evaluation?: EvaluationState; decisionCutoffMetrics?: SimulationMetrics | null; error?: string; calculationMs: number; }
 
 export function calculateBaseline({ scenario, seed }: BaselineRequest): BaselineResponse {
   const start = performance.now();
-  const engine = new SimulationEngine(scenario);
+  const engine = new SimulationEngine(scenario, undefined, true);
   engine.reset(seed);
   while (!engine.isDone()) engine.step();
-  return { identity: baselineIdentity(scenario, seed), metrics: engine.getState().metrics, calculationMs: performance.now() - start };
+  return { identity: baselineIdentity(scenario, seed), metrics: engine.getState().metrics, evaluation: engine.getEvaluation(), decisionCutoffMetrics: engine.getDecisionCutoffMetrics(), calculationMs: performance.now() - start };
 }
 
 const ctx = globalThis as unknown as { onmessage: ((event: MessageEvent<BaselineRequest>) => void) | null; postMessage: (message: BaselineResponse) => void };

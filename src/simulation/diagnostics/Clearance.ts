@@ -6,7 +6,9 @@ export function clearanceDiagnostic(source: SimulationEngine, capMinutes: number
   if (!source.isDone()) throw Error("Finish the decision window before clearance diagnostics.");
   if (!Number.isFinite(capMinutes) || capMinutes <= 0 || capMinutes % source.dtMinutes) throw Error("Clearance safety limit must be positive and tick-aligned.");
   const snapshot = source.exportSnapshot();
+  if (snapshot.scenario.evaluation) throw Error("Official evaluations already continue through clearance; do not substitute a diagnostic configuration.");
   snapshot.scenario.endTime += capMinutes;
+  snapshot.scenario.evaluation = undefined;
   snapshot.scenario.terminalHoldAccounting = false;
   snapshot.scenario.demand.curve = [{ minute: 0, tripsPerMinute: 0 }, { minute: snapshot.time + capMinutes + 1, tripsPerMinute: 0 }];
   snapshot.forecastingEnabled = false;

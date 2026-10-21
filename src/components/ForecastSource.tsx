@@ -9,9 +9,10 @@ export function useForecastDisplay() {
     sourceTime: forecastView.sourceTime, age: forecastView.sourceTime === null ? null : time - forecastView.sourceTime, maxAge };
 }
 export function ForecastSource() {
-  const { engine, scenario, forecastView, refreshForecasts } = useGameStore();
+  const { engine, scenario, forecastView, refreshForecasts, fastForwarding } = useGameStore();
   const { sourceTime, age, maxAge } = useForecastDisplay();
   if (!engine.externalForecasts) return null;
+  if (fastForwarding) return <p className="forecastSource">Forecasts refresh when you return to watching.</p>;
   return <div className="forecastSource" style={{ fontSize: 12, color: "#b8c9c1" }}>
     {engine.isDone() ? "Scenario complete; no new forecasts." : sourceTime !== null && age !== null && age <= maxAge ?
       <>Forecast source {formatClock(scenario.startTime + sourceTime)}:{String(Math.round((sourceTime % 1) * 60)).padStart(2, "0")} · {age.toFixed(2)} min old. Horizons count from now.</> :

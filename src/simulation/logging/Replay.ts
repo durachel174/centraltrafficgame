@@ -11,7 +11,7 @@ export function replayRun(scenario: Scenario, run: SimulationRun) {
   if (run.engineVersion !== ENGINE_VERSION || run.scenarioId !== scenario.id) throw new Error("Incompatible engine version or scenario for replay.");
   const completed = "schemaVersion" in run ? parseRunFile(JSON.stringify(run), scenario) : null;
   validateActionTiming(run.actions, scenario);
-  const engine = new SimulationEngine(scenario);
+  const engine = new SimulationEngine(scenario, undefined, true);
   engine.reset(run.seed);
   while (!engine.isDone()) {
     engine.step(actionForReplayTick(run, engine.getState().time + engine.dtMinutes));
