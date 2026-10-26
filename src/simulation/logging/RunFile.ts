@@ -1,6 +1,6 @@
 import { SimulationEngine } from "../core/SimulationEngine";
 import type { EvaluationState, LoggedAction, Scenario, SimulationAction, SimulationMetrics, SimulationRun, SimulationSnapshot } from "../types";
-import { canonicalJSON, checksum, configurationIdentity, DT_MINUTES, ENGINE_VERSION, RUN_SCHEMA_VERSION } from "./Identity";
+import { canonicalJSON, checksum, configurationIdentity, DT_MINUTES, engineVersionFor, RUN_SCHEMA_VERSION } from "./Identity";
 
 export interface CompletedRun extends SimulationRun {
   schemaVersion: 2;
@@ -25,6 +25,8 @@ export function validateAction(value: unknown, scenario: Scenario): asserts valu
   if (!record(value) || typeof value.type !== "string") fail("Invalid action structure.");
   const action = value as Record<string, unknown>;
   const fields: Record<string, string[]> = {
+    ROUTE_GROUP: ["type", "groupId", "corridorId"],
+    HOLD_GROUP: ["type", "groupId", "durationMinutes"],
     REROUTE: ["type", "targetEdge", "percentage", "avoidEdge"],
     DELAY_DEPARTURES: ["type", "targetEdge", "origin", "destination", "percentage", "durationMinutes"],
     RELEASE_DEPARTURES: ["type", "targetEdge", "origin", "destination"],
@@ -35,6 +37,11 @@ export function validateAction(value: unknown, scenario: Scenario): asserts valu
   const allowed = fields[action.type as string];
   if (!allowed) fail(`Unsupported action type: ${action.type}. NO_OP ticks must be omitted.`);
   keys(action, allowed, "action");
+  if (action.type === "ROUTE_GROUP" || action.type === "HOLD_GROUP") {
+    if (!scenario.departureGroups || !scenario.demand.batches?.some(b => b.id === action.groupId)) fail("Unknown or unsupported departure group.");
+    if (action.type === "ROUTE_GROUP" && !scenario.departureGroups?.corridors.some(c => c.id === action.corridorId)) fail("Unknown corridor.");
+    if (action.type === "HOLD_GROUP" && (!finite(action.durationMinutes) || action.durationMinutes <= 0 || action.durationMinutes > 1440 || action.durationMinutes % DT_MINUTES)) fail("Invalid group hold duration.");
+  }
   const edgeExists = (field: string, required = false) => {
     if (action[field] === undefined && !required) return;
     if (!scenario.graph.edges.some(edge => edge.id === action[field])) fail(`Unknown ${field} road.`);
@@ -56,11 +63,18 @@ export function validateAction(value: unknown, scenario: Scenario): asserts valu
 export function validateActionTiming(actions: LoggedAction[], scenario: Scenario) {
   const duration = scenario.endTime - scenario.startTime;
   let previous = 0;
+  const decidedGroups = new Set<string>();
   for (const entry of actions) {
     const time = entry.simulationTime;
     if (!finite(time) || time < DT_MINUTES || time > duration || Math.abs(time / DT_MINUTES - Math.round(time / DT_MINUTES)) > 1e-8) fail("Action time must be an interval-end tick inside the scenario.");
     if (time <= previous) fail("Actions must be ordered, with one action per tick. Same-tick duplicates are unsupported; none were discarded.");
     validateAction(entry.action, scenario);
+    if (entry.action.type === "ROUTE_GROUP" || entry.action.type === "HOLD_GROUP") {
+      const groupId = entry.action.groupId;
+      const batch = scenario.demand.batches!.find(b => b.id === groupId)!;
+      if (time - DT_MINUTES < batch.at + DT_MINUTES || decidedGroups.has(batch.id)) fail("Group decision must follow request generation and occur only once per group.");
+      decidedGroups.add(batch.id);
+    }
     previous = time;
   }
 }
@@ -99,8 +113,8 @@ export function parseRunFile(text: string, scenario: Scenario): CompletedRun {
   const data = input as Record<string, unknown>;
   keys(data, ["schemaVersion", "scenarioId", "scenarioVersion", "engineVersion", "configurationIdentity", "seed", "startedAt", "exportedAt", "actions", "finalMetrics", "finalStateChecksum", "evaluation", "decisionCutoffMetrics"], "run");
   if (data.schemaVersion !== RUN_SCHEMA_VERSION) fail("Unsupported run schema version. Older formats are not converted automatically.");
-  if (data.engineVersion !== ENGINE_VERSION) fail("Incompatible engine version.");
-  if (data.scenarioId !== scenario.id || data.scenarioVersion !== (scenario.version ?? 1)) fail("Incompatible scenario ID or version. Only this Monday Morning challenge is supported.");
+  if (data.engineVersion !== engineVersionFor(scenario)) fail("Incompatible engine version.");
+  if (data.scenarioId !== scenario.id || data.scenarioVersion !== (scenario.version ?? 1)) fail("Incompatible scenario ID or version. Only the selected challenge configuration is supported.");
   if (data.configurationIdentity !== configurationIdentity(scenario)) fail("Incompatible scenario configuration or objective weights.");
   if (!Number.isInteger(data.seed) || (data.seed as number) < 1 || (data.seed as number) > 0xffffffff) fail("Seed must be an integer from 1 to 4294967295.");
   for (const field of ["startedAt", "exportedAt"]) if (typeof data[field] !== "string" || !Number.isFinite(Date.parse(data[field] as string))) fail(`Invalid ${field} timestamp.`);

@@ -1,3 +1,4 @@
+import { twoBridgesScenario } from "../simulation/scenarios/TwoBridges";
 import { runTickBatches } from "./TickBatchRunner";
 import { ForecastScheduler, emptyForecast, forecastMaxAge, type ForecastView } from "./ForecastScheduler";
 import { recordBrowserTiming } from "../performance/Recorder";
@@ -14,7 +15,7 @@ import type { ActionPreview, EvaluationState, LoggedAction, Scenario, Simulation
 import type { PreviewWorkerRequest, PreviewWorkerResponse } from "../workers/previewWorker";
 
 export type Speed = 0 | 1 | 2 | 4;
-export type ScenarioMode = "practice" | "monday";
+export type ScenarioMode = "practice" | "monday" | "twoBridges";
 export type TutorialStep =
   | "intro"
   | "select"
@@ -103,6 +104,7 @@ interface GameStore {
 
 const scenarioByMode: Record<ScenarioMode, Scenario> = {
   practice: practiceScenario,
+  twoBridges: twoBridgesScenario,
   monday: mondayMorningScenario
 };
 
@@ -252,7 +254,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingImport: null,
   importError: null,
   importRun: (text) => {
-    try { set({ pendingImport: parseRunFile(text, mondayMorningScenario), importError: null }); }
+    try { set({ pendingImport: parseRunFile(text, get().scenarioMode === "twoBridges" ? twoBridgesScenario : mondayMorningScenario), importError: null }); }
     catch (error) { set({ pendingImport: null, importError: error instanceof Error ? error.message : String(error) }); }
   },
   cancelImport: () => set({ pendingImport: null, importError: null }),
@@ -261,9 +263,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!run) return;
     // Validate even in-memory runs, so replay never silently accepts a stale configuration.
     let validated: CompletedRun;
-    try { validated = parseRunFile(JSON.stringify(run), mondayMorningScenario); }
+    try { validated = parseRunFile(JSON.stringify(run), run.scenarioId === twoBridgesScenario.id ? twoBridgesScenario : mondayMorningScenario); }
     catch (error) { set({ importError: error instanceof Error ? error.message : String(error) }); return; }
-    get().setScenarioMode("monday", validated.seed);
+    get().setScenarioMode(validated.scenarioId === twoBridgesScenario.id ? "twoBridges" : "monday", validated.seed);
     set({ speed: 0, completedRun: validated, replay: { run: validated, verification: "pending", error: null }, pendingImport: null });
   },
   retrySameSeed: () => { get().setScenarioMode(get().scenarioMode, get().seed); },
@@ -352,7 +354,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       previewCanceled: false,
       lastActionNotice: null,
       help: { open: false, confirmingReplay: false, previousSpeed: null },
-      tutorial: scenarioMode === "monday" ? completeTutorial() : initialTutorial(!completed, completed)
+      tutorial: scenarioMode !== "practice" ? completeTutorial() : initialTutorial(!completed, completed)
     });
     get().computeBaseline();
     get().refreshForecasts(true);
@@ -380,7 +382,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const beforePhase = engine.getEvaluation().phase;
     const beforeEvents = engine.getInfo().activeEventIds;
     const result = engine.step(applied);
-    if (result.info.actionRejected) return;
+    if (result.info.actionRejected) {
+      if (replay) set({ speed: 0, replay: { ...replay, verification: "failed", error: `Replay action rejected: ${result.info.actionRejected}` } });
+      return;
+    }
     const phaseChanged = beforePhase !== engine.getEvaluation().phase;
     if (phaseChanged) { stopActiveWorker(); requestCounter++; previewCache.clear(); forecastScheduler?.reset(); }
     const afterEvents = engine.getInfo().activeEventIds;
@@ -392,7 +397,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const done = engine.isDone();
     const finalizationStart = recordBrowserTiming ? performance.now() : 0;
     const verificationError = done && replay ? verifyCompletedRun(engine, replay.run) : null;
-    const completedRun = done && !replay && get().scenarioMode === "monday" ? createCompletedRun(engine) : get().completedRun;
+    const completedRun = done && !replay && get().scenarioMode !== "practice" ? createCompletedRun(engine) : get().completedRun;
     if (done) recordBrowserTiming?.("finalizeRun", performance.now() - finalizationStart);
     set((state) => {
       const elapsed = state.tutorial.observedFromTime === null ? 0 : get().engine.getObservation().time - state.tutorial.observedFromTime;
@@ -461,7 +466,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   computeBaseline: () => {
     const { scenario, seed, scenarioMode } = get();
-    if (scenarioMode !== "monday") return;
+    if (scenarioMode === "practice") return;
     const identity = baselineIdentity(scenario, seed);
     if (get().baseline.identity === identity && (get().baseline.status === "ready" || (get().baseline.status === "loading" && activeBaselineWorker))) return;
     stopBaselineWorker();
@@ -530,7 +535,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         baseVersion: version,
         baseSessionId: sessionId,
         requestId,
-        targetEdgeId: targetEdgeForAction(copiedAction),
+        targetEdgeId: copiedAction.type === "ROUTE_GROUP" ? get().scenario.departureGroups?.corridors.find(c => c.id === copiedAction.corridorId)?.viaEdge ?? null : targetEdgeForAction(copiedAction),
         error: null,
         timings: null
       }

@@ -45,6 +45,15 @@ export class DemandGenerator {
         passengerTolerance: minTolerance + this.rng.next() * (maxTolerance - minTolerance)
       });
     }
+    for (const batch of this.config.batches ?? []) {
+      if (batch.at < relativeMinute - dtMinutes || batch.at >= relativeMinute) continue;
+      const [min, max] = this.config.passengerTolerance;
+      for (let i = 0; i < batch.size; i++) trips.push({
+        id: `trip_${this.nextId++}`, groupId: batch.id, origin: batch.origin, destination: batch.destination,
+        requestedDepartureTime: relativeMinute, availableAt: relativeMinute + batch.decisionMinutes,
+        passengerTolerance: min + this.rng.next() * (max - min)
+      });
+    }
     return trips;
   }
 

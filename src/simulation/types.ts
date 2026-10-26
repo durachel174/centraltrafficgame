@@ -12,6 +12,7 @@ export interface EvaluationState {
 }
 
 export interface Vehicle {
+  groupId?: string;
   id: string;
   origin: string;
   destination: string;
@@ -32,6 +33,10 @@ export interface Vehicle {
 }
 
 export interface TripRequest {
+  groupId?: string;
+  availableAt?: number;
+  groupDecided?: boolean;
+  assignedCorridor?: string;
   id: string;
   origin: string;
   destination: string;
@@ -103,6 +108,8 @@ export interface TrafficAlert {
 }
 
 export type SimulationAction =
+  | { type: "ROUTE_GROUP"; groupId: string; corridorId: string }
+  | { type: "HOLD_GROUP"; groupId: string; durationMinutes: number }
   | { type: "NO_OP" }
   | { type: "REROUTE"; targetEdge: string; percentage: number; avoidEdge?: string }
   | { type: "DELAY_DEPARTURES"; destination?: string; origin?: string; targetEdge?: string; durationMinutes: number; percentage: number }
@@ -192,7 +199,10 @@ export interface DemandPoint {
   tripsPerMinute: number;
 }
 
+export interface DepartureBatch { id: string; label: string; at: number; size: number; origin: string; destination: string; decisionMinutes: number }
+
 export interface DemandConfig {
+  batches?: DepartureBatch[];
   curve: DemandPoint[];
   pairs: DemandPair[];
   passengerTolerance: [number, number];
@@ -209,6 +219,7 @@ export interface ScenarioEvent {
 }
 
 export interface Scenario {
+  departureGroups?: { version: 1; corridors: { id: string; label: string; viaEdge: string }[]; arrivalDeadline: number };
   /** endTime remains the decision/demand cutoff. Omit for fixed-window practice/fixtures. */
   evaluation?: { maxClearanceMinutes: number };
   version?: number;

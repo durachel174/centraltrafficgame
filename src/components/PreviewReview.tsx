@@ -19,12 +19,12 @@ export function PreviewReview() {
   const active = preview.status !== "idle";
   useLayoutEffect(() => {
     if (active && !previousActive.current) {
-      origin.current = preview.action?.type === "DELAY_DEPARTURES" ? "preview-hold" : "preview-reroute";
+      origin.current = preview.action?.type === "ROUTE_GROUP" ? `preview-group-${preview.action.corridorId}` : preview.action?.type === "DELAY_DEPARTURES" || preview.action?.type === "HOLD_GROUP" ? "preview-hold" : "preview-reroute";
       review.current?.focus();
     } else if (active && document.activeElement === document.body) {
       review.current?.focus();
     } else if (!active && previousActive.current && document.activeElement === document.body) {
-      document.getElementById(origin.current ?? "road-selector")?.focus();
+      (document.getElementById(origin.current ?? "road-selector") ?? document.getElementById("bay-resume"))?.focus();
     }
     previousActive.current = active;
   }, [active, preview.action, preview.status]);
@@ -35,6 +35,8 @@ export function PreviewReview() {
   const roadName = (id: string) => graph.edges.get(id)?.name ?? id.replaceAll("_", " ");
   const actionLabel = action?.type === "REROUTE" ? `Reroute ${action.percentage * 100}%`
     : action?.type === "DELAY_DEPARTURES" ? `Hold ${(action.percentage ?? 1) * 100}% of eligible waiting trips for ${action.durationMinutes} min`
+    : action?.type === "ROUTE_GROUP" ? `Send ${scenario.demand.batches?.find(b => b.id === action.groupId)?.label ?? action.groupId} via ${action.corridorId}`
+    : action?.type === "HOLD_GROUP" ? `Hold ${scenario.demand.batches?.find(b => b.id === action.groupId)?.label ?? action.groupId} for ${action.durationMinutes} min`
     : action?.type.replaceAll("_", " ") ?? "Action";
   const selected = result?.forecastChanges.find(change => change.edgeId === preview.targetEdgeId && Math.abs(change.actualHorizonMinutes - result.horizonMinutes) < 0.000001)
     ?? result?.forecastChanges.find(change => change.edgeId === preview.targetEdgeId && change.requestedHorizonMinutes === result.requestedHorizonMinutes);

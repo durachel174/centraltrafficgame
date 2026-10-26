@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useGameStore } from "../game/GameStore";
 
 export function RunFiles() {
-  const { completedRun, replay, pendingImport, importError, importRun, cancelImport, startReplay, tutorial, preview } = useGameStore();
+  const { completedRun, replay, pendingImport, importError, importRun, cancelImport, startReplay, tutorial, preview, scenarioMode } = useGameStore();
   const id = useId();
   const readToken = useRef(0);
   useEffect(() => { readToken.current++; setReadError(null); }, [preview.baseSessionId]);
@@ -20,7 +20,7 @@ export function RunFiles() {
   };
   return <div className="runFiles">
     {completedRun && <button onClick={exportRun} disabled={!!replay && replay.verification !== "verified"}>Export Completed Run JSON</button>}
-    <label htmlFor={id}>Import Monday Morning run (local JSON)</label>
+    <label htmlFor={id}>Import {scenarioMode === "twoBridges" ? "Two Bridges" : "Monday Morning"} run (local JSON)</label>
     <input id={id} type="file" accept=".json,application/json" onChange={async event => {
       const file = event.currentTarget.files?.[0];
       event.currentTarget.value = "";

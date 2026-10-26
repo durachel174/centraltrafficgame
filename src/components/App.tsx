@@ -1,3 +1,4 @@
+import { TwoBridgesChallenge } from "./TwoBridgesChallenge";
 import { PerformancePanel } from "./PerformancePanel";
 import { useEffect } from "react";
 import { ChevronDown, Gauge, HelpCircle, Pause, Play, RotateCcw, Wrench } from "lucide-react";
@@ -41,6 +42,8 @@ export function App() {
     }, 250);
     return () => window.clearInterval(interval);
   }, [speed, step, done, version]);
+
+  if (useGameStore.getState().scenarioMode === "twoBridges") return <TwoBridgesChallenge />;
 
   return (
     <div className={`appShell tutorialStep-${tutorial.active ? tutorial.step : "off"}`}>

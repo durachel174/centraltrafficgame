@@ -2,6 +2,8 @@ import type { Scenario } from "../types";
 
 // Bump when deterministic state, scoring, or run/log semantics change.
 export const ENGINE_VERSION = "0.5.0";
+// Additive, configuration-gated action extension. Monday/practice retain 0.5.0.
+export const engineVersionFor = (scenario: Scenario) => scenario.departureGroups ? `${ENGINE_VERSION}+groups.1` : ENGINE_VERSION;
 export const RUN_SCHEMA_VERSION = 2;
 export const DT_MINUTES = 0.25;
 
@@ -27,7 +29,7 @@ export function checksum(value: unknown): string {
 
 export function configurationIdentity(scenario: Scenario): string {
   const { seed: _seed, ...config } = scenario;
-  return `${ENGINE_VERSION}:${scenario.id}:${scenario.version ?? 1}:${checksum(config)}`;
+  return `${engineVersionFor(scenario)}:${scenario.id}:${scenario.version ?? 1}:${checksum(config)}`;
 }
 
 export const baselineIdentity = (scenario: Scenario, seed: number) => `${configurationIdentity(scenario)}:seed=${seed}`;

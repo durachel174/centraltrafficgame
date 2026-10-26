@@ -3,7 +3,7 @@ import { TrafficGraph } from "../network/TrafficGraph";
 import { Router, type RoutingContext } from "../network/Router";
 import { travelTime, utilization } from "../traffic/CongestionModel";
 import { DemandGenerator } from "../traffic/DemandGenerator";
-import { ENGINE_VERSION } from "../logging/Identity";
+import { engineVersionFor } from "../logging/Identity";
 import { calculateMetrics, cloneMetrics } from "../scoring/Metrics";
 import { createAlerts } from "../forecasting/TrafficPredictor";
 import type {
@@ -55,6 +55,13 @@ export class SimulationEngine {
     const duration = scenario.endTime - scenario.startTime;
     const cap = scenario.evaluation?.maxClearanceMinutes;
     if (!Number.isFinite(duration) || duration <= 0 || duration % this.dtMinutes || (cap !== undefined && (!Number.isFinite(cap) || cap <= 0 || cap % this.dtMinutes))) throw Error("Decision duration and clearance limit must be positive and tick-aligned.");
+    if (scenario.demand.batches?.length && !scenario.departureGroups) throw Error("Scheduled departure batches require the groups extension.");
+    if (scenario.departureGroups) {
+      const batches = scenario.demand.batches ?? [], ids = new Set(batches.map(b => b.id));
+      if (scenario.departureGroups.version !== 1 || ids.size !== batches.length || !Number.isFinite(scenario.departureGroups.arrivalDeadline) || scenario.departureGroups.arrivalDeadline < scenario.endTime || scenario.departureGroups.arrivalDeadline > scenario.endTime + (cap ?? 0)
+        || batches.some(b => !b.id || !Number.isInteger(b.size) || b.size < 1 || b.size > 5000 || !Number.isFinite(b.at) || b.at < 0 || b.at >= duration || b.at % this.dtMinutes || !Number.isFinite(b.decisionMinutes) || b.decisionMinutes < 0 || b.decisionMinutes % this.dtMinutes || !scenario.graph.nodes.some(n => n.id === b.origin) || !scenario.graph.nodes.some(n => n.id === b.destination))
+        || new Set(scenario.departureGroups.corridors.map(c => c.id)).size !== scenario.departureGroups.corridors.length || scenario.departureGroups.corridors.some(c => !c.id || !scenario.graph.edges.some(e => e.id === c.viaEdge))) throw Error("Invalid departure-group configuration.");
+    }
     this.graph = new TrafficGraph(scenario.graph);
     this.rng = new SeededRandom(scenario.seed ?? 1);
     this.router = new Router(this.graph, scenario.congestion);
@@ -94,6 +101,8 @@ export class SimulationEngine {
     if (action.type !== "NO_OP" && !this.decisionsOpen()) {
       return { observation: this.getObservation(), reward: 0, done: this.isDone(), info: { ...this.getInfo(), actionRejected: "Decisions are closed. Only NO_OP evaluation ticks are accepted." } };
     }
+    const groupError = this.groupActionError(action);
+    if (groupError) return { observation: this.getObservation(), reward: 0, done: this.isDone(), info: { ...this.getInfo(), actionRejected: groupError } };
     if (this.isDone()) {
       return { observation: this.getObservation(), reward: 0, done: true, info: this.getInfo() };
     }
@@ -214,6 +223,8 @@ export class SimulationEngine {
 
   previewAction(action: SimulationAction): ActionPreview {
     if (!this.decisionsOpen()) throw Error("Decisions are closed; action previews are unavailable during clearance.");
+    const groupError = this.groupActionError(action);
+    if (groupError) throw Error(groupError);
     this.validateForecastConfig();
     const requestedHorizon = this.scenario.forecast?.previewHorizonMinutes ?? 15;
     const forecastHorizons = this.scenario.forecast?.horizonsMinutes ?? ([5, 10, 15] as [number, number, number]);
@@ -291,7 +302,7 @@ export class SimulationEngine {
       decisionCutoffMetrics: this.getDecisionCutoffMetrics(),
       scenarioId: this.scenario.id,
       seed: this.seed,
-      engineVersion: ENGINE_VERSION,
+      engineVersion: engineVersionFor(this.scenario),
       startedAt: new Date(0).toISOString(),
       actions: this.actionLog.map((entry) => ({
         ...entry,
@@ -324,7 +335,40 @@ export class SimulationEngine {
     }
   }
 
+  /** Resolve a generic mandatory corridor edge, never a bridge-specific rule. */
+  groupRoute(trip: Pick<TripRequest, "origin" | "destination">, corridorId: string): string[] {
+    const corridor = this.scenario.departureGroups?.corridors.find(c => c.id === corridorId);
+    if (!corridor) return [];
+    const edge = this.graph.edge(corridor.viaEdge);
+    if (edge.closed) return [];
+    const before = this.router.findRoute(trip.origin, edge.from), after = this.router.findRoute(edge.to, trip.destination);
+    if ((trip.origin !== edge.from && !before.length) || (trip.destination !== edge.to && !after.length)) return [];
+    const route = [...before, edge.id, ...after];
+    const nodes = [trip.origin, ...route.map(id => this.graph.edge(id).to)];
+    return new Set(nodes).size === nodes.length ? route : [];
+  }
+
+  private groupActionError(action: SimulationAction): string | null {
+    if (action.type !== "ROUTE_GROUP" && action.type !== "HOLD_GROUP") return null;
+    if (!this.scenario.departureGroups) return "Departure groups are unavailable in this scenario.";
+    const trips = this.waiting.filter(t => t.groupId === action.groupId && !t.groupDecided);
+    if (!trips.length) return "This group has no pending undecided requests. Select another group.";
+    if (action.type === "HOLD_GROUP" && (!Number.isFinite(action.durationMinutes) || action.durationMinutes <= 0 || action.durationMinutes > 1440 || action.durationMinutes % this.dtMinutes)) return "Hold duration must be positive, tick-aligned and at most 1440 minutes.";
+    if (action.type === "ROUTE_GROUP" && trips.some(t => !this.groupRoute(t, action.corridorId).length)) return "This corridor is unavailable for the selected group.";
+    return null;
+  }
+
   private applyAction(action: SimulationAction): number {
+    if (action.type === "ROUTE_GROUP" || action.type === "HOLD_GROUP") {
+      const trips = this.waiting.filter(t => t.groupId === action.groupId && !t.groupDecided);
+      for (const trip of trips) {
+        trip.groupDecided = true;
+        trip.availableAt = this.time;
+        if (action.type === "ROUTE_GROUP") trip.assignedCorridor = action.corridorId;
+        else trip.heldUntil = this.time + action.durationMinutes;
+      }
+      return trips.length;
+    }
     if (action.type === "NO_OP") return 0;
     if (action.type === "REROUTE") return this.reroute(action.targetEdge, action.percentage, action.avoidEdge ?? action.targetEdge);
     if (action.type === "DELAY_DEPARTURES") {
@@ -405,15 +449,15 @@ export class SimulationEngine {
     const routes = new Map<string, string[]>();
     const freeFlowRoutes = new Map<string, string[]>();
     for (const trip of this.waiting) {
-      if ((trip.heldUntil ?? -1) > this.time) {
+      if ((trip.heldUntil ?? -1) > this.time || (trip.availableAt ?? -1) > this.time) {
         remaining.push(trip);
         continue;
       }
       const context: RoutingContext = {};
-      const key = JSON.stringify([trip.origin, trip.destination]);
+      const key = JSON.stringify([trip.origin, trip.destination, trip.assignedCorridor]);
       let route = routes.get(key);
       if (!route) {
-        route = this.router.findRoute(trip.origin, trip.destination, context);
+        route = trip.assignedCorridor ? this.groupRoute(trip, trip.assignedCorridor) : this.router.findRoute(trip.origin, trip.destination, context);
         routes.set(key, route);
       }
       if (!route.length || !this.canEnter(route[0])) {
@@ -451,6 +495,7 @@ export class SimulationEngine {
         rerouteCount: 0,
         distanceKm: 0
       };
+      if (trip.groupId) vehicle.groupId = trip.groupId;
       this.vehicles.push(vehicle);
       this.graph.edge(route[0]).currentVehicleCount += 1;
       routes.clear();
@@ -594,7 +639,7 @@ export class SimulationEngine {
     return {
       version: 3,
       decisionCutoffMetrics: this.getDecisionCutoffMetrics(),
-      engineVersion: ENGINE_VERSION,
+      engineVersion: engineVersionFor(this.scenario),
       scenario: this.cloneScenario(this.scenario),
       seed: this.seed,
       time: this.time,
@@ -620,7 +665,7 @@ export class SimulationEngine {
   }
 
   private restoreSnapshot(snapshot: SimulationSnapshot) {
-    if (snapshot.version !== 3 || snapshot.engineVersion !== ENGINE_VERSION) throw new Error(`Incompatible simulation snapshot: version ${snapshot.version}, engine ${snapshot.engineVersion}; expected snapshot 3 / engine ${ENGINE_VERSION}`);
+    if (snapshot.version !== 3 || snapshot.engineVersion !== engineVersionFor(snapshot.scenario)) throw new Error(`Incompatible simulation snapshot: version ${snapshot.version}, engine ${snapshot.engineVersion}; expected snapshot 3 / engine ${engineVersionFor(snapshot.scenario)}`);
     this.scenario = this.cloneScenario(snapshot.scenario);
     this.seed = snapshot.seed;
     this.time = snapshot.time;
@@ -777,7 +822,9 @@ export class SimulationEngine {
         nodes: scenario.graph.nodes.map((node) => ({ ...node })),
         edges: scenario.graph.edges.map((edge) => ({ ...edge }))
       },
+      ...(scenario.departureGroups ? { departureGroups: { ...scenario.departureGroups, corridors: scenario.departureGroups.corridors.map(c => ({ ...c })) } } : {}),
       demand: {
+        ...(scenario.demand.batches ? { batches: scenario.demand.batches.map(b => ({ ...b })) } : {}),
         curve: scenario.demand.curve.map((point) => ({ ...point })),
         pairs: scenario.demand.pairs.map((pair) => ({ ...pair })),
         passengerTolerance: [...scenario.demand.passengerTolerance]

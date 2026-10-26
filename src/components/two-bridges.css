@@ -1,0 +1,584 @@
+.twoBridges {
+  --ink:#2d4439;
+  --paper:#f7f1df;
+  --accent:#31594b;
+  background:#eee9d7;
+  color:var(--ink);
+  min-height:100vh;
+  padding:24px 32px 28px;
+  font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+  color-scheme:light
+}
+.twoBridges * {
+  box-sizing:border-box
+}
+.twoBridges button {
+  background:#faf5e7;
+  border:1px solid #9b9e82;
+  color:#2d4439;
+  border-radius:10px;
+  padding:10px 15px;
+  cursor:pointer;
+  font-weight:650;
+  box-shadow:0 2px 0 #c7c4ac
+}
+.twoBridges button:hover {
+  background:#e3e7cc
+}
+.twoBridges button:focus-visible,.twoBridges [tabindex]:focus-visible,.twoBridges summary:focus-visible {
+  outline:3px solid #954927;
+  outline-offset:4px
+}
+.twoBridges button:disabled {
+  opacity:.55;
+  cursor:not-allowed
+}
+.twoBridges button[aria-pressed=true],.twoBridges .bayIntro button {
+  background:#31594b;
+  color:#fff9e9;
+  border-color:#31594b
+}
+.bayEyebrow {
+  font-size:10px;
+  font-weight:750;
+  letter-spacing:2px;
+  color:#52624a
+}
+.bayHeader {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding-bottom:20px
+}
+.bayHeader h1 {
+  font-family:Georgia,serif;
+  font-size:36px;
+  letter-spacing:-1.2px;
+  margin:6px 0 0
+}
+.bayHeader h1 span {
+  display:block;
+  font:10px ui-sans-serif,system-ui;
+  letter-spacing:2px;
+  margin-top:9px;
+  color:#63715b
+}
+.bayHeader>button {
+  box-shadow:none;
+  background:transparent
+}
+.bayStatus {
+  display:grid;
+  grid-template-columns:1fr 1fr 1.4fr;
+  gap:20px;
+  border-top:1px solid #bbc1a6;
+  border-bottom:1px solid #bbc1a6;
+  padding:14px 0;
+  margin-bottom:16px
+}
+.bayStatus>div {
+  display:flex;
+  flex-direction:column;
+  gap:5px
+}
+.bayStatus strong {
+  font-size:19px
+}
+.bayStatus span,.bayStatus small {
+  font-size:12px;
+  font-weight:450
+}
+.bayTable {
+  position:relative;
+  min-height:570px;
+  isolation:isolate
+}
+.bayMap {
+  position:relative;
+  border:1px solid #aeb69b;
+  border-radius:25px;
+  overflow:hidden;
+  box-shadow:0 16px 35px #44583b18
+}
+.bayMap>svg {
+  display:block;
+  width:100%;
+  max-height:790px
+}
+.bayVehicles {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none
+}
+.bayWaterLabel {
+  font:13px Georgia,serif;
+  letter-spacing:7px;
+  fill:#426d66;
+  opacity:.8;
+  text-anchor:middle
+}
+.bayDistrict {
+  font:700 12px ui-sans-serif,system-ui;
+  letter-spacing:2px;
+  text-anchor:middle;
+  fill:#3d5546
+}
+.bayBridgeLabels rect {
+  fill:#f5efd9;
+  stroke:#9fa689;
+  stroke-width:1
+}
+.bayBridgeLabels text {
+  fill:#3e5144;
+  font:700 9px ui-sans-serif,system-ui;
+  letter-spacing:.5px;
+  text-anchor:middle
+}
+.bayIntro {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:min(440px,85%);
+  padding:30px;
+  background:#fff8e8f7;
+  border:1px solid #9ca786;
+  box-shadow:0 14px 40px #334c3533;
+  border-radius:18px
+}
+.bayIntro h2 {
+  font:32px Georgia,serif;
+  margin:12px 0
+}
+.bayIntro p {
+  font-size:14px;
+  line-height:1.6
+}
+.bayIntro small {
+  display:block;
+  font-size:11px;
+  margin-top:15px;
+  line-height:1.5
+}
+.bayDepartures {
+  position:absolute;
+  bottom:18px;
+  left:18px;
+  max-width:500px;
+  background:#fff8e9f5;
+  box-shadow:0 6px 20px #42523420;
+  border:1px solid #b0b594;
+  border-radius:16px;
+  padding:18px
+}
+.bayDepartures h2 {
+  font:24px Georgia,serif;
+  margin:14px 0 8px
+}
+.bayDepartures h2 small {
+  display:block;
+  font:12px ui-sans-serif,system-ui;
+  margin-top:7px
+}
+.bayDepartures p {
+  font-size:13px;
+  line-height:1.6;
+  margin:9px 0
+}
+.bayDepartures>small {
+  display:block;
+  font-size:11px;
+  line-height:1.5;
+  margin-top:12px
+}
+.bayGroupChoices {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px
+}
+.bayGroupChoices:empty {
+  display:none
+}
+.bayGroupChoices small,.bayRouteButtons small {
+  display:block;
+  font-size:11px;
+  font-weight:450;
+  margin-top:6px;
+  line-height:1.4
+}
+.bayRouteButtons {
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  margin-top:12px
+}
+.twoBridges .bayRouteButtons button {
+  padding:10px;
+  font-size:12px;
+  text-align:left
+}
+.bayReview {
+  position:absolute;
+  right:18px;
+  top:18px;
+  width:360px;
+  max-height:calc(100% - 36px);
+  overflow:auto;
+  background:var(--paper);
+  box-shadow:0 8px 25px #263f3138;
+  border:1px solid #9ba47f;
+  border-radius:16px;
+  padding:18px;
+  z-index:2
+}
+.twoBridges .previewDialog {
+  background:transparent;
+  border:0;
+  margin:0;
+  padding:0;
+  font-size:12px;
+  color:var(--ink)
+}
+.twoBridges .previewDialog p {
+  line-height:1.5
+}
+.twoBridges .statGrid {
+  grid-template-columns:1.2fr 1fr;
+  gap:8px
+}
+.twoBridges .statGrid span {
+  color:#4a604f
+}
+.twoBridges .previewDialog strong {
+  color:#2a4538
+}
+.twoBridges .otherRoads {
+  color:#3a5447
+}
+.twoBridges .previewActions {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:15px
+}
+.bayToolbar {
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:14px 0
+}
+.bayToolbar>span {
+  margin-left:auto;
+  font-size:12px
+}
+.bayFeedback {
+  font-size:12px;
+  padding:13px 0 0;
+  min-height:32px;
+  color:#3c5343
+}
+.twoBridges .panel,.twoBridges .bayDetails {
+  background:#faf5e7;
+  color:#2d4439;
+  border:1px solid #b5bba0;
+  border-radius:12px;
+  padding:14px
+}
+.bayDetails>summary {
+  cursor:pointer;
+  font-size:12px
+}
+.bayDetails .panel {
+  margin:10px 0
+}
+.bayMotionNote {
+  position:absolute;
+  top:8px;
+  left:20px;
+  font-size:10px;
+  background:#f7f1df;
+  padding:5px
+}
+.twoBridges .modalBackdrop {
+  background:#24382a77
+}
+.twoBridges .bayResults {
+  color:#2d4439;
+  background:#faf4e3;
+  border:1px solid #879578;
+  width:min(640px,calc(100vw - 30px));
+  padding:28px;
+  border-radius:18px;
+  max-height:calc(100vh - 32px);
+  overflow:auto
+}
+.bayResults h2 {
+  font:32px Georgia,serif
+}
+.bayResults p {
+  line-height:1.6
+}
+.bayResults button {
+  margin:5px
+}
+.twoBridges .helpPanel {
+  background:#faf4e3;
+  color:#2d4439;
+  border-color:#9fa88a
+}
+.twoBridges .muted,.twoBridges .helpPanel p {
+  color:#405746
+}
+.twoBridges .runFiles {
+  margin-top:15px
+}
+.bayHub {
+  position:absolute;
+  transform:translate(-50%,-50%);
+  max-width:180px;
+  font-size:11px!important;
+  padding:6px 9px!important;
+  box-shadow:0 4px 12px #30493144!important
+}
+.bayHub small {
+  display:block;
+  font-size:10px;
+  margin-top:4px
+}
+@media(min-width:1550px) {
+  .twoBridges {
+    max-width:1550px;
+    margin:auto
+  }
+  .bayMap>svg {
+    max-height:850px
+  }
+}
+@media(max-width:1100px) {
+  .twoBridges {
+    padding:18px
+  }
+  .bayHeader h1 {
+    font-size:30px
+  }
+  .bayDepartures {
+    position:relative;
+    left:auto;
+    bottom:auto;
+    max-width:none;
+    margin-top:12px
+  }
+  .bayReview {
+    position:relative;
+    top:auto;
+    right:auto;
+    width:auto;
+    max-height:none;
+    margin-top:12px
+  }
+  .bayTable {
+    min-height:0
+  }
+  .bayStatus {
+    grid-template-columns:1fr 1fr
+  }
+  .bayStatus>div:last-child {
+    grid-column:1/-1
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .twoBridges * {
+    animation:none!important;
+    transition:none!important
+  }
+}
+/* Keep both crossings visible on a desktop;
+one action tray below the city. */
+.bayTable {
+  min-height:0
+}
+.bayMap>svg {
+  height:clamp(350px,calc(100vh - 335px),640px);
+  max-height:none
+}
+.bayIntro {
+  padding:22px;
+  width:min(430px,85%)
+}
+.bayIntro h2 {
+  font-size:27px
+}
+.bayIntro p {
+  font-size:13px;
+  margin:8px 0
+}
+.bayIntro small {
+  margin-top:9px;
+  font-size:10px
+}
+.bayDepartures {
+  position:relative;
+  bottom:auto;
+  left:auto;
+  max-width:none;
+  margin-top:10px;
+  padding:13px 16px;
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(320px,1.5fr);
+  column-gap:20px;
+  align-items:start
+}
+.bayDepartures>.bayEyebrow,.bayGroupChoices,.bayDepartures>h2 {
+  grid-column:1
+}
+.bayDepartures>h2 {
+  font-size:21px;
+  margin:8px 0
+}
+.bayDepartures>p,.bayDepartures>small {
+  grid-column:2;
+  font-size:11px;
+  margin:3px 0
+}
+.bayDepartures .bayRouteButtons {
+  grid-column:2;
+  grid-row:2/span 2;
+  margin:0
+}
+.bayGroupChoices {
+  margin-top:8px
+}
+.bayGroupChoices button {
+  font-size:11px;
+  padding:7px 10px
+}
+.bayTable:has(.bayReview) {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 350px;
+  gap:12px;
+  align-items:start
+}
+.bayTable:has(.bayReview) .bayMap {
+  grid-column:1;
+  grid-row:1
+}
+.bayTable:has(.bayReview) .bayDepartures {
+  grid-column:1;
+  grid-row:2;
+  margin:0
+}
+.bayReview {
+  position:relative;
+  top:auto;
+  right:auto;
+  width:auto;
+  max-height:640px;
+  grid-column:2;
+  grid-row:1/span 2;
+  padding:16px
+}
+.bayFeedback {
+  padding-top:9px
+}
+.bayToolbar {
+  padding:10px 0
+}
+.bayHub {
+  z-index:1
+}
+.bayReview {
+  z-index:2
+}
+@media(max-width:1100px) {
+  .bayTable:has(.bayReview) {
+    display:block
+  }
+  .bayReview {
+    margin-top:10px;
+    max-height:none
+  }
+  .bayDepartures {
+    display:block
+  }
+  .bayDepartures .bayRouteButtons {
+    margin-top:12px
+  }
+  .bayMap>svg {
+    height:390px
+  }
+}
+@media(max-height:760px) and (min-width:1101px) {
+  .twoBridges {
+    padding-top:16px
+  }
+  .bayHeader {
+    padding-bottom:12px
+  }
+  .bayHeader h1 {
+    font-size:30px
+  }
+  .bayStatus {
+    padding:10px 0;
+    margin-bottom:12px
+  }
+  .bayMap>svg {
+    height:350px
+  }
+  .bayReview {
+    max-height:550px
+  }
+}
+.bayMap>svg {
+  height:clamp(350px,calc(100vh - 335px),500px)
+}
+.bayTable:has(.bayReview) .bayMap>svg {
+  height:clamp(280px,calc((100vw - 450px)*.36),400px)
+}
+.bayBridgeLabels text {
+  font-size:10px
+}
+.bayDistrict {
+  font-size:11px
+}
+.bayWaterLabel {
+  font-size:11px;
+  letter-spacing:4px
+}
+.twoBridges p,.twoBridges .previewDialog p {
+  color:#405746
+}
+.twoBridges small {
+  color:#52634c
+}
+.twoBridges .bayIntro button small,.twoBridges button[aria-pressed=true] small {
+  color:#fff9e9
+}
+.twoBridges .previewDialog .preview {
+  background:#e4e6cd;
+  color:#2d4439
+}
+.twoBridges .previewActions button {
+  width:auto;
+  flex:1
+}
+.twoBridges .previewDialog .previewActions {
+  display:flex;
+  flex-wrap:nowrap
+}
+.twoBridges .previewDialog details {
+  font-size:11px
+}
+.twoBridges .previewDialog p {
+  margin:5px 0
+}
+.twoBridges .previewDialog {
+  gap:7px
+}
+.twoBridges .bayRouteButtons small {
+  color:#52634c
+}

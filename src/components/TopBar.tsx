@@ -19,6 +19,7 @@ export function TopBar() {
       <div className="scenarioSwitch" aria-label="Scenario">
         <button className={scenarioMode === "practice" ? "active" : ""} onClick={startFreePractice}>Practice</button>
         <button className={scenarioMode === "monday" ? "active" : ""} onClick={() => setScenarioMode("monday")}>Monday Morning</button>
+        <button onClick={() => setScenarioMode("twoBridges")}>Two Bridges · Experimental</button>
       </div>
       <strong>{formatClock(time)}</strong>
     </header>

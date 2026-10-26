@@ -10,6 +10,8 @@ export function describeAction(action: SimulationAction, roadName: (id: string) 
     case "DEBUG_SPAWN": return `Debug spawn ${action.count}`;
     case "DEBUG_INCIDENT": return `Debug restriction · ${roadName(action.edgeId)} · ${action.capacityModifier * 100}% capacity for ${action.durationMinutes} min`;
     case "DEBUG_CLEAR_INCIDENT": return `Debug clear restriction · ${roadName(action.edgeId)}`;
+    case "ROUTE_GROUP": return `Send ${action.groupId} via ${action.corridorId}`;
+    case "HOLD_GROUP": return `Hold ${action.groupId} for ${action.durationMinutes} min`;
     case "NO_OP": return "No intervention";
   }
 }
