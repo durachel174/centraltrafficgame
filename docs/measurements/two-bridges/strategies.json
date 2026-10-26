@@ -1,0 +1,1019 @@
+{
+  "scenario": "two_bridges_one_rush",
+  "version": 1,
+  "engine": "0.5.0+groups.1",
+  "identity": "0.5.0+groups.1:two_bridges_one_rush:1:46b1525b2974941f",
+  "defaultSpeed": 1,
+  "tickSimulatedMinutes": 0.25,
+  "tickWallMilliseconds": 250,
+  "results": [
+    {
+      "seed": 428193,
+      "policy": "no-intervention",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622.25
+      },
+      "cost": 28774.647614530215,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 34.0724214687259,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 157.0961538461521,
+      "intended1xSeconds": 202.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428193,
+      "policy": "north",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 45.5,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 645.5
+      },
+      "cost": 27133.61532076187,
+      "arrived": 300,
+      "byDeadline": 280,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 39.77721187049192,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 224.14230769230306,
+      "intended1xSeconds": 225.5,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428193,
+      "policy": "south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622
+      },
+      "cost": 22001.139050861446,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.40131968330926,
+      "peakNorth": 0,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 0,
+      "intended1xSeconds": 202,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428193,
+      "policy": "alternate",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 21.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 621.75
+      },
+      "cost": 20393.206209035707,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.156372299124545,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 143.36538461538407,
+      "intended1xSeconds": 201.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428193,
+      "policy": "restriction-south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 10.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 610.25
+      },
+      "cost": 15043.53253265557,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 20.259044407966314,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 56.700000000000315,
+      "intended1xSeconds": 190.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428193,
+      "policy": "long-hold",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 102.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 702.75
+      },
+      "cost": 106539.5629882233,
+      "arrived": 300,
+      "byDeadline": 180,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 117.24268067333307,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 175.4153846153835,
+      "intended1xSeconds": 282.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "no-intervention",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622.25
+      },
+      "cost": 28755.805238385077,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 34.0724214687259,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 157.0961538461521,
+      "intended1xSeconds": 202.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "north",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 45.5,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 645.5
+      },
+      "cost": 27103.71217886223,
+      "arrived": 300,
+      "byDeadline": 280,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 39.77721187049192,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 224.14230769230306,
+      "intended1xSeconds": 225.5,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622
+      },
+      "cost": 22054.565174414605,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.40131968330926,
+      "peakNorth": 0,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 0,
+      "intended1xSeconds": 202,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "alternate",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 21.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 621.75
+      },
+      "cost": 20429.413996333733,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.156372299124545,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 143.36538461538407,
+      "intended1xSeconds": 201.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "restriction-south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 10.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 610.25
+      },
+      "cost": 15059.0123281397,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 20.259044407966314,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 56.700000000000315,
+      "intended1xSeconds": 190.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428194,
+      "policy": "long-hold",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 102.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 702.75
+      },
+      "cost": 106573.5784810828,
+      "arrived": 300,
+      "byDeadline": 180,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 117.24268067333307,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 175.4153846153835,
+      "intended1xSeconds": 282.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "no-intervention",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622.25
+      },
+      "cost": 28783.195585466594,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 34.0724214687259,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 157.0961538461521,
+      "intended1xSeconds": 202.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "north",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 45.5,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 645.5
+      },
+      "cost": 27185.91196991504,
+      "arrived": 300,
+      "byDeadline": 280,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 39.77721187049192,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 224.14230769230306,
+      "intended1xSeconds": 225.5,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 22,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 622
+      },
+      "cost": 22076.8691920069,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.40131968330926,
+      "peakNorth": 0,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 0,
+      "intended1xSeconds": 202,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "alternate",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 21.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 621.75
+      },
+      "cost": 20413.958323241437,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 26.156372299124545,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 143.36538461538407,
+      "intended1xSeconds": 201.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "restriction-south",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 10.25,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 610.25
+      },
+      "cost": 15037.686856226412,
+      "arrived": 300,
+      "byDeadline": 300,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 20.259044407966314,
+      "peakNorth": 18,
+      "peakSouth": 42,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 56.700000000000315,
+      "intended1xSeconds": 190.25,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    },
+    {
+      "seed": 428195,
+      "policy": "long-hold",
+      "finish": {
+        "phase": "finished",
+        "decisionCutoff": 600,
+        "elapsedClearanceMinutes": 102.75,
+        "maxClearanceMinutes": 180,
+        "evaluationLimit": 780,
+        "finishReason": "all-arrived",
+        "finishedAt": 702.75
+      },
+      "cost": 106577.49753034429,
+      "arrived": 300,
+      "byDeadline": 180,
+      "waiting": 0,
+      "active": 0,
+      "averageCompletedDelayMinutes": 117.24268067333307,
+      "peakNorth": 18,
+      "peakSouth": 0,
+      "northQueuedMinutes": 0,
+      "northPressureVehicleRatioMinutes": 175.4153846153835,
+      "intended1xSeconds": 282.75,
+      "opportunities": [
+        {
+          "group": "group_1",
+          "at": 0.25,
+          "size": 50
+        },
+        {
+          "group": "group_2",
+          "at": 32.25,
+          "size": 50
+        },
+        {
+          "group": "group_3",
+          "at": 64.25,
+          "size": 50
+        },
+        {
+          "group": "group_4",
+          "at": 96.25,
+          "size": 50
+        },
+        {
+          "group": "group_5",
+          "at": 128.25,
+          "size": 50
+        },
+        {
+          "group": "group_6",
+          "at": 160.25,
+          "size": 50
+        }
+      ]
+    }
+  ]
+}

@@ -19,6 +19,12 @@ npm run audit:clearance -- --seeds=428193,428194,428195,428196,428197,428198,428
 node --import tsx scripts/probe-storage.ts --out=/private/tmp/central-traffic-storage.json
 ```
 
+## Experimental: Two Bridges, One Rush
+
+Choose **Two Bridges · Experimental** in the scenario switch for a separate warm, tabletop-style city challenge. Select actual waiting commuter groups at residential hubs, explicitly Preview North/South/a brief Hold, then Apply or Cancel. Six scheduled groups cross two unequal bridges around an announced restriction. Decisions end at 10:00; the arrival target is 10:40; normal clearance continues afterward. Results use actual arrival timestamps and completed-commuter delay, with same-traffic retry and return to Monday.
+
+Production active playback measured **3:25 at default 1x**, excluding pauses. Matched runs show all-North getting 280/300 in by the target versus 300/300 with selective South routing; sending everyone South or holding too long has measured disadvantages. **168 tests pass; production build passes.** Monday's 0.5.0 rules/files remain compatible; the configuration-gated group-action profile is `0.5.0+groups.1`. No human enjoyment or universal balance claim is made. See the [prototype note, measurements, screenshots and browser limitations](docs/TWO_BRIDGES_PROTOTYPE.md). Human playtesting and Phase 12 remain pending/in progress.
+
 ## Player Flow
 
 The default interface is map-first: the city canvas, three main indicators, and the selected-road inspector stay visible while lower-level diagnostics stay out of the way. First-time players start in a skippable practice checkpoint that is paused on North Bridge pressure. The tutorial is stored in `localStorage` and advances through real actions: select North Bridge, request a reroute preview, review the measured tradeoff, apply or cancel, resume time, and watch the observed result.

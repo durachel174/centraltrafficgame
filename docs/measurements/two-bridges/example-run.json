@@ -1,0 +1,89 @@
+{
+  "evaluation": {
+    "phase": "finished",
+    "decisionCutoff": 600,
+    "elapsedClearanceMinutes": 22.25,
+    "maxClearanceMinutes": 180,
+    "evaluationLimit": 780,
+    "finishReason": "all-arrived",
+    "finishedAt": 622.25
+  },
+  "decisionCutoffMetrics": {
+    "objectiveBreakdown": {
+      "travelTime": 8027.437188458496,
+      "congestion": 2283.4101917159633,
+      "departureDelay": 6600.000000000001,
+      "dissatisfaction": 6485.122564794833,
+      "excessDistance": 2400.0000000000005,
+      "terminalHoldDelay": 0
+    },
+    "remainingHoldPassengerMinutes": 0,
+    "tripsRequested": 300,
+    "tripsCompleted": 250,
+    "activeTrips": 50,
+    "inNetworkQueuedTrips": 32,
+    "waitingTrips": 0,
+    "averageTravelTime": 30.559748753833986,
+    "medianTripTime": 29.405543407048654,
+    "p90TripTime": 54.03598548683253,
+    "p95TripTime": 71.05529483112805,
+    "maxTripTime": 71.05529483112805,
+    "averageSatisfaction": 84.5592319885841,
+    "congestionCost": 285.4262739644954,
+    "departureDelay": 3000,
+    "excessDistance": 800.0000000000001,
+    "objective": 25795.969944969293,
+    "flow": 21.599999999999994,
+    "worstBottleneck": "North Bridge"
+  },
+  "scenarioId": "two_bridges_one_rush",
+  "seed": 428193,
+  "engineVersion": "0.5.0+groups.1",
+  "startedAt": "1970-01-01T00:00:00.000Z",
+  "actions": [
+    {
+      "simulationTime": 0.5,
+      "stateSnapshotId": "t_0.50",
+      "action": {
+        "type": "ROUTE_GROUP",
+        "groupId": "group_1",
+        "corridorId": "north"
+      },
+      "immediateReward": -12.5648,
+      "affectedCount": 50
+    }
+  ],
+  "finalMetrics": {
+    "objectiveBreakdown": {
+      "travelTime": 8721.726440617786,
+      "congestion": 2405.874191715952,
+      "departureDelay": 6600.000000000001,
+      "dissatisfaction": 6655.046982196462,
+      "excessDistance": 2400.0000000000005,
+      "terminalHoldDelay": 0
+    },
+    "remainingHoldPassengerMinutes": 0,
+    "tripsRequested": 300,
+    "tripsCompleted": 300,
+    "activeTrips": 0,
+    "inNetworkQueuedTrips": 0,
+    "waitingTrips": 0,
+    "averageTravelTime": 29.072421468725953,
+    "medianTripTime": 29.385158897217565,
+    "p90TripTime": 54.03598548683253,
+    "p95TripTime": 54.03598548683253,
+    "maxTripTime": 71.05529483112805,
+    "averageSatisfaction": 84.15465004238968,
+    "congestionCost": 300.734273964494,
+    "departureDelay": 3000,
+    "excessDistance": 800.0000000000001,
+    "objective": 26782.6476145302,
+    "flow": 100,
+    "worstBottleneck": ""
+  },
+  "schemaVersion": 2,
+  "scenarioVersion": 1,
+  "configurationIdentity": "0.5.0+groups.1:two_bridges_one_rush:1:46b1525b2974941f",
+  "exportedAt": "2026-10-21T03:10:21.441Z",
+  "finalStateChecksum": "5048de98674757f2"
+}

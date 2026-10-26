@@ -1,0 +1,48 @@
+{
+  "experimentalEngineProfile": "0.5.0+groups.1",
+  "experimentalScenarioVersion": 1,
+  "mondayEngineVersion": "0.5.0",
+  "schemaVersion": 2,
+  "snapshotVersion": 3,
+  "testFiles": 10,
+  "testsPassed": 168,
+  "testDurationSeconds": 3.99,
+  "productionBuildPassed": true,
+  "viteBundlingSeconds": 1.32,
+  "productionMainAsset": "index-Clm9Igwf.js",
+  "actualProductionPlaythrough": {
+    "activePlaybackDisplay": "3:25",
+    "speed": 1,
+    "pausesExcluded": true,
+    "policy": "first group North; remaining groups automatic",
+    "seed": 428193,
+    "actualArrivedByDeadlineObserved": 300,
+    "averageCompletedDelayDisplayMinutes": 32.1,
+    "evaluation": {
+      "phase": "finished",
+      "decisionCutoff": 600,
+      "elapsedClearanceMinutes": 22.25,
+      "maxClearanceMinutes": 180,
+      "evaluationLimit": 780,
+      "finishReason": "all-arrived",
+      "finishedAt": 622.25
+    },
+    "objective": 26782.6476145302,
+    "finalStateChecksum": "5048de98674757f2",
+    "watchReplayBrowserVerified": true
+  },
+  "mondayPreviouslyExportedChecksumVerified": "b18607c503405c7e",
+  "strategyRuns": 18,
+  "humanPlaytestsConducted": 0,
+  "browserUnverified": [
+    "completed local-file import",
+    "final same-traffic retry and return actions",
+    "final console audit",
+    "native reduced-motion preference",
+    "forced worker error / stale Retry",
+    "prototype fast-forward cancellation before completion",
+    "screen reader / cross-browser / mobile",
+    "final feedback highlight lifecycle patch"
+  ],
+  "implementationCommit": "551fa8c"
+}
