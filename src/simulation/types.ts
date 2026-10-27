@@ -219,7 +219,7 @@ export interface ScenarioEvent {
 }
 
 export interface Scenario {
-  departureGroups?: { version: 1; corridors: { id: string; label: string; viaEdge: string }[]; arrivalDeadline: number };
+  departureGroups?: { version: 1; corridors: { id: string; label: string; viaEdge: string }[]; arrivalDeadline: number; arrivalTarget?: number };
   /** endTime remains the decision/demand cutoff. Omit for fixed-window practice/fixtures. */
   evaluation?: { maxClearanceMinutes: number };
   version?: number;

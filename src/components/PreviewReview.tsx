@@ -53,6 +53,25 @@ export function PreviewReview() {
       {preview.status === "error" && <p>{preview.error ?? "Preview failed."}</p>}
       {preview.status === "stale" && <p>Simulation changed. Recompute before applying.</p>}
       {preview.status === "ready" && result && <>
+        {scenario.departureGroups ? <>
+        <div className="statGrid">
+          <span>Commuters affected</span><strong>{result.affectedVehicles}</strong>
+          <span>Projected average delay change</span><strong>{result.passengerDelayDeltaPerPassenger.toFixed(2)} minutes per rider</strong>
+          <span>Selected bridge pressure</span><strong>{selected ? `${roadName(selected.edgeId)}: ${utilization(selected)}` : preview.targetEdgeId ? "Unavailable" : "No bridge selected (hold)"}</strong>
+          <span>Most affected alternative road</span><strong>{others[0] ? `${roadName(others[0].edgeId)} ${horizon(others[0])}: ${utilization(others[0])}` : "No change above 1 percentage point"}</strong>
+          <span>Actual projection horizon</span><strong>{result.horizonMinutes} min{result.truncated ? ` (${finishLabel})` : ""}</strong>
+        </div>
+        <p>Negative delay means less delay; positive means more. Average is across all projected riders, not only this group. This short projection is not a guaranteed arrival time or final journey saving.</p>
+        {result.includesClearance && <p>Includes clearance after demand ends.</p>}
+        <details><summary>Detailed metrics and road horizons</summary>
+          <p>System-cost delta (lower cost is better): {result.networkCostDelta.toFixed(0)}</p>
+          <p>Satisfaction delta: {result.satisfactionDelta.toFixed(1)} percentage points (higher is better).</p>
+          <p>Total passenger-delay delta: {result.passengerDelayDeltaMinutes.toFixed(1)} passenger-minutes.</p>
+          {!!result.terminalHoldDeltaPassengerMinutes && <p>Committed hold beyond finish: {result.terminalHoldDeltaPassengerMinutes.toFixed(1)} passenger-minutes.</p>}
+          <p>Requested {result.requestedHorizonMinutes} min; no-action branch {result.baselineHorizonMinutes ?? result.horizonMinutes} min; action branch {result.actionHorizonMinutes ?? result.horizonMinutes} min. Earlier-finished branches retain their final state.</p>
+          {result.forecastChanges.map(change => <div key={`${change.edgeId}-${change.requestedHorizonMinutes}`}>{roadName(change.edgeId)} {horizon(change)}: {utilization(change)}</div>)}
+        </details>
+        </> : <>
         <div className="statGrid">
           <span>Actual affected trips</span><strong>{result.affectedVehicles}</strong>
           <span>This road utilization</span><strong>{selected ? utilization(selected) : "Unavailable"}</strong>
@@ -72,6 +91,7 @@ export function PreviewReview() {
         <details><summary>All road horizons</summary>
           {result.forecastChanges.map(change => <div key={`${change.edgeId}-${change.actualHorizonMinutes}`}>{roadName(change.edgeId)} {horizon(change)}: {utilization(change)}</div>)}
         </details>
+        </>}
       </>}
       <div className="previewActions">
         {preview.status === "ready" && result && <button onClick={confirmPreview}>Apply</button>}

@@ -232,6 +232,7 @@ export class SimulationEngine {
     const noAction = this.cloneForRollout();
     const withAction = this.cloneForRollout();
     const trackedEdges = this.previewEdgeIds(action);
+    const selectedEdge = action.type === "ROUTE_GROUP" ? this.scenario.departureGroups?.corridors.find(c => c.id === action.corridorId)?.viaEdge : (action as { targetEdge?: string }).targetEdge;
     const noActionSamples = noAction.rolloutSamples(horizons, trackedEdges);
     const actionSamples = withAction.rolloutSamples(horizons, trackedEdges, action);
     const previewSampleIndex = this.sampleIndexAt(noActionSamples, requestedHorizon);
@@ -255,7 +256,7 @@ export class SimulationEngine {
         seenActualHorizons.add(actualHorizon);
         const beforeUtilization = beforeSample.utilizationByEdge.get(edgeId) ?? 0;
         const afterUtilization = actionSample.utilizationByEdge.get(edgeId) ?? 0;
-        if (Math.abs(beforeUtilization - afterUtilization) > 0.000001 || edgeId === (action as { targetEdge?: string }).targetEdge) {
+        if (Math.abs(beforeUtilization - afterUtilization) > 0.000001 || edgeId === selectedEdge) {
           forecastChanges.push({
             edgeId,
             horizonMinutes: actualHorizon,
@@ -771,7 +772,7 @@ export class SimulationEngine {
         .filter((edge) => edge.major)
         .map((edge) => edge.id)
     );
-    const targetEdge = "targetEdge" in action ? action.targetEdge : undefined;
+    const targetEdge = "targetEdge" in action ? action.targetEdge : action.type === "ROUTE_GROUP" ? this.scenario.departureGroups?.corridors.find(c => c.id === action.corridorId)?.viaEdge : undefined;
     if (targetEdge) ids.add(targetEdge);
     return [...ids];
   }

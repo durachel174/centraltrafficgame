@@ -1,9 +1,9 @@
 import type { Scenario } from "../types";
 /** Deliberately separate from Monday Morning. All times are simulated minutes. */
 export const twoBridgesScenario: Scenario = {
-    id: "two_bridges_one_rush", name: "Two Bridges, One Rush", version: 1, seed: 428193,
+    id: "two_bridges_one_rush", name: "Two Bridges, One Rush", version: 2, seed: 428193,
     startTime: 420, endTime: 600, evaluation: { maxClearanceMinutes: 180 },
-    departureGroups: { version: 1, arrivalDeadline: 640, corridors: [
+    departureGroups: { version: 1, arrivalDeadline: 615, arrivalTarget: 280, corridors: [
             { id: "north", label: "North · short, limited space", viaEdge: "north_bridge" },
             { id: "south", label: "South · longer, more space", viaEdge: "south_bridge" }
         ] },

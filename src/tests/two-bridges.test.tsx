@@ -7,6 +7,9 @@ import { mondayMorningScenario } from "../simulation/scenarios/MondayMorning";
 import { createCompletedRun, parseRunFile, verifyCompletedRun, finalStateChecksum } from "../simulation/logging/RunFile";
 import { actionForReplayTick, replayRun } from "../simulation/logging/Replay";
 import { engineVersionFor } from "../simulation/logging/Identity";
+import { App } from "../components/App";
+import { crossingGoal, groupEligibility, trafficPresentation, trafficTransitions } from "../components/TwoBridgesFeedback";
+import { readFileSync } from "node:fs";
 import { TwoBridgesChallenge, challengeOutcome } from "../components/TwoBridgesChallenge";
 import { useGameStore } from "../game/GameStore";
 import type { Scenario, SimulationAction } from "../simulation/types";
@@ -15,6 +18,7 @@ function fixture(): Scenario {
     s.endTime = s.startTime + 8;
     s.evaluation = { maxClearanceMinutes: 20 };
     s.departureGroups!.arrivalDeadline = s.startTime + 12;
+    s.departureGroups!.arrivalTarget = 8;
     s.demand.batches = s.demand.batches!.slice(0, 2).map((b, i) => ({ ...b, at: i * 4, size: 5, decisionMinutes: 3 }));
     s.graph.edges = s.graph.edges.map(e => ({ ...e, lengthKm: e.id === "south_bridge" ? .5 : .25 }));
     s.events = [{ ...s.events[0], time: 1, duration: 2 }];
@@ -185,7 +189,7 @@ let host: HTMLDivElement, root: Root;
 function click(name: string) { const b = [...host.querySelectorAll('button')].find(b => b.textContent?.startsWith(name)); if (!b)
     throw Error(`Missing ${name}`); act(() => b.click()); }
 function UI() { return useGameStore(s => s.scenarioMode) === "twoBridges" ? <TwoBridgesChallenge /> : <p>Monday Morning</p>; }
-function mount() { host = document.createElement('div'); document.body.append(host); root = createRoot(host); act(() => root.render(<UI />)); }
+function mount(fullApp = false) { host = document.createElement('div'); document.body.append(host); root = createRoot(host); act(() => root.render(fullApp ? <App /> : <UI />)); }
 beforeEach(() => { vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); vi.stubGlobal('Worker', PreviewDouble); vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null); PreviewDouble.instances = []; useGameStore.getState().setScenarioMode('twoBridges'); });
 afterEach(() => { if (root)
     act(() => root.unmount()); host?.remove(); act(() => useGameStore.getState().setScenarioMode('practice')); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -243,6 +247,7 @@ describe("experimental interaction", () => {
         act(() => PreviewDouble.instances.at(-1)!.reply());
         expect(host.textContent).toContain('50 affected trips');
         click('Cancel');
+        expect(document.activeElement?.id).toBe('preview-group-south');
         expect(useGameStore.getState().engine.exportSnapshot()).toEqual(before);
         expect(host.textContent).toContain('No action applied');
         click('Preview South');
@@ -284,4 +289,123 @@ describe("experimental interaction", () => {
         expect(useGameStore.getState().scenarioMode).toBe('monday');
         expect(useGameStore.getState().scenario.version).toBe(4);
     });
+});
+
+
+describe("arrival goal, urgency and observed feedback", () => {
+    it("rejects the previous experimental scenario export explicitly", () => {
+        const old = readFileSync("docs/measurements/two-bridges/example-run.json", "utf8");
+        expect(() => parseRunFile(old, twoBridgesScenario)).toThrow("scenario");
+    });
+    it("keeps the configured target identical in intro, gameplay, Help and results", () => {
+        const scenario = fixture(), engine = make(scenario), goal = crossingGoal(scenario);
+        useGameStore.setState({scenario, engine}); mount();
+        expect(host.querySelector('.bayIntro')!.textContent).toContain(goal.text);
+        expect(host.querySelector('.bayStatus')!.textContent).toContain(`/ ${goal.target} target arrivals`);
+        click('Help'); expect(host.querySelector('[role="dialog"]')!.textContent).toContain(goal.text);
+        click('Return To Game'); click('Start the rush');
+        act(() => { while (!engine.isDone()) useGameStore.getState().step(); });
+        const dialog = host.querySelector('[role="dialog"]')!;
+        expect(dialog.textContent).toContain(goal.text);
+        const actual = challengeOutcome(engine, scenario.departureGroups!.arrivalDeadline, scenario.startTime);
+        expect(dialog.textContent).toContain(`Target ${actual.byDeadline >= goal.target ? 'met' : 'missed'}`);
+        expect(dialog.textContent).toContain('Try a different crossing plan');
+    });
+    it("uses real request eligibility and the actual App timer stops countdowns on Pause", () => {
+        vi.useFakeTimers(); mount(true); click('Start the rush');
+        act(() => vi.advanceTimersByTime(250)); // First real group pauses.
+        const tray = () => host.querySelector('.bayGroupChoices')!.textContent;
+        expect(tray()).toContain('12.00 simulated min');
+        click('1x'); act(() => vi.advanceTimersByTime(250));
+        expect(tray()).toContain('11.75 simulated min');
+        click('Pause'); const text = tray(), time = useGameStore.getState().engine.getState().time;
+        act(() => vi.advanceTimersByTime(5000));
+        expect(tray()).toBe(text); expect(useGameStore.getState().engine.getState().time).toBe(time);
+        const trip = useGameStore.getState().engine.getState().waiting[0];
+        expect(groupEligibility([{...trip, availableAt:30}], 20)).toContain('10.00 simulated min');
+        expect(host.querySelector('.bayGroupChoices')!.closest('[aria-live]')).toBeNull();
+    });
+    it("labels expired undecided requests queued when actual storage blocks entry", () => {
+        const scenario = fixture(); scenario.graph.edges.filter(e => e.from === 'cedar').forEach(e => e.maximumCapacity = 0);
+        const engine = make(scenario); useGameStore.setState({scenario, engine}); mount(); click('Start the rush');
+        act(() => { while (engine.getState().time < 3.5) useGameStore.getState().step(); });
+        expect(engine.getState().waiting.filter(t => t.groupId === 'group_1')).toHaveLength(5);
+        expect(host.querySelector('.bayGroupChoices')!.textContent).toContain('5 eligible now · queued for road entry');
+        expect(host.querySelector('.bayGroupChoices')!.textContent).not.toContain('-0.');
+    });
+    it("leads with compact units/horizon and retains metrics in expandable details, including Retry", () => {
+        mount(); click('Start the rush'); act(() => useGameStore.getState().step()); click('Preview South');
+        act(() => PreviewDouble.instances.at(-1)!.onerror?.({message:'Worker unavailable'} as ErrorEvent));
+        expect(useGameStore.getState().preview.status).toBe('error'); click('Retry');
+        act(() => PreviewDouble.instances.at(-1)!.reply());
+        const review = host.querySelector('[aria-label="Action review"]')!, summary = review.querySelector('.statGrid')!.textContent!;
+        const result = useGameStore.getState().preview.result!;
+        expect(summary).toContain('Commuters affected50'); expect(summary).toContain('minutes per rider');
+        expect(summary).toContain(`Actual projection horizon${result.horizonMinutes} min`);
+        expect(summary).toContain('Selected bridge pressureSouth Bridge');
+        expect(summary).toContain('Most affected alternative road'); expect(summary).not.toContain('System-cost');
+        expect(review.textContent).toContain('Negative delay means less delay');
+        expect(review.textContent).toContain('not a guaranteed arrival time');
+        const details = review.querySelector('details')!; expect(details.open).toBe(false);
+        act(() => { details.querySelector('summary')!.click(); }); expect(details.open).toBe(true);
+        expect(details.textContent).toContain('passenger-minutes'); expect(details.textContent).toContain('percentage points');
+        expect(details.textContent).toContain('lower cost is better');
+        expect(details.querySelectorAll('div')).toHaveLength(result.forecastChanges.length);
+        click('1x'); act(() => useGameStore.getState().step());
+        expect(useGameStore.getState().preview.status).toBe('stale');
+        expect([...review.querySelectorAll('button')].some(b => b.textContent === 'Apply')).toBe(false);
+        click('Retry'); act(() => PreviewDouble.instances.at(-1)!.reply());
+        const before = useGameStore.getState().engine.exportSnapshot(); click('Cancel');
+        expect(document.activeElement?.id).toBe('preview-group-south');
+        expect(useGameStore.getState().engine.exportSnapshot()).toEqual(before);
+    });
+    it("observes real arrivals, corridor entry and queue changes once without changing deterministic state", () => {
+        const scenario = fixture();
+        scenario.graph.edges.find(e => e.id === "north_bridge")!.maximumCapacity = 2;
+        const engine = make(scenario);
+        let previous = trafficPresentation(engine.getState().vehicles, scenario), arrivals = 0, entries = 0, queues = 0;
+        engine.step(); engine.step({type:'ROUTE_GROUP',groupId:'group_1',corridorId:'north'});
+        while (!engine.isDone()) {
+            engine.step(); const before = finalStateChecksum(engine.exportSnapshot());
+            const next = trafficPresentation(engine.getState().vehicles, scenario);
+            const changes = trafficTransitions(previous, next, scenario);
+            arrivals += changes.arrivals; entries += changes.messages.filter(m => m.includes('entering')).length;
+            queues += changes.messages.filter(m => m.includes('Exit queues')).length;
+            expect(trafficTransitions(next, next, scenario).messages).toEqual([]);
+            expect(finalStateChecksum(engine.exportSnapshot())).toBe(before); previous = next;
+        }
+        expect(arrivals).toBe(engine.getObservation().metrics.tripsCompleted); expect(entries).toBeGreaterThan(0); expect(queues).toBeGreaterThan(0);
+    }, 10000);
+    it("keeps real feedback readable with reduced motion, bounds it without duplicate rerenders, and clears on retry", () => {
+        vi.useFakeTimers();
+        vi.stubGlobal('matchMedia', () => ({matches:true,addEventListener:vi.fn(),removeEventListener:vi.fn()}));
+        const scenario = fixture(), engine = make(scenario); useGameStore.setState({scenario, engine}); mount(); click('Start the rush');
+        const progressText = () => host.querySelector('[aria-label="Observed traffic"]')!.textContent;
+        act(() => { while (engine.getState().time < 4) useGameStore.getState().step(); });
+        expect(progressText()).toContain('entering North Bridge');
+        act(() => vi.advanceTimersByTime(3000));
+        act(() => { while (!engine.isDone()) useGameStore.getState().step(); });
+        const progress = () => host.querySelector('[aria-label="Observed traffic"]')!.textContent;
+        expect(progress()).toContain(`${engine.getObservation().metrics.tripsCompleted} at Bay Works`);
+        expect(progress()).toContain('recent arrivals'); const text = progress();
+        act(() => root.render(<UI />)); expect(progress()).toBe(text);
+        act(() => vi.advanceTimersByTime(1001)); expect(progress()).not.toContain('recent arrivals');
+        expect(progress()).toContain('10 at Bay Works');
+        click('Try Again With Same Traffic');
+        expect(progress()).toContain('0 at Bay Works'); expect(progress()).not.toContain('recent arrivals');
+        expect(progress()).not.toContain('entering');
+    });
+});
+
+
+it("retains selected group-bridge pressure even when both projected branches are identical there", () => {
+    const engine = make(twoBridgesScenario); engine.step();
+    const result = engine.previewAction({type:'ROUTE_GROUP',groupId:'group_1',corridorId:'north'});
+    const pressure = result.forecastChanges.find(c => c.edgeId === 'north_bridge' && c.actualHorizonMinutes === result.horizonMinutes);
+    expect(pressure).toBeDefined(); expect(pressure!.before).toBe(pressure!.after);
+    const before = engine.exportSnapshot();
+    mount(); click('Start the rush'); act(() => useGameStore.getState().step()); click('Preview North');
+    act(() => PreviewDouble.instances.at(-1)!.reply());
+    expect(host.querySelector('[aria-label="Action review"] .statGrid')!.textContent).toContain('Selected bridge pressureNorth Bridge');
+    expect(engine.exportSnapshot()).toEqual(before);
 });
