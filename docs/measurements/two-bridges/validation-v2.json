@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-26",
+  "scenarioVersion": 2,
+  "configurationIdentity": "0.5.0+groups.1:two_bridges_one_rush:2:98a7e5cd2743c886",
+  "tests": {
+    "passed": 176,
+    "files": 10,
+    "consecutiveFinalSeconds": [
+      3.93,
+      4.0
+    ],
+    "mockedWorkersAndCanvasFree": true
+  },
+  "build": {
+    "passed": true,
+    "viteSeconds": 1.35,
+    "mainAsset": "index-CJT4F7YA.js"
+  },
+  "audit": {
+    "runs": 45,
+    "policies": 9,
+    "seeds": 5,
+    "allCleared": true,
+    "raw": "target-strategies-v2.json"
+  },
+  "browser": {
+    "actualWorkers": true,
+    "finalDevelopmentRound": {
+      "firstGroup": "north",
+      "speed": 4,
+      "clearance": "fast-forward",
+      "activeSeconds": 47,
+      "byDeadline": 268,
+      "completed": 300
+    },
+    "finalProductionRound": {
+      "firstGroup": "south",
+      "speed": 4,
+      "clearance": "watch",
+      "activeSeconds": 52,
+      "byDeadline": 268,
+      "completed": 300
+    },
+    "earlier1xProductionRound": {
+      "activeSeconds": 205,
+      "pausesExcluded": true,
+      "byDeadline": 268,
+      "completed": 300,
+      "replayVerified": true,
+      "precededFinalReportingFixes": true
+    },
+    "layouts": [
+      [
+        1280,
+        720
+      ],
+      [
+        1440,
+        900
+      ]
+    ],
+    "consoleWarnings": [],
+    "consoleErrors": [],
+    "unverified": [
+      "native reduced-motion preference",
+      "pointer hover",
+      "forced worker-error Retry",
+      "local export/import",
+      "safety-limit result",
+      "target-met result",
+      "fast-forward cancellation",
+      "screen reader",
+      "cross-browser",
+      "mobile"
+    ]
+  },
+  "humanPlaytesting": "pending",
+  "implementationCommit": "3dd167b"
+}
