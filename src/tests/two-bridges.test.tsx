@@ -409,3 +409,29 @@ it("retains selected group-bridge pressure even when both projected branches are
     expect(host.querySelector('[aria-label="Action review"] .statGrid')!.textContent).toContain('Selected bridge pressureNorth Bridge');
     expect(engine.exportSnapshot()).toEqual(before);
 });
+
+
+it("keeps keyboard recovery through Cancel, async Retry, Apply and Help without changing action semantics", () => {
+    // DOM behavior only. Real-browser computed-style checks establish contrast.
+    mount(); click('Start the rush'); act(() => useGameStore.getState().step());
+    click('1x');
+    const engine = useGameStore.getState().engine, before = engine.exportSnapshot();
+    const north = host.querySelector<HTMLButtonElement>('#preview-group-north')!;
+    act(() => north.focus()); expect(useGameStore.getState().speed).toBe(1);
+    expect(useGameStore.getState().preview.status).toBe('idle'); expect(engine.exportSnapshot()).toEqual(before);
+    click('Preview North');
+    expect(useGameStore.getState().preview.status).toBe('loading');
+    click('Cancel'); expect(document.activeElement?.id).toBe('preview-group-north');
+    expect(engine.exportSnapshot()).toEqual(before);
+    click('Preview South');
+    act(() => PreviewDouble.instances.at(-1)!.onerror?.({message:'Worker unavailable'} as ErrorEvent));
+    const retry = [...host.querySelectorAll('button')].find(b => b.textContent === 'Retry')!;
+    act(() => retry.focus()); click('Retry');
+    act(() => PreviewDouble.instances.at(-1)!.reply());
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('Action review');
+    click('Apply'); expect(document.activeElement?.id).toBe('bay-resume');
+    expect(engine.createRun().actions).toHaveLength(1); expect(engine.createRun().actions[0].affectedCount).toBe(50);
+    const help = [...host.querySelectorAll('button')].find(b => b.textContent === 'Help')!;
+    act(() => help.focus()); click('Help'); click('Return To Game');
+    expect(document.activeElement).toBe(help); expect(engine.createRun().actions).toHaveLength(1);
+});

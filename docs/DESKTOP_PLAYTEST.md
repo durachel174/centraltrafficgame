@@ -66,3 +66,32 @@ An **informed decision** is a concrete action considered after reading a ready p
 ## After real sessions
 
 Summarize build/seeds, participant count, assisted/unassisted outcomes, obstacles with quotes, and contradictory cases. Separate usability, performance and scoring/model questions. Do not invent feedback, infer understanding from clicks/scores, or generalize a small sample to all players. Human testing, independent screen-reader/cross-browser checks, broader calibration and cross-device performance remain pending; Phase 12 stays IN PROGRESS.
+
+## Focused Two Bridges session (5–10 minutes)
+
+Use the current production build and select **Two Bridges · Experimental**. This is a separate short session; the Monday tasks above are optional afterward. Current challenge: scenario **2**, engine **0.5.0+groups.1**, schema **2**, snapshot **3**. Record commit/version, seed, browser/OS, viewport/zoom, input/reduced-motion preference and prior familiarity using the context sheet. Do not show the strategy audit or prescribe crossings. Human sessions remain pending.
+
+Read the same neutral introduction above, then give only this task:
+
+“Get 280 commuters to Bay Works by 10:15. Use the available controls as you think best.”
+
+Let the participant choose pause, Help, previews, routes and clearance controls. Record running time separately from paused reading, discussion and assistance. Observe unaided first; ask neutral questions afterward rather than pointing out groups or recommending South. Do not interpret a target-met result as proof of understanding or enjoyment.
+
+| Observe | Time / behavior / assistance / exact quote |
+| --- | --- |
+| Explains goal, arrival deadline and what counts as progress | |
+| Notices pending groups and understands automatic eligibility versus road entry | |
+| Roughly 12-second unpaused window: manageable, rushed, or missed? Which groups? | |
+| Preview → review → Apply/Cancel; expected effect versus observed outcome | |
+| Chosen routes/holds per group; reasons stated before or after choosing | |
+| Notices actual arrivals and bridge congestion | |
+| Explains whether/why routing some groups South could help | |
+| Pauses: count, start/end, reading/decision or other reason | |
+| Assistance: exact words, group/clock, assisted or unassisted outcome | |
+| Outcome: arrivals by 10:15, total complete/unfinished, clearance status | |
+| Spontaneous desire to retry; different plan proposed; retry seed matches | |
+| Unreadable controls, focus loss, problems and participant quotes | |
+
+After play ask: “What were you aiming for, and how did you know how you were doing?” “What happened when a group became eligible?” “How did the decision time feel?” “What did Preview, Apply and Cancel do?” “What changes did you notice on the map?” “What did the two crossings offer?” “Would you try again? What would you change?” If their explanation does not mention routing tradeoffs, ask “Could sending some groups South help? Why or why not?” Record that as prompted, not spontaneous. Ask about retry before requesting any retry action. A second round is optional.
+
+Keep observations, quotes and moderator interpretations separate. Record “not observed” for unused controls. Do not invent feedback, reveal a winning policy or equate the passing strategy audit with enjoyment.

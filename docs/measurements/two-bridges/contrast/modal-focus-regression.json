@@ -1,0 +1,34 @@
+{
+  "before": {
+    "focus": {
+      "color": "rgb(149, 73, 39)",
+      "focusVisible": true,
+      "id": "",
+      "label": "How To PlayGoal: 280 of 300 commuters at Bay Works by 10:15.Select a real waiting group at Cedar Hil",
+      "offset": "4px",
+      "outline": "solid",
+      "ratio": 2.119362896878287,
+      "tag": "SECTION",
+      "width": "3px"
+    },
+    "failures": [
+      "Active element has missing/low-contrast focus indicator"
+    ]
+  },
+  "after": {
+    "focus": {
+      "backing": "#fff9e9",
+      "color": "rgb(149, 73, 39)",
+      "focusVisible": true,
+      "id": "",
+      "label": "How To PlayGoal: 280 of 300 commuters at Bay Works by 10:15.Select a real waiting group at Cedar Hil",
+      "offset": "4px",
+      "outline": "solid",
+      "ratio": 6.128074912116981,
+      "shadow": "rgb(255, 249, 233) 0px 0px 0px 8px, rgba(0, 0, 0, 0.45) 0px 20px 60px 0px",
+      "tag": "SECTION",
+      "width": "3px"
+    },
+    "failures": []
+  }
+}

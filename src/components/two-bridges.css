@@ -603,3 +603,71 @@ one action tray below the city. */
 }
 
 .bayReview[hidden] { display:none }
+
+/* Own the complete button state palette: the shared dark theme loads later.
+   Keep state selectors more specific than global button:hover/:focus-visible. */
+.twoBridges button {
+  background:#faf5e7;
+  color:#2d4439;
+  border-color:#59684f;
+  opacity:1;
+}
+.twoBridges button:is(:hover,:focus-visible) {
+  background:#e3e7cc;
+  color:#2d4439;
+  border-color:#59684f;
+  outline:none;
+}
+.twoBridges button:is(:active,.active,[aria-pressed=true],[aria-selected=true]),
+.twoBridges .bayIntro button {
+  background:#31594b;
+  color:#fff9e9;
+  border-color:#31594b;
+}
+.twoBridges button:is(.active,[aria-pressed=true],[aria-selected=true]):is(:hover,:focus-visible),
+.twoBridges .bayIntro button:is(:hover,:focus-visible,:active) {
+  background:#24483b;
+  color:#fff9e9;
+  border-color:#24483b;
+}
+.twoBridges button:is(:disabled,[aria-disabled=true]),
+.twoBridges button:is(:disabled,[aria-disabled=true]):is(:hover,:focus-visible,:active,.active,[aria-pressed=true],[aria-selected=true]) {
+  background:#e1dfd1;
+  color:#535d50;
+  border-color:#59684f;
+  opacity:1;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+.twoBridges button small,
+.twoBridges .bayRouteButtons button small,
+.twoBridges .bayIntro button small,
+.twoBridges button[aria-pressed=true] small {
+  color:inherit;
+}
+.twoBridges input[type=file] {
+  background:#faf5e7;
+  color:#2d4439;
+  border-color:#59684f;
+}
+.twoBridges input[type=file]::file-selector-button {
+  background:#faf5e7;
+  color:#2d4439;
+  border:1px solid #59684f;
+  border-radius:6px;
+  padding:6px 9px;
+  cursor:pointer;
+}
+.twoBridges input[type=file]::file-selector-button:hover {
+  background:#e3e7cc;
+  color:#2d4439;
+}
+.twoBridges :is(button,input,summary,[tabindex]):focus-visible {
+  outline:3px solid #954927;
+  outline-offset:4px;
+}
+/* Initial keyboard focus lands on the dialog itself. Give its offset outline
+   an opaque backing so the dimmed, changing map cannot reduce ring contrast. */
+.twoBridges .modalBackdrop > [tabindex]:focus-visible {
+  box-shadow:0 0 0 8px #fff9e9,0 20px 60px rgba(0,0,0,.45);
+}
